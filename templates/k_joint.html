@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}K-Joint Page{% endblock %}
+
+{% block content %}
+
+<!-- image of k joint at the top -->
+<div class="image-container">
+    <img src="{{ url_for('static', filename='k_joint_img.png') }}" alt="Header Image" class="header-image">
+</div>
+
+<div class="container">
+    <div class="titles-container">
+        <p><strong>Joint Properties</strong></p>
+    </div>
+    <div class="input-calculation-container">
+        <!-- input variable definition -->
+        <div class="input-form">
+            <form method="post" action="/k_joint">
+                <label for="D">D:</label>
+                <input type="text" id="D" name="D" value="{{ D }}"><br>
+                <label for="T">T:</label>
+                <input type="text" id="T" name="T" value="{{ T }}"><br>
+                <label for="dA">dA:</label>
+                <input type="text" id="dA" name="dA" value="{{ dA }}"><br>
+                <label for="tA">tA:</label>
+                <input type="text" id="tA" name="tA" value="{{ tA }}"><br>
+                <label for="thetaA">thetaA:</label>
+                <input type="text" id="thetaA" name="thetaA" value="{{ thetaA }}"><br>
+                <label for="dB">dB:</label>
+                <input type="text" id="dB" name="dB" value="{{ dB }}" ><br>
+                <label for="tB">tB:</label>
+                <input type="text" id="tB" name="tB" value="{{ tB }}"><br>
+                <label for="thetaB">thetaB:</label>
+                <input type="text" id="thetaB" name="thetaB" value="{{ thetaB }}"><br>
+                <label for="g_ab">g_ab:</label>
+                <input type="text" id="g_ab" name="g_ab" value="{{ g_ab }}" ><br>
+                <label for="L">L:</label>
+                <input type="text" id="L" name="L" value="{{ L }}"><br>
+                <label for="C">C:</label>
+                <input type="text" id="C" name="C" value="{{ C }}"><br>
+                <!-- SCF Options heading -->
+                <p><strong>SCF calculation options</strong></p>
+                <!-- optional input using dropdown box -->
+                <label for="load_type">Joint loading:</label>
+                <select id="load_type" name="load_type">
+                    <option value="balanced_axial_unbalanced_moment" {% if load_type=='balanced_axial_unbalanced_moment' %}selected{% endif %}>balanced_axial_unbalanced_moment</option>
+                    <option value="single_brace_load" {% if load_type=='single_brace_load' %}selected{% endif %}>single_brace_load</option>
+                </select><br>
+
+                <!-- x-axis plot variable -->
+                <label for="x_axis_desc">X-axis variation:</label>
+                <select id="x_axis_desc" name="x_axis_desc">
+                    <option value="D" {% if x_axis_desc=='D' %}selected{% endif %}>D</option>
+                    <option value="T" {% if x_axis_desc=='T' %}selected{% endif %}>T</option>
+                    <option value="dA" {% if x_axis_desc=='dA' %}selected{% endif %}>dA</option>
+                    <option value="tA" {% if x_axis_desc=='tA' %}selected{% endif %}>tA</option>
+                    <option value="thetaA" {% if x_axis_desc=='thetaA' %}selected{% endif %}>thetaA</option>
+                    <option value="dB" {% if x_axis_desc=='dB' %}selected{% endif %}>dB</option>
+                    <option value="tB" {% if x_axis_desc=='tB' %}selected{% endif %}>tB</option>
+                    <option value="thetaB" {% if x_axis_desc=='thetaB' %}selected{% endif %}>thetaB</option>
+                    <option value="g_ab" {% if x_axis_desc=='g_ab' %}selected{% endif %}>g_ab</option>
+                </select><br>
+
+                <!-- plot options using dropdown box-->
+                <label for="scf_options">SCF options:</label>
+                <select id="scf_options" name="scf_options">
+                    <option value="scf_only" {% if scf_options=='scf_only' %}selected{% endif %}>scf_only</option>
+                    <option value="scf_stress_adjusted" {% if scf_options=='scf_stress_adjusted' %}selected{% endif %}>scf_stress_adjusted</option>
+                </select><br>
+
+            </form>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const form = document.querySelector('form');
+                    const inputs = form.querySelectorAll('input, select');
+
+                    inputs.forEach(input => {
+                        input.addEventListener('change', function() {
+                            form.submit();
+                        });
+                    });
+                });
+            </script>
+
+            <!-- error message text styled using flash styling -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="error-message">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Display calculated values-->
+        <div class="calculated-values">
+            {% if chord_props_obj is not none %}
+                <p><strong>Chord calculated properties</strong></p>
+                <p class="{% if chord_props_obj.alpha < 4 or chord_props_obj.alpha > 40 %}text-red{% else %}text-green{% endif %}">
+                    &alpha; = 2L/D = {{ chord_props_obj.alpha }} (4 ≤ &alpha; ≤ 40)</p>
+            <p class="{% if chord_props_obj.gamma < 8 or chord_props_obj.gamma > 32 %}text-red{% else %}text-green{% endif %}">
+                &gamma; = D/2T = {{ chord_props_obj.gamma }} (8 ≤ &gamma; ≤ 32)</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- plot image from flask -->
+    {% if plot_data_a_cs and plot_data_a_bs %}
+        <div class="plots-container">
+            <div class="plot">
+                <h1>BRACE A SCFs</h1>
+                <h2>chord-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_a_cs }}" alt="Plot">
+            </div>
+            <div class="plot">
+                <h1>&nbsp;</h1>
+                <h2>brace-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_a_bs }}" alt="Plot">
+            </div>
+        </div>
+    {% endif %}
+
+    {% if plot_data_b_cs and plot_data_b_bs %}
+        <div class="plots-container">
+            <div class="plot">
+                <h1>BRACE B SCFs</h1>
+                <h2>chord-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_b_cs }}" alt="Plot">
+            </div>
+            <div class="plot">
+                <h1>&nbsp;</h1>
+                <h2>brace-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_b_bs }}" alt="Plot">
+            </div>
+        </div>
+        <a href="/">Go Back</a>
+    {% endif %}
+
+    <!-- Include the table conditionally -->
+    {% if show_table %}
+        <h2>SCFs</h2>
+        {% include 'table.html' %}
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+

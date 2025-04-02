@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Website{% endblock %}</title>
+    <style>
+        body {
+            display: flex;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh; /* Full height of the viewport */
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #FF2400; /* Scarlet color */
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            height: 100%; /* Full height */
+            overflow-y: auto; /* Scrollable */
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto; /* Scrollable content */
+        }
+        .titles-container {
+            display: flex;
+            align-items: center;
+            gap: 20px; /* Adjust the gap between titles */
+        }
+        .calculated-title {
+            margin: 0; /* Remove default margin */
+        }
+        .input-calculation-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 20px; /* Adjust the gap between inputs and calculated values */
+        }
+        .input-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Adjust the gap between form elements */
+        }
+        .input-form label {
+            display: inline-block;
+            width: 150px; /* Set a fixed width for labels */
+        }
+        .input-form input[type="text"],
+        .input-form select {
+            display: inline-block;
+            width: calc(80% - 160px); /* Adjust width to fit next to labels */
+            box-sizing: border-box; /* Include padding and border in element's total width */
+        }
+        .plots-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+        }
+        .plot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .plot img {
+            max-width: 100%;
+            height: auto;
+        }
+        .text-red {
+            color: red;
+        }
+        .text-green {
+            color: #32CD32; /* Lime Green */
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <!-- home page button -->
+        <button onclick="window.location.href='/'">Home</button>
+        <!-- k joint scf page button -->
+        <button onclick="window.location.href='/k_joint'">K Joint</button>
+        <!-- x joint scf page button -->
+        <button onclick="window.location.href='/x_joint'">X Joint</button>
+        <!-- placeholder page button -->
+        <button onclick="window.location.href='/placeholder'">Placeholder Page</button>
+    </div>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

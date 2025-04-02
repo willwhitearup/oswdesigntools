@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}X-Joint Page{% endblock %}
+
+{% block content %}
+<!-- image of x joint at the top -->
+<div class="image-container">
+    <img src="{{ url_for('static', filename='x_joint_img.png') }}" alt="Header Image" class="header-image" style="width: 40%; height: auto;">
+</div>
+
+<div class="container">
+    <div class="titles-container">
+        <p><strong>Joint Properties</strong></p>
+    </div>
+    <div class="input-calculation-container">
+        <!-- input variable definition -->
+        <div class="input-form">
+            <form method="post" action="/x_joint">
+
+                <label for="Dx">Dx:</label>
+                <input type="text" id="Dx" name="Dx" value="{{ Dx }}"><br>
+
+                <label for="Tx">Tx:</label>
+                <input type="text" id="Tx" name="Tx" value="{{ Tx }}"><br>
+
+                <label for="dax">dx:</label>
+                <input type="text" id="dax" name="dax" value="{{ dax }}"><br>
+
+                <label for="tax">tx:</label>
+                <input type="text" id="tax" name="tax" value="{{ tax }}"><br>
+
+                <label for="thetax">&theta;:</label>
+                <input type="text" id="thetax" name="thetax" value="{{ thetax }}"><br>
+
+                <label for="Lx">Lx:</label>
+                <input type="text" id="Lx" name="Lx" value="{{ Lx }}"><br>
+
+                <label for="Cx">Cx:</label>
+                <input type="text" id="Cx" name="Cx" value="{{ Cx }}"><br>
+
+                <!-- SCF Options heading -->
+                <p><strong>SCF calculation options</strong></p>
+                <!-- optional input using dropdown box -->
+                <label for="load_type_x">Joint loading:</label>
+                <select id="load_type_x" name="load_type_x">
+                    <option value="balanced_forces" {% if load_type_x=='balanced_forces' %}selected{% endif %}>balanced_forces</option>
+                    <option value="single_brace_load" {% if load_type_x=='single_brace_load' %}selected{% endif %}>single_brace_load</option>
+                </select><br>
+
+                <!--a-->
+                <label for="x_axis_desc_x">X-axis variation:</label>
+                <select id="x_axis_desc_x" name="x_axis_desc_x">
+                    <option value="Dx" {% if x_axis_desc_x=='Dx' %}selected{% endif %}>Dx</option>
+                    <option value="Tx" {% if x_axis_desc_x=='Tx' %}selected{% endif %}>Tx</option>
+                    <option value="dax" {% if x_axis_desc_x=='dax' %}selected{% endif %}>dax</option>
+                    <option value="tax" {% if x_axis_desc_x=='tax' %}selected{% endif %}>tax</option>
+                    <option value="thetax" {% if x_axis_desc_x=='thetax' %}selected{% endif %}>thetax</option>
+                </select><br>
+
+                <!--plot options using dropdown box-->
+                <label for="scf_options_x">SCF options:</label>
+                <select id="scf_options_x" name="scf_options_x">
+                    <option value="scf_only" {% if scf_options_x=='scf_only' %}selected{% endif %}>scf_only</option>
+                    <option value="scf_stress_adjusted" {% if scf_options_x=='scf_stress_adjusted' %}selected{% endif %}>scf_stress_adjusted</option>
+                </select><br>
+
+            </form>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('form');
+                const inputs = form.querySelectorAll('input, select');
+
+                inputs.forEach(input => {
+                    input.addEventListener('change', function() {
+                        form.submit();
+                    });
+                });
+            });
+            </script>
+
+        </div>
+    </div>
+
+    <!-- plot image from flask -->
+    {% if plot_data_a_csx and plot_data_a_bsx %}
+        <div class="plots-container">
+            <div class="plot">
+                <h1>BRACE A SCFs</h1>
+                <h2>chord-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_a_csx }}" alt="Plot">
+            </div>
+            <div class="plot">
+                <h1>&nbsp;</h1>
+                <h2>brace-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_a_bsx }}" alt="Plot">
+            </div>
+        </div>
+    {% endif %}
+
+
+
+</div>
+
+{% endblock %}
