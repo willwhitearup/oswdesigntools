@@ -3,6 +3,7 @@ from flask import Flask
 from routing.routes_home import home
 from routing.routes_kjoint import k_joint_route
 from routing.routes_xjoint import x_joint_route
+from routing.routes_tyjoint import ty_joint_route
 from routing.placeholder import placeholder_route
 
 # initialise app variable for Flask obj
@@ -14,6 +15,7 @@ app.secret_key = 'your_secret_key_here'
 app.add_url_rule('/', 'home', home)
 app.add_url_rule('/k_joint', 'k_joint', k_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/x_joint', 'x_joint', x_joint_route, methods=['GET', 'POST'])
+app.add_url_rule('/ty_joint', 'ty_joint', ty_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/placeholder', 'placeholder', placeholder_route)
 
 
