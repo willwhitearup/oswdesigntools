@@ -1,7 +1,7 @@
 from flask import request, render_template, flash
-from main.core import create_plot
+from routing.core import create_plot
 import numpy as np
-from main.scfs_kjts import KJointSCFManager, ChordPropertyManager
+from routing.scfs_kjts import KJointSCFManager, ChordPropertyManager
 
 # Define default values
 DEFAULT_VALUES_K = {'D': 1000, 'T': 20, 'dA': 500, 'tA': 15, 'thetaA': 45,
@@ -77,24 +77,24 @@ def k_joint_route():
 
         # brace A plots
         # chord side
-        plot_data_a_cs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_a_axial_chord_crowns,
-                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_a_axial_chord_saddles,
+        plot_data_a_cs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_axial_a_chord_crowns,
+                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_axial_a_chord_saddles,
                                                       ("IPB crown", "blue", "-"): kjt_obj.scf_ipb_a_chord_crowns,
                                                       ("OPB saddle", "green", "-"): kjt_obj.scf_opb_a_chord_saddles,
-                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_a_axial_chord_crowns_adj,
-                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_a_axial_chord_saddles_adj,
+                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_axial_a_chord_crowns_adj,
+                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_axial_a_chord_saddles_adj,
                                                       ("IPB crown stress_adjusted", "blue", "--"): kjt_obj.scf_ipb_a_chord_crowns_adj,
                                                       ("OPB saddle stress_adjusted", "green", "--"): kjt_obj.scf_opb_a_chord_saddles_adj
                                                       },
                                      x_axis_desc, stress_adjusted=stress_adjusted)  # chordside
 
         # brace side
-        plot_data_a_bs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_a_axial_brace_crowns,
-                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_a_axial_brace_saddles,
+        plot_data_a_bs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_axial_a_brace_crowns,
+                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_axial_a_brace_saddles,
                                                       ("IPB crown", "blue", "-"): kjt_obj.scf_ipb_a_brace_crowns,
                                                       ("OPB saddle", "green", "-"): kjt_obj.scf_opb_a_brace_saddles,
-                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_a_axial_brace_crowns_adj,
-                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_a_axial_brace_saddles_adj,
+                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_axial_a_brace_crowns_adj,
+                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_axial_a_brace_saddles_adj,
                                                       ("IPB crown stress_adjusted", "blue", "--"): kjt_obj.scf_ipb_a_brace_crowns_adj,
                                                       ("OPB saddle stress_adjusted", "green", "--"): kjt_obj.scf_opb_a_brace_saddles_adj
                                                       },
@@ -102,24 +102,24 @@ def k_joint_route():
 
         # brace B plots
         # chord side
-        plot_data_b_cs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_b_axial_chord_crowns,
-                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_b_axial_chord_saddles,
+        plot_data_b_cs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_axial_b_chord_crowns,
+                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_axial_b_chord_saddles,
                                                       ("IPB crown", "blue", "-"): kjt_obj.scf_ipb_b_chord_crowns,
                                                       ("OPB saddle", "green", "-"): kjt_obj.scf_opb_b_chord_saddles,
-                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_b_axial_chord_crowns_adj,
-                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_b_axial_chord_saddles_adj,
+                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_axial_b_chord_crowns_adj,
+                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_axial_b_chord_saddles_adj,
                                                       ("IPB crown stress_adjusted", "blue", "--"): kjt_obj.scf_ipb_b_chord_crowns_adj,
                                                       ("OPB saddle stress_adjusted", "green", "--"): kjt_obj.scf_opb_b_chord_saddles_adj
                                                       },
                                      x_axis_desc, stress_adjusted=stress_adjusted)  # chordside
 
         # brace side
-        plot_data_b_bs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_b_axial_brace_crowns,
-                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_b_axial_brace_saddles,
+        plot_data_b_bs = create_plot(kjt_obj.params, {("axial crown", "red", "-"): kjt_obj.scf_axial_b_brace_crowns,
+                                                      ("axial saddle", "orange", "-"): kjt_obj.scf_axial_b_brace_saddles,
                                                       ("IPB crown", "blue", "-"): kjt_obj.scf_ipb_b_brace_crowns,
                                                       ("OPB saddle", "green", "-"): kjt_obj.scf_opb_b_brace_saddles,
-                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_b_axial_brace_crowns_adj,
-                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_b_axial_brace_saddles_adj,
+                                                      ("axial crown stress_adjusted", "red", "--"): kjt_obj.scf_axial_b_brace_crowns_adj,
+                                                      ("axial saddle stress_adjusted", "orange", "--"): kjt_obj.scf_axial_b_brace_saddles_adj,
                                                       ("IPB crown stress_adjusted", "blue", "--"): kjt_obj.scf_ipb_b_brace_crowns_adj,
                                                       ("OPB saddle stress_adjusted", "green", "--"): kjt_obj.scf_opb_b_brace_saddles_adj
                                                       },

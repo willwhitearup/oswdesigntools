@@ -17,25 +17,25 @@
         <div class="input-form">
             <form method="post" action="/x_joint">
 
-                <label for="Dx">Dx:</label>
+                <label for="Dx">D:</label>
                 <input type="text" id="Dx" name="Dx" value="{{ Dx }}"><br>
 
-                <label for="Tx">Tx:</label>
+                <label for="Tx">T:</label>
                 <input type="text" id="Tx" name="Tx" value="{{ Tx }}"><br>
 
-                <label for="dax">dx:</label>
+                <label for="dax">d:</label>
                 <input type="text" id="dax" name="dax" value="{{ dax }}"><br>
 
-                <label for="tax">tx:</label>
+                <label for="tax">t:</label>
                 <input type="text" id="tax" name="tax" value="{{ tax }}"><br>
 
                 <label for="thetax">&theta;:</label>
                 <input type="text" id="thetax" name="thetax" value="{{ thetax }}"><br>
 
-                <label for="Lx">Lx:</label>
+                <label for="Lx">L:</label>
                 <input type="text" id="Lx" name="Lx" value="{{ Lx }}"><br>
 
-                <label for="Cx">Cx:</label>
+                <label for="Cx">C:</label>
                 <input type="text" id="Cx" name="Cx" value="{{ Cx }}"><br>
 
                 <!-- SCF Options heading -->
@@ -50,11 +50,11 @@
                 <!--a-->
                 <label for="x_axis_desc_x">X-axis variation:</label>
                 <select id="x_axis_desc_x" name="x_axis_desc_x">
-                    <option value="Dx" {% if x_axis_desc_x=='Dx' %}selected{% endif %}>Dx</option>
-                    <option value="Tx" {% if x_axis_desc_x=='Tx' %}selected{% endif %}>Tx</option>
-                    <option value="dax" {% if x_axis_desc_x=='dax' %}selected{% endif %}>dax</option>
-                    <option value="tax" {% if x_axis_desc_x=='tax' %}selected{% endif %}>tax</option>
-                    <option value="thetax" {% if x_axis_desc_x=='thetax' %}selected{% endif %}>thetax</option>
+                    <option value="Dx" {% if x_axis_desc_x=='Dx' %}selected{% endif %}>D</option>
+                    <option value="Tx" {% if x_axis_desc_x=='Tx' %}selected{% endif %}>T</option>
+                    <option value="dax" {% if x_axis_desc_x=='dax' %}selected{% endif %}>d</option>
+                    <option value="tax" {% if x_axis_desc_x=='tax' %}selected{% endif %}>t</option>
+                    <option value="thetax" {% if x_axis_desc_x=='thetax' %}selected{% endif %}>theta</option>
                 </select><br>
 
                 <!--plot options using dropdown box-->
@@ -70,7 +70,6 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const form = document.querySelector('form');
                 const inputs = form.querySelectorAll('input, select');
-
                 inputs.forEach(input => {
                     input.addEventListener('change', function() {
                         form.submit();
@@ -79,7 +78,18 @@
             });
             </script>
 
+            <!-- error message text styled using flash styling -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="error-message">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
         </div>
+
     </div>
 
     <!-- plot image from flask -->
@@ -98,6 +108,11 @@
         </div>
     {% endif %}
 
+    <!-- Include the table conditionally -->
+    {% if show_table_x %}
+        <h2>SCFs</h2>
+        {% include 'table_xjt.html' %}
+    {% endif %}
 
 
 </div>

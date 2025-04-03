@@ -2,7 +2,7 @@ import  numpy as np
 from efthymiou.scf import k1, k2, t8, t9, k4, k5, t5, t7, t6, t3, k7, k6  # chord scfs
 import copy
 
-from main.core import tubular_cross_section_area, tubular_second_moment_of_area
+from routing.core import tubular_cross_section_area, tubular_second_moment_of_area
 
 """
 Table B-3 Stress concentration factors for simple tubular K joints
@@ -33,11 +33,11 @@ class KJointSCFManager:
 
         # store all SCFs for each load type
         # AXIAL SCFs----------------
-        self.scf_a_axial_chord_crowns, self.scf_b_axial_chord_crowns = [], []
-        self.scf_a_axial_brace_crowns, self.scf_b_axial_brace_crowns = [], []
+        self.scf_axial_a_chord_crowns, self.scf_axial_b_chord_crowns = [], []
+        self.scf_axial_a_brace_crowns, self.scf_axial_b_brace_crowns = [], []
 
-        self.scf_a_axial_chord_saddles, self.scf_a_axial_brace_saddles = [], []
-        self.scf_b_axial_chord_saddles, self.scf_b_axial_brace_saddles = [], []
+        self.scf_axial_a_chord_saddles, self.scf_axial_a_brace_saddles = [], []
+        self.scf_axial_b_chord_saddles, self.scf_axial_b_brace_saddles = [], []
 
         # IPB SCFs-----------
         self.scf_ipb_a_chord_crowns, self.scf_ipb_a_brace_crowns = [], []
@@ -47,19 +47,19 @@ class KJointSCFManager:
         self.scf_opb_a_chord_saddles, self.scf_opb_a_brace_saddles = [], []
         self.scf_opb_b_chord_saddles, self.scf_opb_b_brace_saddles = [], []
 
-        # stress adjusted SCFs brace B # chordside
-        self.scf_a_axial_chord_crowns_adj = None
-        self.scf_a_axial_chord_saddles_adj = None
-        self.scf_a_axial_brace_crowns_adj = None
-        self.scf_a_axial_brace_saddles_adj = None
+        # stress adjusted SCFs brace A
+        self.scf_axial_a_chord_crowns_adj = None # chordside
+        self.scf_axial_a_chord_saddles_adj = None # chordside
+        self.scf_axial_a_brace_crowns_adj = None
+        self.scf_axial_a_brace_saddles_adj = None
         self.scf_ipb_a_chord_crowns_adj = None
         self.scf_opb_a_chord_saddles_adj = None
 
-        # stress adjusted SCFs brace B  # chordside
-        self.scf_b_axial_chord_crowns_adj = None
-        self.scf_b_axial_chord_saddles_adj = None
-        self.scf_b_axial_brace_crowns_adj = None
-        self.scf_b_axial_brace_saddles_adj = None
+        # stress adjusted SCFs brace B
+        self.scf_axial_b_chord_crowns_adj = None # chordside
+        self.scf_axial_b_chord_saddles_adj = None # chordside
+        self.scf_axial_b_brace_crowns_adj = None
+        self.scf_axial_b_brace_saddles_adj = None
         self.scf_ipb_b_chord_crowns_adj = None
         self.scf_opb_b_chord_saddles_adj = None
 
@@ -138,7 +138,6 @@ class KJointSCFManager:
             # saddles
             scf_axial_a_chord_saddle, scf_axial_b_chord_saddle, _ = k1(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab)
             scf_axial_a_brace_saddle, scf_axial_b_brace_saddle, _ = k2(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab)
-
             # IPB LOAD SCFs-------------------------------------------------------------------------------------------------------
             # brace A
             scf_ipb_a_chord_crown = t8(d1, d2_a, thk1, thk2_a, theta_a)  # chordside
@@ -146,13 +145,11 @@ class KJointSCFManager:
             # brace B
             scf_ipb_b_chord_crown = t8(d1, d2_b, thk1, thk2_b, theta_b)  # chordside
             scf_ipb_b_brace_crown = t9(d1, d2_b, thk1, thk2_b, theta_b)  # braceside
-
             # OPB LOAD SCFs-------------------------------------------------------------------------------------------------------
             # brace A and brace B chord-side saddle SCFs
             scf_opb_a_chord_saddle, scf_opb_b_chord_saddle = k4(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab)
             # brace A and brace B brace-side saddle SCFs
             scf_opb_a_brace_saddle, scf_opb_b_brace_saddle = k5(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab)
-
 
         elif load_type == "single_brace_load":
             c = 0.7  # chord end fixity default
@@ -167,7 +164,6 @@ class KJointSCFManager:
             scf_axial_b_brace_crown = t7(d1, d2_b, thk1, thk2_b, L, c)  # braceside
             scf_axial_b_chord_saddle = t5(d1, d2_b, thk1, thk2_b, L, theta_b, c)  # chordside
             scf_axial_b_brace_saddle = t3(d1, d2_b, thk1, thk2_b, L, theta_b)  # braceside
-
             ## IPB SCFs
             # brace A
             scf_ipb_a_chord_crown = t8(d1, d2_a, thk1, thk2_a, theta_a)  # chordside
@@ -175,7 +171,6 @@ class KJointSCFManager:
             # brace B
             scf_ipb_b_chord_crown = t8(d1, d2_b, thk1, thk2_b, theta_b)  # chordside
             scf_ipb_b_brace_crown = t9(d1, d2_b, thk1, thk2_b, theta_b)  # braceside
-
             ## OPB SCFs (for consistency, just written out equations twice)
             # brace A
             scf_opb_a_chord_saddle, _ = k6(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab)  # chordside
@@ -220,27 +215,27 @@ class KJointSCFManager:
 
         ## BRACE A
         # brace A chord-side SCFs - stress adjusted
-        self.scf_a_axial_chord_crowns_adj = list(np.array(self.scf_a_axial_chord_crowns) * np.array(self.brace_a_area_ratios))
-        self.scf_a_axial_chord_saddles_adj = list(np.array(self.scf_a_axial_chord_saddles) * np.array(self.brace_a_area_ratios))
+        self.scf_axial_a_chord_crowns_adj = list(np.array(self.scf_axial_a_chord_crowns) * np.array(self.brace_a_area_ratios))
+        self.scf_axial_a_chord_saddles_adj = list(np.array(self.scf_axial_a_chord_saddles) * np.array(self.brace_a_area_ratios))
         self.scf_ipb_a_chord_crowns_adj = list(self.scf_ipb_a_chord_crowns * np.array(self.brace_a_bending_stiffness_ratios))
         self.scf_opb_a_chord_saddles_adj = list(self.scf_opb_a_chord_saddles * np.array(self.brace_a_bending_stiffness_ratios))
 
         # brace A brace-side SCFs - stress adjusted
-        self.scf_a_axial_brace_crowns_adj = list(np.array(self.scf_a_axial_brace_crowns) * np.array(self.brace_a_area_ratios))
-        self.scf_a_axial_brace_saddles_adj = list(np.array(self.scf_a_axial_brace_saddles) * np.array(self.brace_a_area_ratios))
+        self.scf_axial_a_brace_crowns_adj = list(np.array(self.scf_axial_a_brace_crowns) * np.array(self.brace_a_area_ratios))
+        self.scf_axial_a_brace_saddles_adj = list(np.array(self.scf_axial_a_brace_saddles) * np.array(self.brace_a_area_ratios))
         self.scf_ipb_a_brace_crowns_adj = list(self.scf_ipb_a_brace_crowns * np.array(self.brace_a_bending_stiffness_ratios))
         self.scf_opb_a_brace_saddles_adj = list(self.scf_opb_a_brace_saddles * np.array(self.brace_a_bending_stiffness_ratios))
 
         ## BRACE B
         # brace B chord-side SCFs - stress adjusted
-        self.scf_b_axial_chord_crowns_adj = list(np.array(self.scf_b_axial_chord_crowns) * np.array(self.brace_b_area_ratios))
-        self.scf_b_axial_chord_saddles_adj = list(np.array(self.scf_b_axial_chord_saddles) * np.array(self.brace_b_area_ratios))
+        self.scf_axial_b_chord_crowns_adj = list(np.array(self.scf_axial_b_chord_crowns) * np.array(self.brace_b_area_ratios))
+        self.scf_axial_b_chord_saddles_adj = list(np.array(self.scf_axial_b_chord_saddles) * np.array(self.brace_b_area_ratios))
         self.scf_ipb_b_chord_crowns_adj = list(self.scf_ipb_b_chord_crowns * np.array(self.brace_b_bending_stiffness_ratios))
         self.scf_opb_b_chord_saddles_adj = list(self.scf_opb_b_chord_saddles * np.array(self.brace_b_bending_stiffness_ratios))
 
         # brace B brace-side SCFs - stress adjusted
-        self.scf_b_axial_brace_crowns_adj = list(np.array(self.scf_b_axial_brace_crowns) * np.array(self.brace_b_area_ratios))
-        self.scf_b_axial_brace_saddles_adj = list(np.array(self.scf_b_axial_brace_saddles) * np.array(self.brace_b_area_ratios))
+        self.scf_axial_b_brace_crowns_adj = list(np.array(self.scf_axial_b_brace_crowns) * np.array(self.brace_b_area_ratios))
+        self.scf_axial_b_brace_saddles_adj = list(np.array(self.scf_axial_b_brace_saddles) * np.array(self.brace_b_area_ratios))
         self.scf_ipb_b_brace_crowns_adj = list(self.scf_ipb_b_brace_crowns * np.array(self.brace_b_bending_stiffness_ratios))
         self.scf_opb_b_brace_saddles_adj = list(self.scf_opb_b_brace_saddles * np.array(self.brace_b_bending_stiffness_ratios))
 
@@ -290,20 +285,20 @@ class KJointSCFManager:
 
             # AXIAL SCFs---------------------------------------------------
             # brace A crowns
-            self.scf_a_axial_chord_crowns.append(scf_axial_a_chord_crown)  # chord side
-            self.scf_a_axial_brace_crowns.append(scf_axial_a_brace_crown)  # brace side
+            self.scf_axial_a_chord_crowns.append(scf_axial_a_chord_crown)  # chord side
+            self.scf_axial_a_brace_crowns.append(scf_axial_a_brace_crown)  # brace side
 
             # brace B crowns
-            self.scf_b_axial_chord_crowns.append(scf_axial_b_chord_crown)  # chord side
-            self.scf_b_axial_brace_crowns.append(scf_axial_b_brace_crown)  # brace side
+            self.scf_axial_b_chord_crowns.append(scf_axial_b_chord_crown)  # chord side
+            self.scf_axial_b_brace_crowns.append(scf_axial_b_brace_crown)  # brace side
 
             # brace A saddles
-            self.scf_a_axial_chord_saddles.append(scf_axial_a_chord_saddle)  # chord side
-            self.scf_a_axial_brace_saddles.append(scf_axial_a_brace_saddle)  # brace side
+            self.scf_axial_a_chord_saddles.append(scf_axial_a_chord_saddle)  # chord side
+            self.scf_axial_a_brace_saddles.append(scf_axial_a_brace_saddle)  # brace side
 
             # brace B saddles
-            self.scf_b_axial_chord_saddles.append(scf_axial_b_chord_saddle)  # chord side
-            self.scf_b_axial_brace_saddles.append(scf_axial_b_brace_saddle)  # brace side
+            self.scf_axial_b_chord_saddles.append(scf_axial_b_chord_saddle)  # chord side
+            self.scf_axial_b_brace_saddles.append(scf_axial_b_brace_saddle)  # brace side
 
             # IPB SCFs---------------------------------------------------
             # brace A

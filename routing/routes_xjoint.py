@@ -1,8 +1,8 @@
 from flask import request, render_template, flash
 import numpy as np
 
-from main.core import create_plot
-from main.scfs_xjts import XJointSCFManager
+from routing.core import create_plot
+from routing.scfs_xjts import XJointSCFManager
 
 # Define default values
 DEFAULT_VALUES_X = {'Dx': 1000, 'Tx': 20, 'dax': 500, 'tax': 15, 'thetax': 45, 'Lx': 5000, 'Cx': 0.7,
@@ -45,7 +45,7 @@ def x_joint_route():
         scf_options_x = request.form.get('scf_options_x', DEFAULT_VALUES_X['scf_options_x'])  # "scf_only" or "scf_stress_adjusted"
 
     try:
-        show_table = True
+        show_table_x = True
 
         # convert angles to radians
         theta_radians = np.radians(float(theta))
@@ -59,30 +59,37 @@ def x_joint_route():
         xjt_obj = XJointSCFManager(x_axis_desc_x, input_fields, stress_adjusted)
         xjt_obj.get_joint_scfs(load_type_x)
 
+        # convert theta angles back to radians for plotting
+        xjt_obj.convert_angles_to_degrees(x_axis_desc_x)
+
         # brace A plots
+
+        x_axis_desc_map = {"Dx": "D", "Tx": "T", "dax": "d", "tax": "t", "thetax": "theta"}
+        x_axis_desc_key = x_axis_desc_map[x_axis_desc_x]
+
         # chord side
-        plot_data_a_csx = create_plot(xjt_obj.params, {("axial crown", "red", "-"): xjt_obj.scf_a_axial_chord_crowns,
-                                                      ("axial saddle", "orange", "-"): xjt_obj.scf_a_axial_chord_saddles,
-        #                                               ("IPB crown", "blue", "-"): xjt_obj.scf_ipb_a_chord_crowns,
-        #                                               ("OPB saddle", "green", "-"): xjt_obj.scf_opb_a_chord_saddles,
-        #                                               ("axial crown stress_adjusted", "red", "--"): xjt_obj.scf_a_axial_chord_crowns_adj,
-        #                                               ("axial saddle stress_adjusted", "orange", "--"): xjt_obj.scf_a_axial_chord_saddles_adj,
-        #                                               ("IPB crown stress_adjusted", "blue", "--"): xjt_obj.scf_ipb_a_chord_crowns_adj,
-        #                                               ("OPB saddle stress_adjusted", "green", "--"): xjt_obj.scf_opb_a_chord_saddles_adj
+        plot_data_a_csx = create_plot(xjt_obj.params, {("axial crown", "red", "-"): xjt_obj.scf_axial_a_chord_crowns,
+                                                      ("axial saddle", "orange", "-"): xjt_obj.scf_axial_a_chord_saddles,
+                                                       ("IPB crown", "blue", "-"): xjt_obj.scf_ipb_a_chord_crowns,
+                                                       ("OPB saddle", "green", "-"): xjt_obj.scf_opb_a_chord_saddles,
+                                                      ("axial crown stress_adjusted", "red", "--"): xjt_obj.scf_axial_a_chord_crowns_adj,
+                                                      ("axial saddle stress_adjusted", "orange", "--"): xjt_obj.scf_axial_a_chord_saddles_adj,
+                                                      ("IPB crown stress_adjusted", "blue", "--"): xjt_obj.scf_ipb_a_chord_crowns_adj,
+                                                      ("OPB saddle stress_adjusted", "green", "--"): xjt_obj.scf_opb_a_chord_saddles_adj
                                                        },
-                                      x_axis_desc_x, stress_adjusted=stress_adjusted)  # chordside
+                                      x_axis_desc_key, stress_adjusted=stress_adjusted)  # chordside
         #
         # brace side
-        plot_data_a_bsx = create_plot(xjt_obj.params, {("axial crown", "red", "-"): xjt_obj.scf_a_axial_brace_crowns,
-                                                      ("axial saddle", "orange", "-"): xjt_obj.scf_a_axial_brace_saddles,
-        #                                               ("IPB crown", "blue", "-"): xjt_obj.scf_ipb_a_brace_crowns,
-        #                                               ("OPB saddle", "green", "-"): xjt_obj.scf_opb_a_brace_saddles,
-        #                                               ("axial crown stress_adjusted", "red", "--"): xjt_obj.scf_a_axial_brace_crowns_adj,
-        #                                               ("axial saddle stress_adjusted", "orange", "--"): xjt_obj.scf_a_axial_brace_saddles_adj,
-        #                                               ("IPB crown stress_adjusted", "blue", "--"): xjt_obj.scf_ipb_a_brace_crowns_adj,
-        #                                               ("OPB saddle stress_adjusted", "green", "--"): xjt_obj.scf_opb_a_brace_saddles_adj
+        plot_data_a_bsx = create_plot(xjt_obj.params, {("axial crown", "red", "-"): xjt_obj.scf_axial_a_brace_crowns,
+                                                      ("axial saddle", "orange", "-"): xjt_obj.scf_axial_a_brace_saddles,
+                                                       ("IPB crown", "blue", "-"): xjt_obj.scf_ipb_a_brace_crowns,
+                                                       ("OPB saddle", "green", "-"): xjt_obj.scf_opb_a_brace_saddles,
+                                                      ("axial crown stress_adjusted", "red", "--"): xjt_obj.scf_axial_a_brace_crowns_adj,
+                                                      ("axial saddle stress_adjusted", "orange", "--"): xjt_obj.scf_axial_a_brace_saddles_adj,
+                                                      ("IPB crown stress_adjusted", "blue", "--"): xjt_obj.scf_ipb_a_brace_crowns_adj,
+                                                      ("OPB saddle stress_adjusted", "green", "--"): xjt_obj.scf_opb_a_brace_saddles_adj
                                                        },
-                                      x_axis_desc_x, stress_adjusted=stress_adjusted)  # braceside
+                                      x_axis_desc_key, stress_adjusted=stress_adjusted)  # braceside
 
 
 
@@ -95,7 +102,7 @@ def x_joint_route():
                            xjt_obj=xjt_obj,
                            plot_data_a_csx=plot_data_a_csx,
                            plot_data_a_bsx=plot_data_a_bsx,
-                           show_table=show_table,
+                           show_table_x=show_table_x,
                            Dx=d1, Tx=thk1,  # chord
                            dax=d2, tax=thk2, thetax=theta, # brace A
                            Lx=L, Cx=C,
