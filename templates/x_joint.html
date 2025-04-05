@@ -93,17 +93,17 @@
     </div>
 
     <!-- plot image from flask -->
-    {% if plot_data_a_csx and plot_data_a_bsx %}
+    {% if plot_data_a_cs_x and plot_data_a_bs_x %}
         <div class="plots-container">
             <div class="plot">
                 <h1>BRACE A SCFs</h1>
                 <h2>chord-side</h2>
-                <img src="data:image/png;base64,{{ plot_data_a_csx }}" alt="Plot">
+                <img src="data:image/png;base64,{{ plot_data_a_cs_x }}" alt="Plot">
             </div>
             <div class="plot">
                 <h1>&nbsp;</h1>
                 <h2>brace-side</h2>
-                <img src="data:image/png;base64,{{ plot_data_a_bsx }}" alt="Plot">
+                <img src="data:image/png;base64,{{ plot_data_a_bs_x }}" alt="Plot">
             </div>
         </div>
     {% endif %}

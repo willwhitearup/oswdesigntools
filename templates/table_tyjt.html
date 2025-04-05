@@ -1,0 +1,39 @@
+<style>
+    table {
+        width: auto;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        text-align: center;
+        padding: 2px;
+    }
+    .equal-width {
+        width: 100px; /* Adjust the width as needed */
+    }
+</style>
+
+<table>
+    <tr>
+        <th></th>
+        <th class="equal-width">Axial Crown</th>
+        <th class="equal-width">Axial Saddle</th>
+        <th class="equal-width">IPB</th>
+        <th class="equal-width">OPB</th>
+    </tr>
+    <tr>
+        <th>Chordside</th>
+        <td class="equal-width">{{ tyjt_obj.scf_axial_a_chord_crown }}</td>
+        <td class="equal-width">{{ tyjt_obj.scf_axial_a_chord_saddle }}</td>
+        <td class="equal-width">{{ tyjt_obj.scf_ipb_a_chord_crown }}</td>
+        <td class="equal-width">{{ tyjt_obj.scf_opb_a_chord_saddle }}</td>
+    </tr>
+    <tr>
+        <th>Braceside</th>
+        <td class="equal-width">{{ tyjt_obj.scf_axial_a_brace_crown }}</td>
+        <td class="equal-width">{{ tyjt_obj.scf_axial_a_brace_saddle }}</td>
+        <td class="equal-width">{{ tyjt_obj.scf_ipb_a_brace_crown }}</td>
+        <td class="equal-width">{{ tyjt_obj.scf_opb_a_brace_saddle }}</td>
+    </tr>
+</table>
+

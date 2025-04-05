@@ -1,21 +1,24 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from routing.routes_home import home
 from routing.routes_kjoint import k_joint_route
 from routing.routes_xjoint import x_joint_route
 from routing.routes_tyjoint import ty_joint_route
-from routing.placeholder import placeholder_route
+from routing.placeholder import placeholder_route, kt_joint_route, butt_weld_mps_route
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')
 #app.secret_key = os.environ.get('SECRET_KEY')  # Get the secret key from environment variables
 app.secret_key = 'your_secret_key_here'
 
+
 # register routes
 app.add_url_rule('/', 'home', home)
 app.add_url_rule('/k_joint', 'k_joint', k_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/x_joint', 'x_joint', x_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/ty_joint', 'ty_joint', ty_joint_route, methods=['GET', 'POST'])
+app.add_url_rule('/kt_joint', 'kt_joint', kt_joint_route, methods=['GET', 'POST'])
+app.add_url_rule('/butt_weld_mps', 'butt_weld_mps', butt_weld_mps_route, methods=['GET', 'POST'])
 app.add_url_rule('/placeholder', 'placeholder', placeholder_route)
 
 

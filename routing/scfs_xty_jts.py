@@ -1,24 +1,25 @@
 import numpy as np
 import copy
 # local imports
-from efthymiou.scf import x1, x2, x3, x4, t8, t9, x5, x6, x7, t6, x8, t7, t10, t11
+from efthymiou.scf import x1, x2, x3, x4, t8, t9, x5, x6, x7, t1, t2, t3, t4, t6, x8, t7, t10, t11
 from routing.core import tubular_cross_section_area, tubular_second_moment_of_area
 
 
-class XJointSCFManager:
-
-    def __init__(self, x_axis_desc: str, input_fields: dict, stress_adjusted: bool):
+class XTYJointSCFManager:
+    """defines the JointSCFManager for X and TY Joints
+    """
+    def __init__(self, x_axis_desc: str, input_fields: dict, stress_adjusted: bool, joint_type: str):
 
         self.x_axis_desc, self.input_fields, self.stress_adjusted = x_axis_desc, input_fields, stress_adjusted
+        self.joint_type = joint_type
 
-        # unpack SCF variables
-        self.d1 = self.input_fields["Dx"]
-        self.thk1 = self.input_fields["Tx"]
-        self.d2 = self.input_fields["dax"]
-        self.thk2 = self.input_fields["tax"]
-        self.theta = self.input_fields["thetax"]
-        self.L = self.input_fields["Lx"]  # chord length
-        self.C = self.input_fields["Cx"]  # chord end fixity (default as 0.7 in dnvrpc203)
+        # unpack SCF variables. Done like this as Flask app requires unique global variables depending on site
+        self.d1, self.thk1 = self.input_fields["D"], self.input_fields["T"]
+        self.d2, self.thk2 = self.input_fields["d"], self.input_fields["t"]
+        self.theta = self.input_fields["theta"]
+        self.L = self.input_fields["L"]  # chord length
+        self.C = self.input_fields["C"]  # chord end fixity (default as 0.7 in dnvrpc203)
+
         self.params = None
 
         self.scf_axial_a_chord_saddles = []  # x1
@@ -58,13 +59,23 @@ class XJointSCFManager:
 
     def get_joint_scfs(self, load_type):
 
-        # get individual SCFs
-        (self.scf_axial_a_chord_saddle, self.scf_axial_a_chord_crown, self.scf_axial_a_brace_saddle, self.scf_axial_a_brace_crown,
-         self.scf_ipb_a_chord_crown, self.scf_ipb_a_brace_crown, self.scf_opb_a_chord_saddle, self.scf_opb_a_brace_saddle) = (
-            self._calculate_scfs(self.d1, self.d2, self.thk1, self.thk2, self.theta, self.L, load_type))
+        if self.joint_type == "x":
+
+            # get individual SCFs
+            (self.scf_axial_a_chord_saddle, self.scf_axial_a_chord_crown, self.scf_axial_a_brace_saddle, self.scf_axial_a_brace_crown,
+             self.scf_ipb_a_chord_crown, self.scf_ipb_a_brace_crown, self.scf_opb_a_chord_saddle, self.scf_opb_a_brace_saddle) = (
+                self._calculate_scfs_x_joint(self.d1, self.d2, self.thk1, self.thk2, self.theta, self.L, load_type))
+
+        elif self.joint_type == "ty":
+
+            # get individual SCFs
+            (self.scf_axial_a_chord_saddle, self.scf_axial_a_chord_crown, self.scf_axial_a_brace_saddle, self.scf_axial_a_brace_crown,
+             self.scf_ipb_a_chord_crown, self.scf_ipb_a_brace_crown, self.scf_opb_a_chord_saddle, self.scf_opb_a_brace_saddle) = (
+                self._calculate_scfs_ty_joint(self.d1, self.d2, self.thk1, self.thk2, self.theta, self.L, load_type))
 
         # get SCF trends
         self._calculate_nominal_section_properties()  # required if stress_adjusted is true
+
         self._generate_variable_list()
         self._joint_scf_variations(load_type)
 
@@ -88,12 +99,12 @@ class XJointSCFManager:
         """method to allow for conversion from radians to degrees (for plotting purposes)
         """
         if self.params is not None:
-            if x_axis_desc == "thetax":
+            if x_axis_desc == "theta":
                 self.params = np.degrees(self.params)
         else:
             print("Angles not converted to degrees as params initialised as another variable type...Continuing.")
 
-    def _calculate_scfs(self, d1, d2, thk1, thk2, theta, L, load_type, ndps=5):
+    def _calculate_scfs_x_joint(self, d1, d2, thk1, thk2, theta, L, load_type, ndps=5):
 
         # calculate SCFs with varied parameter
         if load_type == "balanced_forces":
@@ -123,13 +134,35 @@ class XJointSCFManager:
             scf_opb_a_chord_saddle = t10(d1, d2, thk1, thk2, theta)
             scf_opb_a_brace_saddle = t11(d1, d2, thk1, thk2, theta)
 
-
         scfs = (scf_axial_a_chord_saddle, scf_axial_a_chord_crown, scf_axial_a_brace_saddle, scf_axial_a_brace_crown,
                 scf_ipb_a_chord_crown, scf_ipb_a_brace_crown, scf_opb_a_chord_saddle, scf_opb_a_brace_saddle)
 
         scfs = [round(scf, ndps) for scf in scfs]
         return scfs
 
+    def _calculate_scfs_ty_joint(self, d1, d2, thk1, thk2, theta, L, load_type, ndps=5):
+        """load_type is only single_brace for a TY joint. Just included for consistency with other joints
+        """
+        c = 0.7  # todo, make this user input
+        # AXIAL SCFs------------------------------------
+        # end fixed
+        scf_axial_a_chord_saddle = t1(d1, d2, thk1, thk2, theta) # chord side
+        scf_axial_a_chord_crown = t2(d1, d2, thk1, thk2, L, theta)
+        scf_axial_a_brace_saddle = t3(d1, d2, thk1, thk2, L, theta) # brace side
+        scf_axial_a_brace_crown = t4(d1, d2, thk1, thk2, L)
+        # todo general fixity conditions
+        # IPB SCFS-------------------------------------
+        scf_ipb_a_chord_crown = t8(d1, d2, thk1, thk2, theta)
+        scf_ipb_a_brace_crown = t9(d1, d2, thk1, thk2, theta)
+        # OPB SCFS-------------------------------------
+        scf_opb_a_chord_saddle = t10(d1, d2, thk1, thk2, theta)
+        scf_opb_a_brace_saddle = t11(d1, d2, thk1, thk2, theta)
+
+        scfs = (scf_axial_a_chord_saddle, scf_axial_a_chord_crown, scf_axial_a_brace_saddle, scf_axial_a_brace_crown,
+                scf_ipb_a_chord_crown, scf_ipb_a_brace_crown, scf_opb_a_chord_saddle, scf_opb_a_brace_saddle)
+
+        scfs = [round(scf, ndps) for scf in scfs]
+        return scfs
 
     def _calculate_brace_property_ratios(self, d2, thk2):
         """calculate ratios between the nominally provided brace section properties and the range of properties (defined
@@ -170,25 +203,28 @@ class XJointSCFManager:
 
         for param in self.params:
             # determine which parameter has been selected to vary by User
-            if self.x_axis_desc == "Dx":
+            if self.x_axis_desc == "D":
                 d1 = copy.copy(param)
-            elif self.x_axis_desc == "Tx":
+            elif self.x_axis_desc == "T":
                 thk1 = copy.copy(param)
-            elif self.x_axis_desc == "dax":
+            elif self.x_axis_desc == "d":
                 d2 = copy.deepcopy(param)
-            elif self.x_axis_desc == "tax":
+            elif self.x_axis_desc == "t":
                 thk2 = copy.deepcopy(param)
-            elif self.x_axis_desc == "thetax":
+            elif self.x_axis_desc == "theta":
                 theta = copy.deepcopy(param)
-            elif self.x_axis_desc == "Lx":
+            elif self.x_axis_desc == "L":
                 L = copy.deepcopy(param)
 
-            # AXIAL
-            # chord side
-            (scf_axial_a_chord_saddle, scf_axial_a_chord_crown, scf_axial_a_brace_saddle, scf_axial_a_brace_crown,
-             scf_ipb_a_chord_crown, scf_ipb_a_brace_crown, scf_opb_a_chord_saddle, scf_opb_a_brace_saddle) = (
-                self._calculate_scfs(d1, d2, thk1, thk2, theta, L, load_type))
-
+            # get all SCFs
+            if self.joint_type == "x":
+                (scf_axial_a_chord_saddle, scf_axial_a_chord_crown, scf_axial_a_brace_saddle, scf_axial_a_brace_crown,
+                 scf_ipb_a_chord_crown, scf_ipb_a_brace_crown, scf_opb_a_chord_saddle, scf_opb_a_brace_saddle) = (
+                    self._calculate_scfs_x_joint(d1, d2, thk1, thk2, theta, L, load_type))
+            elif self.joint_type == "ty":
+                (scf_axial_a_chord_saddle, scf_axial_a_chord_crown, scf_axial_a_brace_saddle, scf_axial_a_brace_crown,
+                 scf_ipb_a_chord_crown, scf_ipb_a_brace_crown, scf_opb_a_chord_saddle, scf_opb_a_brace_saddle) = (
+                    self._calculate_scfs_ty_joint(d1, d2, thk1, thk2, theta, L, load_type))
 
             # AXIAL SCFs---------------------------------------------------
             self.scf_axial_a_chord_saddles.append(scf_axial_a_chord_saddle)  # chord side

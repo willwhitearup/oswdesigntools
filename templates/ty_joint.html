@@ -8,5 +8,112 @@
     <img src="{{ url_for('static', filename='ty_joint_img.png') }}" alt="Header Image" class="header-image" style="width: 40%; height: auto;">
 </div>
 
+<div class="container">
+    <div class="titles-container">
+        <p><strong>Joint Properties</strong></p>
+    </div>
+    <div class="input-calculation-container">
+        <!-- input variable definition -->
+        <div class="input-form">
+            <form method="post" action="/ty_joint">
+
+                <label for="D_ty">D:</label>
+                <input type="text" id="D_ty" name="D_ty" value="{{ D_ty }}"><br>
+
+                <label for="T_ty">T:</label>
+                <input type="text" id="T_ty" name="T_ty" value="{{ T_ty }}"><br>
+
+                <label for="d_ty">d:</label>
+                <input type="text" id="d_ty" name="d_ty" value="{{ d_ty }}"><br>
+
+                <label for="t_ty">t:</label>
+                <input type="text" id="t_ty" name="t_ty" value="{{ t_ty }}"><br>
+
+                <label for="theta_ty">&theta;:</label>
+                <input type="text" id="theta_ty" name="theta_ty" value="{{ theta_ty }}"><br>
+
+                <label for="L_ty">L:</label>
+                <input type="text" id="L_ty" name="L_ty" value="{{ L_ty }}"><br>
+
+                <label for="C_ty">C:</label>
+                <input type="text" id="C_ty" name="C_ty" value="{{ C_ty }}"><br>
+
+                <!-- SCF Options heading -->
+                <p><strong>SCF calculation options</strong></p>
+                <!-- optional input using dropdown box -->
+                <label for="load_type_ty">Joint loading:</label>
+                <select id="load_type_ty" name="load_type_ty">
+                    <option value="single_brace_load" {% if load_type_ty=='single_brace_load' %}selected{% endif %}>single_brace_load</option>
+                </select><br>
+
+                <!--a-->
+                <label for="x_axis_desc_ty">X-axis variation:</label>
+                <select id="x_axis_desc_ty" name="x_axis_desc_ty">
+                    <option value="D_ty" {% if x_axis_desc_ty=='D_ty' %}selected{% endif %}>D</option>
+                    <option value="T_ty" {% if x_axis_desc_ty=='T_ty' %}selected{% endif %}>T</option>
+                    <option value="d_ty" {% if x_axis_desc_ty=='d_ty' %}selected{% endif %}>d</option>
+                    <option value="t_ty" {% if x_axis_desc_ty=='t_ty' %}selected{% endif %}>t</option>
+                    <option value="theta_ty" {% if x_axis_desc_ty=='theta_ty' %}selected{% endif %}>theta</option>
+                </select><br>
+
+                <!--plot options using dropdown box-->
+                <label for="scf_options_ty">SCF options:</label>
+                <select id="scf_options_ty" name="scf_options_ty">
+                    <option value="scf_only" {% if scf_options_ty=='scf_only' %}selected{% endif %}>scf_only</option>
+                    <option value="scf_stress_adjusted" {% if scf_options_ty=='scf_stress_adjusted' %}selected{% endif %}>scf_stress_adjusted</option>
+                </select><br>
+
+            </form>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('form');
+                const inputs = form.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.addEventListener('change', function() {
+                        form.submit();
+                    });
+                });
+            });
+            </script>
+
+            <!-- error message text styled using flash styling -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="error-message">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+    </div>
+
+    <!-- plot image from flask -->
+    {% if plot_data_a_cs_ty and plot_data_a_bs_ty %}
+        <div class="plots-container">
+            <div class="plot">
+                <h1>BRACE A SCFs</h1>
+                <h2>chord-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_a_cs_ty }}" alt="Plot">
+            </div>
+            <div class="plot">
+                <h1>&nbsp;</h1>
+                <h2>brace-side</h2>
+                <img src="data:image/png;base64,{{ plot_data_a_bs_ty }}" alt="Plot">
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Include the table conditionally -->
+    {% if show_table_ty %}
+        <h2>SCFs</h2>
+        {% include 'table_tyjt.html' %}
+    {% endif %}
+
+
+</div>
 
 {% endblock %}

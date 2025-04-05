@@ -11,7 +11,7 @@ Unbalanced in plane bending
 Unbalanced out of plane bending
 """
 
-class KJointSCFManager:
+class KTJointSCFManager:
 
     def __init__(self, x_axis_desc: str, input_fields: dict, stress_adjusted: bool):
 
