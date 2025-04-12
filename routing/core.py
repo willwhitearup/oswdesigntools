@@ -167,7 +167,7 @@ def create_joint_plots(jt_obj, x_axis_desc, stress_adjusted, no_braces):
 
         plot_objs.append(plot_data_c_cs)
         plot_objs.append(plot_data_c_bs)
-        
+
     return plot_objs
 
 
