@@ -4,7 +4,8 @@ from routing.routes_home import home
 from routing.routes_kjoint import k_joint_route
 from routing.routes_xjoint import x_joint_route
 from routing.routes_tyjoint import ty_joint_route
-from routing.placeholder import placeholder_route, kt_joint_route, butt_weld_mps_route
+from routing.routes_ktjoint import kt_joint_route
+from routing.placeholder import placeholder_route, butt_weld_mps_route
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')

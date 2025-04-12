@@ -656,8 +656,8 @@ def k1(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab,
     return scf_a, scf_b, scf_c
 
 
-def k2(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab, brace_ab=None,
-       d2_c=None, thk2_c=None, theta_c=None, g_bc=None, brace_bc=None):
+def k2(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab,
+       d2_c=None, thk2_c=None, theta_c=None, g_bc=None):
     """ Table 3 - equations for SCF in gap / overlap K-joints, Eqn. K2
 
     !!! WW edited to allow only k joints with gaps !!!
@@ -702,21 +702,23 @@ def k2(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab, brace_ab=No
     theta_max = np.maximum(theta_a, theta_b)
     theta_min = np.minimum(theta_a, theta_b)
 
-    if brace_ab is not None:
-        raise Exception("Calculations currently only assume there is a gap i.e. no overlaps...")
-    else:
-        c_a = (g_ab <= 0) * ((brace_ab == 1) * 1 + (brace_ab == 2) * 0.5)
-        c_b = (g_ab <= 0) * ((brace_ab == 1) * 0.5 + (brace_ab == 2) * 1)
+    if g_ab <= 0:
+        raise Exception("SCFs only calculated when gap is larger than 0! Please make g_ab > 0.")
 
     # calculate scf for A and B using K1
     scf_a, scf_b, scf_c = k1(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab,
                              d2_c, thk2_c, theta_c, g_bc)
 
     three_braces = True
+
     if d2_c is None or thk2_c is None or theta_c is None or g_bc is None:
         three_braces = False
 
     if three_braces:
+
+        if g_bc <= 0:
+            raise Exception("SCFs only calculated when gap is larger than 0! Please make g_bc > 0.")
+
         beta_c = d2_c / d1
         tau_c = thk2_c / thk1
         zeta_bc = g_bc / d1
@@ -729,16 +731,18 @@ def k2(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, theta_a, theta_b, g_ab, brace_ab=No
         theta_min = np.minimum(theta_c, theta_min)
 
         # Unclear whether c_b should be relative to brace a or c - therefore, worst of both (maximum) taken here
-        c_b = np.maximum(c_b, (g_bc <= 0) * ((brace_bc == 2) * 1 + (brace_bc == 3) * 0.5))
-        c_c = (g_bc <= 0) * ((brace_bc == 2) * 0.5 + (brace_bc == 3) * 1)
+        c_b = 0
+        c_c = 0
+        c_c = 0
 
         scf_c = 1 + scf_c * (1.97 - 1.57 * (beta_c ** 0.25)) * (tau_c ** -0.14) * \
-                (np.sin(theta_c) ** 0.7) + c_c * (beta_c ** 1.5) * (gamma ** 0.5) * (tau_c ** -1.22) * \
-                (np.sin(theta_max + theta_min) ** 1.8) * (0.131 - 0.084 * np.arctan(14 * zeta_c + 4.2 * beta_c))
+                (np.sin(theta_c) ** 0.7)# + c_c * (beta_c ** 1.5) * (gamma ** 0.5) * (tau_c ** -1.22) * \
+                #(np.sin(theta_max + theta_min) ** 1.8) * (0.131 - 0.084 * np.arctan(14 * zeta_c + 4.2 * beta_c))
     else:
         zeta_a = zeta_b = zeta_ab
         scf_c = np.nan
 
+    c_a, c_b, c_c = 0, 0, 0  # assume gaps
     # calculate scf for A, B and C
     # WW edited!!!!
     scf_a = 1 + scf_a * (1.97 - 1.57 * (beta_a ** 0.25)) * (tau_a ** -0.14) * \
@@ -1053,7 +1057,7 @@ def kt2(d1, d2_a, d2_b, d2_c, thk1, thk2_a, thk2_b, thk2_c, theta_a, theta_b, th
     return scf
 
 
-def opb_brace(d1, d2, thk1, thk2, scf):
+def opb_brace(d1, d2, thk1, thk2, scf_chord):
     """ Table 4 - Equations for SCF in KT-joints, new eqn: OPB Brace
         Args:
             d1, numpy array of floats defining chord diameter "D"
@@ -1071,7 +1075,7 @@ def opb_brace(d1, d2, thk1, thk2, scf):
     gamma = d1 / (2 * thk1)
     tau = thk2 / thk1
 
-    scf = (tau ** -0.54) * (gamma ** -0.05) * (0.99 - 0.47 * beta + 0.08 * (beta ** 4)) * scf
+    scf = (tau ** -0.54) * (gamma ** -0.05) * (0.99 - 0.47 * beta + 0.08 * (beta ** 4)) * scf_chord
 
     return scf
 
