@@ -6,7 +6,7 @@
 
 <!-- image of k joint at the top -->
 <div class="image-container">
-    <img src="{{ url_for('static', filename='k_joint_img.png') }}" alt="Header Image" class="header-image">
+    <img src="{{ url_for('static', filename='k_joint_img.png') }}" alt="Header Image" class="header-image" style="width: 35%; height: auto;">
 </div>
 
 <div class="container">
@@ -109,7 +109,7 @@
 
     <!-- plot image from flask -->
     {% if plot_data_a_cs and plot_data_a_bs %}
-        <div class="plots-container">
+        <div class="plots-container" style="display: flex; gap: 10px">
             <div class="plot">
                 <h1>BRACE A SCFs</h1>
                 <h2>chord-side</h2>
@@ -124,7 +124,7 @@
     {% endif %}
 
     {% if plot_data_b_cs and plot_data_b_bs %}
-        <div class="plots-container">
+        <div class="plots-container" style="display: flex; gap: 10px">
             <div class="plot">
                 <h1>BRACE B SCFs</h1>
                 <h2>chord-side</h2>

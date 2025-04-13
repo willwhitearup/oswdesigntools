@@ -18,11 +18,18 @@
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             height: 100%; /* Full height */
             overflow-y: auto; /* Scrollable */
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* Equal spacing between all buttons */
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 2 columns */
+            gap: 5px; /* Adjust the gap between buttons */
         }
         button {
             width: 100%;
             padding: 15px;
-            margin-bottom: 10px;
             font-size: 16px;
             cursor: pointer;
         }
@@ -31,20 +38,14 @@
             padding: 20px;
             overflow-y: auto; /* Scrollable content */
         }
-        .titles-container {
-            display: flex;
-            align-items: center;
-            gap: 20px; /* Adjust the gap between titles */
+        .center-text {
+            text-align: center;
+            margin: 5px 0; /* Add margin for spacing */
         }
-        .calculated-title {
-            margin: 0; /* Remove default margin */
+        .main-content {
+            padding: 20px;
         }
-        .input-calculation-container {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 20px; /* Adjust the gap between inputs and calculated values */
-        }
+        /* Add your specific styles for input boxes and containers here */
         .input-form {
             display: flex;
             flex-direction: column;
@@ -52,49 +53,33 @@
         }
         .input-form label {
             display: inline-block;
-            width: 150px; /* Set a fixed width for labels */
+            width: 120px; /* Set a fixed width for labels */
         }
         .input-form input[type="text"],
         .input-form select {
             display: inline-block;
-            width: calc(80% - 160px); /* Adjust width to fit next to labels */
+            width: calc(20% - 160px); /* Adjust width to fit next to labels */
             box-sizing: border-box; /* Include padding and border in element's total width */
-        }
-        .plots-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            text-align: center;
-        }
-        .plot {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .plot img {
-            max-width: 100%;
-            height: auto;
-        }
-        .text-red {
-            color: red;
-        }
-        .text-green {
-            color: #32CD32; /* Lime Green */
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <!-- define side bar buttons -->
-        <button onclick="window.location.href='/'">Home</button>
-        <button onclick="window.location.href='/k_joint'">K Joint</button>
-        <button onclick="window.location.href='/x_joint'">X Joint</button>
-        <button onclick="window.location.href='/ty_joint'">TY Joint</button>
-        <button onclick="window.location.href='/kt_joint'">KT Joint</button>
-        <button onclick="window.location.href='/butt_weld_mps'">Butt welds<br>(monopiles)</button>
-        <button onclick="window.location.href='/placeholder'">Placeholder Page</button>
+        <button onclick="window.location.href='/'" aria-label="Home">Home</button>
+        <strong class="center-text">Joint SCFs</strong>
+        <div class="button-grid">
+            <button onclick="window.location.href='/k_joint'" aria-label="K Joint">K</button>
+            <button onclick="window.location.href='/x_joint'" aria-label="X Joint">X</button>
+            <button onclick="window.location.href='/kt_joint'" aria-label="KT Joint">KT</button>
+            <button onclick="window.location.href='/ty_joint'" aria-label="TY Joint">TY</button>
+        </div>
+        <strong class="center-text">Monopile SCFs</strong>
+        <button onclick="window.location.href='/butt_weld_mps'" aria-label="Butt welds (monopiles)">Butt welds<br>(monopiles)</button>
+        <strong class="center-text">Grouted connections</strong>
+        <button onclick="window.location.href='/placeholder'" aria-label="Grout material">Grout material</button>
+        <button onclick="window.location.href='/placeholder'" aria-label="Placeholder Page">Placeholder Page</button>
     </div>
-    <div class="content">
+    <div class="content main-content">
         {% block content %}{% endblock %}
     </div>
 </body>

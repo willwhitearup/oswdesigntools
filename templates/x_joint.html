@@ -5,7 +5,7 @@
 {% block content %}
 <!-- image of x joint at the top -->
 <div class="image-container">
-    <img src="{{ url_for('static', filename='x_joint_img.png') }}" alt="Header Image" class="header-image" style="width: 40%; height: auto;">
+    <img src="{{ url_for('static', filename='x_joint_img.png') }}" alt="Header Image" class="header-image" style="width: 35%; height: auto;">
 </div>
 
 <div class="container">
@@ -94,7 +94,7 @@
 
     <!-- plot image from flask -->
     {% if plot_data_a_cs_x and plot_data_a_bs_x %}
-        <div class="plots-container">
+        <div class="plots-container" style="display: flex; gap: 10px">
             <div class="plot">
                 <h1>BRACE A SCFs</h1>
                 <h2>chord-side</h2>
