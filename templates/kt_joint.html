@@ -4,10 +4,12 @@
 
 {% block content %}
 
+
 <!-- image of k joint at the top -->
 <div class="image-container">
-    <img src="{{ url_for('static', filename='kt_joint_img.jpg') }}" alt="Header Image" class="header-image" style="width: 30%; height: auto;">
+    <img src="{{ url_for('static', filename='kt_joint_img.jpg') }}" alt="Header Image" class="header-image" style="width: 30%; height: auto;" onerror="this.onerror=null; this.src='default.jpg';">
 </div>
+
 
 <div class="container">
     <div class="titles-container">
