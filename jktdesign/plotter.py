@@ -1,6 +1,6 @@
 import numpy as np
 import plotly.graph_objs as go
-from typing import Dict
+import plotly.io as pio
 
 from jktdesign.jacket import Jacket
 from jktdesign.tower import Tower
@@ -116,6 +116,9 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
         legend=dict(x=1, y=1)
     )
     # Show the plot
-    fig.show()
+    # fig.show()
 
-    return None
+    # Convert the plot to JSON
+    plot_json = pio.to_json(fig)
+
+    return plot_json
