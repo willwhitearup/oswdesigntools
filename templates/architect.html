@@ -7,7 +7,7 @@
             <!-- Other form groups -->
             <div class="architect-form-group">
                 <label for="show_tower">Show Tower:</label>
-                <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %}>
+                <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %} onchange="toggleTowerInputs()">
             </div>
             <div class="architect-form-group">
                 <label for="rna_cog">RNA CoG:</label>
@@ -22,8 +22,8 @@
                 <input type="text" id="shear_interface_del" name="shear_interface_del" value="{{ defaults.shear_interface_del }}">
             </div>
             <div class="architect-form-group">
-                <label for="lat">LAT:</label>
-                <input type="text" id="lat" name="lat" value="{{ defaults.lat }}">
+                <label for="interface_elev">Interface Elevation:</label>
+                <input type="text" id="interface_elev" name="interface_elev" value="{{ defaults.interface_elev }}">
             </div>
             <div class="architect-form-group">
                 <label for="water_depth">Water Depth:</label>
@@ -40,10 +40,6 @@
             <div class="architect-form-group">
                 <label for="splash_upper">SZ Upper:</label>
                 <input type="text" id="splash_upper" name="splash_upper" value="{{ defaults.splash_upper }}">
-            </div>
-            <div class="architect-form-group">
-                <label for="interface_elev">Interface Elevation:</label>
-                <input type="text" id="interface_elev" name="interface_elev" value="{{ defaults.interface_elev }}">
             </div>
             <div class="architect-form-group">
                 <label for="tp_btm">TP Bottom:</label>
@@ -98,6 +94,14 @@
 document.querySelectorAll('.architect-input-form input').forEach(input => {
     input.addEventListener('input', updatePlot);
 });
+
+function toggleTowerInputs() {
+    var showTower = document.getElementById('show_tower').checked;
+    document.getElementById('rna_cog').disabled = !showTower;
+    document.getElementById('moment_interface_del').disabled = !showTower;
+    document.getElementById('shear_interface_del').disabled = !showTower;
+    updatePlot();
+}
 
 document.querySelectorAll('.architect-input-form input[type="range"]').forEach(slider => {
     slider.addEventListener('input', function() {

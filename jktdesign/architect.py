@@ -11,7 +11,6 @@ app = Flask(__name__)
 def jacket_architect():
     if request.method == 'POST':
         try:
-            lat = float(request.form['lat'])
             water_depth = float(request.form['water_depth'])
             msl = float(request.form['msl'])
             splash_lower = float(request.form['splash_lower'])
@@ -40,6 +39,7 @@ def jacket_architect():
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
 
             # Plot jacket
+            lat = 0.
             plot_json = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
 
             return jsonify({'plot_json': plot_json})
@@ -49,7 +49,6 @@ def jacket_architect():
 
     # Default values for GET request
     defaults = {
-        'lat': 0.0,
         'water_depth': 62800,
         'msl': 2200,
         'splash_lower': -6110,
