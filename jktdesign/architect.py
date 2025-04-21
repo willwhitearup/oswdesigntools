@@ -38,6 +38,8 @@ def jacket_architect():
                              jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth)
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
 
+            batter_2_theta = jkt_obj.batter_2_theta
+
             # Plot jacket
             lat = 0.
             plot_json = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
@@ -80,9 +82,15 @@ def jacket_architect():
     # Calculate min and max values for the slider
     batter_1_elev_min = -50000
     batter_1_elev_max = 20000
+    # Calculate batter_2_theta
+    jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
+                     defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],
+                     [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'])
+    batter_2_theta = jkt_obj.batter_2_theta
 
     return render_template('architect.html', defaults=defaults,
-                           batter_1_elev_min=batter_1_elev_min, batter_1_elev_max=batter_1_elev_max)
+                           batter_1_elev_min=batter_1_elev_min, batter_1_elev_max=batter_1_elev_max,
+                           batter_2_theta=batter_2_theta)
 
 
 if __name__ == "__main__":

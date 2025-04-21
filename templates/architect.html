@@ -95,6 +95,7 @@ document.querySelectorAll('.architect-input-form input').forEach(input => {
     input.addEventListener('input', updatePlot);
 });
 
+
 function toggleTowerInputs() {
     var showTower = document.getElementById('show_tower').checked;
     document.getElementById('rna_cog').disabled = !showTower;
@@ -102,6 +103,7 @@ function toggleTowerInputs() {
     document.getElementById('shear_interface_del').disabled = !showTower;
     updatePlot();
 }
+
 
 document.querySelectorAll('.architect-input-form input[type="range"]').forEach(slider => {
     slider.addEventListener('input', function() {
