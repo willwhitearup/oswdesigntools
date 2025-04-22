@@ -6,9 +6,10 @@ from jktdesign.tower import Tower
 
 app = Flask(__name__)
 
-BATTER_1_THETA_MIN, BATTER_1_THETA_MAX = 60, 90
-JACKET_FOOTPRINT_MIN, JACKET_FOOTPRINT_MAX = 5000, 60000
-
+# some sensible inputs
+BATTER_1_THETA_MIN, BATTER_1_THETA_MAX, BATTER_1_THETA_STEP = 60, 90, 0.2
+JACKET_FOOTPRINT_MIN, JACKET_FOOTPRINT_MAX, JACKET_FOOTPRINT_STEP = 5000, 60000, 200
+STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 
 @app.route('/architect', methods=['GET', 'POST'])
 def jacket_architect():
@@ -52,7 +53,7 @@ def jacket_architect():
 
             # Collect bay heights dynamically
             bay_heights = [float(request.form[f'bay_height_{i}']) for i in range(1, n_bays + 1)]
-
+            print(bay_heights)
             # Create objects
             jkt_obj = Jacket(interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev,
                              jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter)
@@ -69,8 +70,13 @@ def jacket_architect():
                             "batter_1_elev_max": jkt_obj.batter_1_elevation_max,
                             "batter_1_theta_min": BATTER_1_THETA_MIN,
                             "batter_1_theta_max": BATTER_1_THETA_MAX,
+                            "batter_1_theta_step": BATTER_1_THETA_STEP,
                             "jacket_footprint_min": JACKET_FOOTPRINT_MIN,
-                            "jacket_footprint_max": JACKET_FOOTPRINT_MAX
+                            "jacket_footprint_max": JACKET_FOOTPRINT_MAX,
+                            "jacket_footprint_step": JACKET_FOOTPRINT_STEP,
+                            "stickup_min": STICKUP_MIN,
+                            "stickup_max": STICKUP_MAX,
+                            "stickup_step": STICKUP_STEP
                             })
 
         except KeyError as e:
@@ -118,9 +124,14 @@ def jacket_architect():
                            batter_2_theta=round(jkt_obj.batter_2_theta, 3),
                            batter_1_theta_min=BATTER_1_THETA_MIN,
                            batter_1_theta_max=BATTER_1_THETA_MAX,
+                           batter_1_theta_step=BATTER_1_THETA_STEP,
                            jacket_footprint_min=JACKET_FOOTPRINT_MIN,
-                           jacket_footprint_max=JACKET_FOOTPRINT_MAX
-    )
+                           jacket_footprint_max=JACKET_FOOTPRINT_MAX,
+                           jacket_footprint_step=JACKET_FOOTPRINT_STEP,
+                           stickup_min=STICKUP_MIN,
+                           stickup_max=STICKUP_MAX,
+                           stickup_step=STICKUP_STEP
+                           )
 
 
 if __name__ == "__main__":

@@ -50,13 +50,14 @@
                 <input type="text" id="tp_width" name="tp_width" value="{{ defaults.tp_width }}">
             </div>
             <div class="architect-form-group">
-                <label for="jacket_footprint">Jacket Footprint</label>
+                <label for="jacket_footprint">Jacket footprint</label>
                 <input type="text" id="jacket_footprint" name="jacket_footprint" value="{{ defaults.jacket_footprint }}">
-                <input type="range" id="jacket_footprint_slider" min="{{ jacket_footprint_min }}" max="{{ jacket_footprint_max }}" value="{{ defaults.jacket_footprint }}">
+                <input type="range" id="jacket_footprint_slider" min="{{ jacket_footprint_min }}" max="{{ jacket_footprint_max }}" step="{{ jacket_footprint_step }}" value="{{ defaults.jacket_footprint }}">
             </div>
             <div class="architect-form-group">
                 <label for="stickup">Stickup</label>
                 <input type="text" id="stickup" name="stickup" value="{{ defaults.stickup }}">
+                <input type="range" id="stickup_slider" min="{{ stickup_min }}" max="{{ stickup_max }}" step = "{{ stickup_step }}" value="{{ defaults.stickup }}">
             </div>
             <div class="architect-form-group">
                 <label for="tp_btm_k1_voffset">TP Bottom K1 Voffset</label>
@@ -98,19 +99,27 @@
     </div>
 </div>
 
+<div class="architect-export-button-container">
+    <button type="button" onclick="exportFormData()">OPTIF export</button>
+</div>
+
+
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 
 document.querySelectorAll('.architect-input-form input').forEach(input => {
     input.addEventListener('input', function() {
-        updatePlot();
-        generateBayInputs();
+
         fetchBatter2Theta();
+        fetchBatterElevationLimits();
+        fetchStickUpLimits();
 
         clearTimeout(this.fetchTimeout);
         this.fetchTimeout = setTimeout(() => {
             fetchSingleBatterData();
         }, 500); // 500 milliseconds delay
+
+        updatePlot();
     });
 });
 
@@ -121,14 +130,16 @@ document.querySelectorAll('.architect-input-form input[type="range"]').forEach(s
         if (correspondingInput) {
             correspondingInput.value = this.value;
         }
-        updatePlot();
-        generateBayInputs();
         fetchBatter2Theta();
+        fetchBatterElevationLimits();
+        fetchStickUpLimits();
 
         clearTimeout(this.fetchTimeout);
         this.fetchTimeout = setTimeout(() => {
             fetchSingleBatterData();
         }, 500); // 500 milliseconds delay
+
+        updatePlot();
     });
 });
 
@@ -139,16 +150,64 @@ document.querySelectorAll('.architect-input-form input[type="text"]').forEach(te
         if (correspondingSlider) {
             correspondingSlider.value = this.value;
         }
-        updatePlot();
-        generateBayInputs();
+
         fetchBatter2Theta();
+        fetchBatterElevationLimits();
+        fetchStickUpLimits();
 
         clearTimeout(this.fetchTimeout);
         this.fetchTimeout = setTimeout(() => {
             fetchSingleBatterData();
         }, 500); // 500 milliseconds delay
+
+        updatePlot();
+
     });
 });
+
+
+['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'stickup_slider', 'n_bays'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+        input.addEventListener('input', () => {
+            generateBayInputs();
+            fetchBatter2Theta();
+            fetchBatterElevationLimits();
+            fetchStickUpLimits();
+            updatePlot();
+        });
+    }
+});
+
+window.addEventListener('resize', function() {
+    Plotly.Plots.resize('plot');
+});
+
+// Generate initial bay inputs based on default n_bays value
+generateBayInputs();
+updatePlot(); // Initial plot update with default values
+
+
+function syncAndTrigger(id, callback) {
+    const textInput = document.getElementById(id);
+    const slider = document.getElementById(`${id}_slider`);
+
+    if (textInput) {
+        textInput.addEventListener('input', () => {
+            if (slider) slider.value = textInput.value;
+            callback();
+        });
+    }
+
+    if (slider) {
+        slider.addEventListener('input', () => {
+            if (textInput) textInput.value = slider.value;
+            callback();
+        });
+    }
+}
+
+
 
 
 function toggleTowerInputs() {
@@ -194,6 +253,42 @@ function fetchBatter2Theta() {
 }
 
 
+function fetchBatterElevationLimits() {
+    const formData = new FormData(document.querySelector('.architect-input-form'));
+    fetch('/architect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.batter_1_elev_min !== undefined) {
+            document.getElementById('batter_1_elev_slider').min = data.batter_1_elev_min;
+        }
+        if (data.batter_1_elev_max !== undefined) {
+            document.getElementById('batter_1_elev_slider').max = data.batter_1_elev_max;
+        }
+    })
+    .catch(error => console.error('Error fetching batter elevations:', error));
+}
+
+function fetchStickUpLimits() {
+    const formData = new FormData(document.querySelector('.architect-input-form'));
+    fetch('/architect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.stickup_min !== undefined) {
+            document.getElementById('stickup_slider').min = data.stickup_min;
+        }
+        if (data.stickup_max !== undefined) {
+            document.getElementById('stickup_slider').max = data.stickup_max;
+        }
+    })
+    .catch(error => console.error('Error fetching stickup limits:', error));
+}
+
 function fetchSingleBatterData() {
     const formData = new FormData(document.querySelector('.architect-input-form'));
     fetch('/architect', {
@@ -210,12 +305,6 @@ function fetchSingleBatterData() {
     .catch(error => console.error('Error fetching batter_1_theta:', error));
 }
 
-
-window.addEventListener('resize', function() {
-    Plotly.Plots.resize('plot');
-});
-
-
 function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;
     const container = document.getElementById('bay_heights_container');
@@ -226,7 +315,8 @@ function generateBayInputs() {
     const water_depth = parseFloat(document.getElementById('water_depth').value);
     const stickup = parseFloat(document.getElementById('stickup').value);
 
-    const bayHeightValue = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup)) / nBays;
+    const xxx = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup)) / nBays;
+    const bayHeightValue = Math.floor(xxx);
 
     for (let i = 1; i <= nBays; i++) {
         const div = document.createElement('div');
@@ -238,7 +328,7 @@ function generateBayInputs() {
         input.type = 'text';
         input.id = `bay_height_${i}`;
         input.name = `bay_height_${i}`;
-        input.value = bayHeightValue.toFixed(10); // Set default value
+        input.value = bayHeightValue.toFixed(1); // Set default value
         input.addEventListener('input', updatePlot); // Add event listener to dynamic inputs
         div.appendChild(label);
         div.appendChild(input);
@@ -255,9 +345,25 @@ function toggleBatterInputs() {
 }
 
 
-// Generate initial bay inputs based on default n_bays value
-generateBayInputs();
-updatePlot(); // Initial plot update with default values
+
+function exportFormData() {
+    const formElements = document.querySelectorAll('.architect-form-container input, .architect-form-container select');
+    let formData = {};
+    formElements.forEach(el => {
+        formData[el.name || el.id] = el.type === 'checkbox' ? el.checked : el.value;
+    });
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(formData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "form_data.json");
+    document.body.appendChild(downloadAnchor); // Required for Firefox
+    downloadAnchor.click();
+    downloadAnchor.remove();
+}
+</script>
+
+
 
 </script>
 {% endblock %}
