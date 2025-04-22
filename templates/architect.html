@@ -104,9 +104,11 @@
 document.querySelectorAll('.architect-input-form input').forEach(input => {
     input.addEventListener('input', function() {
         updatePlot();
+        generateBayInputs();
+        fetchBatter2Theta();
+
         clearTimeout(this.fetchTimeout);
         this.fetchTimeout = setTimeout(() => {
-            fetchBatter2Theta();
             fetchSingleBatterData();
         }, 500); // 500 milliseconds delay
     });
@@ -120,9 +122,11 @@ document.querySelectorAll('.architect-input-form input[type="range"]').forEach(s
             correspondingInput.value = this.value;
         }
         updatePlot();
+        generateBayInputs();
+        fetchBatter2Theta();
+
         clearTimeout(this.fetchTimeout);
         this.fetchTimeout = setTimeout(() => {
-            fetchBatter2Theta();
             fetchSingleBatterData();
         }, 500); // 500 milliseconds delay
     });
@@ -136,9 +140,11 @@ document.querySelectorAll('.architect-input-form input[type="text"]').forEach(te
             correspondingSlider.value = this.value;
         }
         updatePlot();
+        generateBayInputs();
+        fetchBatter2Theta();
+
         clearTimeout(this.fetchTimeout);
         this.fetchTimeout = setTimeout(() => {
-            fetchBatter2Theta();
             fetchSingleBatterData();
         }, 500); // 500 milliseconds delay
     });
@@ -220,7 +226,7 @@ function generateBayInputs() {
     const water_depth = parseFloat(document.getElementById('water_depth').value);
     const stickup = parseFloat(document.getElementById('stickup').value);
 
-    const bayHeightValue = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup + tp_btm_k1_voffset)) / nBays;
+    const bayHeightValue = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup)) / nBays;
 
     for (let i = 1; i <= nBays; i++) {
         const div = document.createElement('div');
@@ -232,7 +238,7 @@ function generateBayInputs() {
         input.type = 'text';
         input.id = `bay_height_${i}`;
         input.name = `bay_height_${i}`;
-        input.value = bayHeightValue.toFixed(2); // Set default value
+        input.value = bayHeightValue.toFixed(10); // Set default value
         input.addEventListener('input', updatePlot); // Add event listener to dynamic inputs
         div.appendChild(label);
         div.appendChild(input);

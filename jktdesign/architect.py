@@ -58,7 +58,6 @@ def jacket_architect():
                              jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter)
 
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
-
             # Plot jacket
             lat = 0.
             plot_json = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
