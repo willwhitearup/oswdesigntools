@@ -106,7 +106,7 @@ def jacket_architect():
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],
                      [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'], defaults['single_batter'])
 
-    batter_2_theta = jkt_obj.batter_2_theta
+    batter_2_theta = round(jkt_obj.batter_2_theta, 3)
 
     return render_template('architect.html', defaults=defaults,
                            batter_1_elev_min=batter_1_elev_min, batter_1_elev_max=batter_1_elev_max,

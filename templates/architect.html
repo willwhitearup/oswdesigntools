@@ -6,63 +6,63 @@
         <form method="POST" action="/architect" class="architect-input-form">
             <!-- Other form groups -->
             <div class="architect-form-group">
-                <label for="show_tower">Show Tower:</label>
+                <label for="show_tower">Show WTG</label>
                 <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %} onchange="toggleTowerInputs()">
             </div>
             <div class="architect-form-group">
-                <label for="rna_cog">RNA CoG:</label>
+                <label for="rna_cog">RNA CoG</label>
                 <input type="text" id="rna_cog" name="rna_cog" value="{{ defaults.rna_cog }}">
             </div>
             <div class="architect-form-group">
-                <label for="moment_interface_del">Moment Interface:</label>
+                <label for="moment_interface_del">Moment interface</label>
                 <input type="text" id="moment_interface_del" name="moment_interface_del" value="{{ defaults.moment_interface_del }}">
             </div>
             <div class="architect-form-group">
-                <label for="shear_interface_del">Shear Interface:</label>
+                <label for="shear_interface_del">Shear interface</label>
                 <input type="text" id="shear_interface_del" name="shear_interface_del" value="{{ defaults.shear_interface_del }}">
             </div>
             <div class="architect-form-group">
-                <label for="interface_elev">Interface Elevation:</label>
+                <label for="interface_elev">Interface elevation:</label>
                 <input type="text" id="interface_elev" name="interface_elev" value="{{ defaults.interface_elev }}">
             </div>
             <div class="architect-form-group">
-                <label for="water_depth">Water Depth:</label>
+                <label for="water_depth">Water depth (rel LAT)</label>
                 <input type="text" id="water_depth" name="water_depth" value="{{ defaults.water_depth }}">
             </div>
             <div class="architect-form-group">
-                <label for="msl">MSL:</label>
+                <label for="msl">MSL</label>
                 <input type="text" id="msl" name="msl" value="{{ defaults.msl }}">
             </div>
             <div class="architect-form-group">
-                <label for="splash_lower">SZ Lower:</label>
+                <label for="splash_lower">SZ Lower</label>
                 <input type="text" id="splash_lower" name="splash_lower" value="{{ defaults.splash_lower }}">
             </div>
             <div class="architect-form-group">
-                <label for="splash_upper">SZ Upper:</label>
+                <label for="splash_upper">SZ Upper</label>
                 <input type="text" id="splash_upper" name="splash_upper" value="{{ defaults.splash_upper }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_btm">TP Bottom:</label>
+                <label for="tp_btm">TP Bottom</label>
                 <input type="text" id="tp_btm" name="tp_btm" value="{{ defaults.tp_btm }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_width">TP Width:</label>
+                <label for="tp_width">TP Width</label>
                 <input type="text" id="tp_width" name="tp_width" value="{{ defaults.tp_width }}">
             </div>
             <div class="architect-form-group">
-                <label for="jacket_footprint">Jacket Footprint:</label>
+                <label for="jacket_footprint">Jacket Footprint</label>
                 <input type="text" id="jacket_footprint" name="jacket_footprint" value="{{ defaults.jacket_footprint }}">
             </div>
             <div class="architect-form-group">
-                <label for="stickup">Stickup:</label>
+                <label for="stickup">Stickup</label>
                 <input type="text" id="stickup" name="stickup" value="{{ defaults.stickup }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_btm_k1_voffset">TP Bottom K1 Voffset:</label>
+                <label for="tp_btm_k1_voffset">TP Bottom K1 Voffset</label>
                 <input type="text" id="tp_btm_k1_voffset" name="tp_btm_k1_voffset" value="{{ defaults.tp_btm_k1_voffset }}">
             </div>
             <div class="architect-form-group">
-                <label for="btm_vert_leg_length">Bottom Vertical Leg Length:</label>
+                <label for="btm_vert_leg_length">Bottom V leg length:</label>
                 <input type="text" id="btm_vert_leg_length" name="btm_vert_leg_length" value="{{ defaults.btm_vert_leg_length }}">
             </div>
             <div class="architect-form-group">
@@ -73,16 +73,20 @@
                 <!-- Bay heights inputs will be generated here -->
             </div>
             <div class="architect-form-group">
-                <label for="batter_1_theta">Batter 1 Theta:</label>
+                <label for="single_batter">Single batter</label>
+                <input type="checkbox" id="single_batter" name="single_batter" {% if defaults.single_tower %}checked{% endif %} onchange="toggleBatterInputs()">
+            </div>
+            <div class="architect-form-group">
+                <label for="batter_1_theta">Batter 1 Theta</label>
                 <input type="text" id="batter_1_theta" name="batter_1_theta" value="{{ defaults.batter_1_theta }}">
             </div>
             <div class="architect-form-group">
-                <label for="batter_1_elev">Batter 1 Elevation:</label>
+                <label for="batter_1_elev">Batter 1 Elevation</label>
                 <input type="text" id="batter_1_elev" name="batter_1_elev" value="{{ defaults.batter_1_elev }}">
                 <input type="range" id="batter_1_elev_slider" min="{{ batter_1_elev_min }}" max="{{ batter_1_elev_max }}" value="{{ defaults.batter_1_elev }}">
             </div>
             <div class="architect-form-group">
-                <label for="batter_2_theta">Batter 2 Theta:</label>
+                <label for="batter_2_theta">Batter 2 Theta</label>
                 <input type="text" id="batter_2_theta" name="batter_2_theta" value="{{ batter_2_theta }}" disabled>
             </div>
         </form>
@@ -163,12 +167,11 @@ function fetchBatter2Theta() {
     .then(data => {
         if (data.batter_2_theta !== undefined) {
             const batter2Input = document.getElementById('batter_2_theta');
-            batter2Input.value = data.batter_2_theta.toFixed(2);
+            batter2Input.value = data.batter_2_theta.toFixed(3);
         }
     })
     .catch(error => console.error('Error fetching batter_2_theta:', error));
 }
-
 
 
 window.addEventListener('resize', function() {
@@ -205,6 +208,12 @@ function generateBayInputs() {
         container.appendChild(div);
     }
 }
+
+
+function toggleBatterInputs() {
+    var mbool = document.getElementById('single_batter').checked;
+}
+
 
 // Generate initial bay inputs based on default n_bays value
 generateBayInputs();
