@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
+import plotly.io as pio
 from jktdesign.jacket import Jacket
 from jktdesign.plotter import jacket_plotter
 from jktdesign.tower import Tower
@@ -42,7 +43,10 @@ def jacket_architect():
 
             # Plot jacket
             lat = 0.
-            plot_json = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
+            fig = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
+
+            # Convert the plot to JSON
+            plot_json = pio.to_json(fig)
 
             return jsonify({'plot_json': plot_json})
 
