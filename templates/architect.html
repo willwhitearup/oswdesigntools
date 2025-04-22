@@ -81,6 +81,10 @@
                 <input type="text" id="batter_1_elev" name="batter_1_elev" value="{{ defaults.batter_1_elev }}">
                 <input type="range" id="batter_1_elev_slider" min="{{ batter_1_elev_min }}" max="{{ batter_1_elev_max }}" value="{{ defaults.batter_1_elev }}">
             </div>
+            <div class="architect-form-group">
+                <label for="batter_2_theta">Batter 2 Theta:</label>
+                <input type="text" id="batter_2_theta" name="batter_2_theta" value="{{ batter_2_theta }}" disabled>
+            </div>
         </form>
     </div>
     <div class="architect-plot-container">
@@ -92,7 +96,34 @@
 <script>
 
 document.querySelectorAll('.architect-input-form input').forEach(input => {
-    input.addEventListener('input', updatePlot);
+    input.addEventListener('input', function() {
+        updatePlot();
+        fetchBatter2Theta();
+    });
+});
+
+
+document.querySelectorAll('.architect-input-form input[type="range"]').forEach(slider => {
+    slider.addEventListener('input', function() {
+        const correspondingInput = document.getElementById(this.id.replace('_slider', ''));
+        if (correspondingInput) {
+            correspondingInput.value = this.value;
+        }
+        updatePlot();
+        fetchBatter2Theta();
+    });
+});
+
+
+document.querySelectorAll('.architect-input-form input[type="text"]').forEach(textInput => {
+    textInput.addEventListener('input', function() {
+        const correspondingSlider = document.getElementById(this.id + '_slider');
+        if (correspondingSlider) {
+            correspondingSlider.value = this.value;
+        }
+        updatePlot();
+        fetchBatter2Theta();
+    });
 });
 
 
@@ -103,27 +134,6 @@ function toggleTowerInputs() {
     document.getElementById('shear_interface_del').disabled = !showTower;
     updatePlot();
 }
-
-
-document.querySelectorAll('.architect-input-form input[type="range"]').forEach(slider => {
-    slider.addEventListener('input', function() {
-        const correspondingInput = document.getElementById(this.id.replace('_slider', ''));
-        if (correspondingInput) {
-            correspondingInput.value = this.value;
-        }
-        updatePlot();
-    });
-});
-
-document.querySelectorAll('.architect-input-form input[type="text"]').forEach(textInput => {
-    textInput.addEventListener('input', function() {
-        const correspondingSlider = document.getElementById(this.id + '_slider');
-        if (correspondingSlider) {
-            correspondingSlider.value = this.value;
-        }
-        updatePlot();
-    });
-});
 
 function updatePlot() {
     const formData = new FormData(document.querySelector('.architect-input-form'));
@@ -142,9 +152,29 @@ function updatePlot() {
     .catch(error => console.error('Error:', error));
 }
 
+
+function fetchBatter2Theta() {
+    const formData = new FormData(document.querySelector('.architect-input-form'));
+    fetch('/architect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.batter_2_theta !== undefined) {
+            const batter2Input = document.getElementById('batter_2_theta');
+            batter2Input.value = data.batter_2_theta.toFixed(2);
+        }
+    })
+    .catch(error => console.error('Error fetching batter_2_theta:', error));
+}
+
+
+
 window.addEventListener('resize', function() {
     Plotly.Plots.resize('plot');
 });
+
 
 function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;

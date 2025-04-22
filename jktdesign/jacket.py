@@ -4,7 +4,7 @@ import numpy as np
 class Jacket:
 
     def __init__(self, interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev, jacket_footprint,
-                 stickup, bay_heights, btm_vert_leg_length, water_depth):
+                 stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter: bool):
 
         self.interface_elev = interface_elev
         self.tp_width = tp_width
@@ -12,6 +12,7 @@ class Jacket:
         self.tp_btm_k1_voffset = tp_btm_k1_voffset
         self.water_depth = water_depth
 
+        self.single_batter = single_batter
         self.batter_1_theta = batter_1_theta  # float, degrees!
         self.batter_1_elev = batter_1_elev
 
@@ -30,8 +31,6 @@ class Jacket:
         self.batter_2_theta = None  # float, degrees!
         self.batter_2_elev = -self.water_depth + self.stickup + self.btm_vert_leg_length
 
-
-
         # kjt and braces
         self.kjt_elevs = {f"kjt_1": self.tp_btm - self.tp_btm_k1_voffset}  # we know k1 elevation from inputs
         self.kjt_widths = {}
@@ -41,7 +40,12 @@ class Jacket:
         # check validity of inputs for jackets
         self._jacket_validity()
         self._raise_warning_strings()
-        self._calculate_2nd_batter()
+
+        if self.single_batter:
+            self._calculate_single_batter()
+        else:
+            self._calculate_2nd_batter()
+
         self._check_bay_heights()
         self._calculate_kjt_elevation()
         self._calculate_kjt_widths()
@@ -60,7 +64,18 @@ class Jacket:
         # e.g. bottom k is within 1m of top of pile
         # bay height n is too small compared to others etc!
         self.warning_strings.append("this is a warning string example!")
-        return None
+
+    def _calculate_single_batter(self):
+        if self.single_batter:
+            o = self.tp_btm - (-self.water_depth + self.stickup + self.btm_vert_leg_length)
+            a = (self.jacket_footprint - self.tp_width) / 2
+            self.batter_1_theta = np.degrees(np.atan(o / a))
+            self.batter_2_theta = self.batter_1_theta
+
+            self.batter_1_elev = self.tp_btm - 0.5 * o  # just set the batter 1 elevation at half way (it doesnt matter)
+            top_batter_dist = self.tp_btm - self.batter_1_elev  # vertical dist
+            a = top_batter_dist / np.tan(np.radians(self.batter_1_theta))  # triangle width, with vertical as above
+            self.batter_1_width = 2 * a + self.tp_width
 
     def _calculate_2nd_batter(self):
 

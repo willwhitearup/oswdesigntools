@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
-import plotly.io as pio
 from jktdesign.jacket import Jacket
 from jktdesign.plotter import jacket_plotter
 from jktdesign.tower import Tower
@@ -12,17 +11,27 @@ app = Flask(__name__)
 def jacket_architect():
     if request.method == 'POST':
         try:
+
+            show_tower = request.form.get('show_tower') == 'on'
+
+            if show_tower:
+                rna_cog = float(request.form['rna_cog'])
+                moment_interface_del = float(request.form['moment_interface_del'])
+                shear_interface_del = float(request.form['shear_interface_del'])
+            else:
+                rna_cog = 999
+                moment_interface_del = 999
+                shear_interface_del = 999
+
             water_depth = float(request.form['water_depth'])
             msl = float(request.form['msl'])
             splash_lower = float(request.form['splash_lower'])
             splash_upper = float(request.form['splash_upper'])
-            rna_cog = float(request.form['rna_cog'])
+
             interface_elev = float(request.form['interface_elev'])
             tp_btm = float(request.form['tp_btm'])
             tp_width = float(request.form['tp_width'])
-            moment_interface_del = float(request.form['moment_interface_del'])
-            shear_interface_del = float(request.form['shear_interface_del'])
-            show_tower = request.form.get('show_tower') == 'on'
+
             jacket_footprint = float(request.form['jacket_footprint'])
             stickup = float(request.form['stickup'])
             tp_btm_k1_voffset = float(request.form['tp_btm_k1_voffset'])
@@ -34,21 +43,28 @@ def jacket_architect():
             batter_1_theta = float(request.form['batter_1_theta'])
             batter_1_elev = float(request.form['batter_1_elev'])
 
+            # todo toggle the single batter on or off. note if it is off then the form will disable batter_1_theta, batter_1_elev and batter_2_theta
+            single_batter = False
+
             # Create objects
             jkt_obj = Jacket(interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev,
-                             jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth)
+                             jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter)
+
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
 
+            batter_1_theta = jkt_obj.batter_1_theta
+            batter_1_elev = jkt_obj.batter_1_elev
             batter_2_theta = jkt_obj.batter_2_theta
 
             # Plot jacket
             lat = 0.
-            fig = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
+            plot_json = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
 
-            # Convert the plot to JSON
-            plot_json = pio.to_json(fig)
-
-            return jsonify({'plot_json': plot_json})
+            return jsonify({'plot_json': plot_json,
+                            "batter_2_theta": batter_2_theta,
+                            "batter_1_theta": batter_1_theta,
+                            "batter_1_elev": batter_1_elev
+                            })
 
         except KeyError as e:
             return f"Missing form field: {e}", 400
@@ -72,7 +88,8 @@ def jacket_architect():
         'btm_vert_leg_length': 5030,
         'n_bays': 4,
         'batter_1_theta': 86,
-        'batter_1_elev': -9700
+        'batter_1_elev': -9700,
+        'single_batter': False
     }
 
     # Calculate default bay heights
@@ -81,15 +98,14 @@ def jacket_architect():
 
     defaults['bay_heights'] = ','.join([str(bay_height_value)] * defaults['n_bays'])
 
-
-
     # Calculate min and max values for the slider
     batter_1_elev_min = -50000
     batter_1_elev_max = 20000
     # Calculate batter_2_theta
     jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],
-                     [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'])
+                     [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'], defaults['single_batter'])
+
     batter_2_theta = jkt_obj.batter_2_theta
 
     return render_template('architect.html', defaults=defaults,
