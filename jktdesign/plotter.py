@@ -88,19 +88,19 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
 
     # Tower and TP----------------------------------------------------------------------------------------------
     if show_tower:
-        # RNA and tower----------------------------------------------------------------------------------------------
-        fig.add_trace(go.Scatter(x=[0], y=[rna_cog], mode='markers', marker=dict(color='black'), name='RNA'))
-        fig.add_trace(go.Scatter(x=[0, 0], y=[interface_elev, rna_cog], mode='lines', line=dict(color='black'), showlegend=False))
-        fig.add_trace(go.Scatter(x=[0], y=[c_o_a_LAT], mode='markers', marker=dict(symbol='star', color='black', size=15), name='WTG CoA'))
         # TP box-----------------------------------------------------------------------------------------------------
         fig.add_trace(go.Scatter(x=[-tp_width/2, -tp_width/2, tp_width/2, tp_width/2, -tp_width/2],
                                  y=[tp_btm, interface_elev, interface_elev, tp_btm, tp_btm],
                                  fill='toself', line=dict(color='rgba(0,0,0,0)'), fillcolor='purple', opacity=0.7, name='TP'))
 
+        # RNA and tower----------------------------------------------------------------------------------------------
+        fig.add_trace(go.Scatter(x=[0], y=[rna_cog], mode='markers', marker=dict(color='black'), name='RNA'))
+        fig.add_trace(go.Scatter(x=[0, 0], y=[interface_elev, rna_cog], mode='lines', line=dict(color='black'), showlegend=False))
+        fig.add_trace(go.Scatter(x=[0], y=[c_o_a_LAT], mode='markers', marker=dict(symbol='star', color='black', size=15), name='WTG CoA'))
         # add the CoA target line
         x4, y4 = c_o_a_targetline([-tp_width / 2, tp_btm], [-batter_1_width / 2, batter_1_elev], tp_btm, tp_width, c_o_a_LAT)
         x5, y5 = c_o_a_targetline([tp_width / 2, tp_btm], [batter_1_width / 2, batter_1_elev], tp_btm, tp_width, c_o_a_LAT)
-        fig.add_trace(go.Scatter(x=[-tp_width / 2, x4], y=[tp_btm, y4], mode='lines', line=dict(color='red', dash="dash"), name='CoA target'))
+        fig.add_trace(go.Scatter(x=[-tp_width / 2, x4], y=[tp_btm, y4], mode='lines', line=dict(color='red', dash="dash"), name='WTG CoA target'))
         fig.add_trace(go.Scatter(x=[tp_width / 2, x5], y=[tp_btm, y5], mode='lines', line=dict(color='red', dash="dash"), showlegend=False))
 
     else:

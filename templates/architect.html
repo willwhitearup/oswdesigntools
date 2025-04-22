@@ -22,7 +22,7 @@
                 <input type="text" id="shear_interface_del" name="shear_interface_del" value="{{ defaults.shear_interface_del }}">
             </div>
             <div class="architect-form-group">
-                <label for="interface_elev">Interface elevation:</label>
+                <label for="interface_elev">Interface elevation</label>
                 <input type="text" id="interface_elev" name="interface_elev" value="{{ defaults.interface_elev }}">
             </div>
             <div class="architect-form-group">
@@ -34,19 +34,19 @@
                 <input type="text" id="msl" name="msl" value="{{ defaults.msl }}">
             </div>
             <div class="architect-form-group">
-                <label for="splash_lower">SZ Lower</label>
+                <label for="splash_lower">SZ lower</label>
                 <input type="text" id="splash_lower" name="splash_lower" value="{{ defaults.splash_lower }}">
             </div>
             <div class="architect-form-group">
-                <label for="splash_upper">SZ Upper</label>
+                <label for="splash_upper">SZ upper</label>
                 <input type="text" id="splash_upper" name="splash_upper" value="{{ defaults.splash_upper }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_btm">TP Bottom</label>
+                <label for="tp_btm">TP bottom</label>
                 <input type="text" id="tp_btm" name="tp_btm" value="{{ defaults.tp_btm }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_width">TP Width</label>
+                <label for="tp_width">TP width</label>
                 <input type="text" id="tp_width" name="tp_width" value="{{ defaults.tp_width }}">
             </div>
             <div class="architect-form-group">
@@ -60,15 +60,15 @@
                 <input type="range" id="stickup_slider" min="{{ stickup_min }}" max="{{ stickup_max }}" step = "{{ stickup_step }}" value="{{ defaults.stickup }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_btm_k1_voffset">TP Bottom K1 Voffset</label>
+                <label for="tp_btm_k1_voffset">TP bottom k1 voffset</label>
                 <input type="text" id="tp_btm_k1_voffset" name="tp_btm_k1_voffset" value="{{ defaults.tp_btm_k1_voffset }}">
             </div>
             <div class="architect-form-group">
-                <label for="btm_vert_leg_length">Bottom V leg length:</label>
+                <label for="btm_vert_leg_length">Bottom vleg length</label>
                 <input type="text" id="btm_vert_leg_length" name="btm_vert_leg_length" value="{{ defaults.btm_vert_leg_length }}">
             </div>
             <div class="architect-form-group">
-                <label for="n_bays">No. bays:</label>
+                <label for="n_bays">No. bays</label>
                 <input type="text" id="n_bays" name="n_bays" value="{{ defaults.n_bays }}" oninput="generateBayInputs(); updatePlot();">
             </div>
             <div id="bay_heights_container" class="architect-form-group">
@@ -323,7 +323,7 @@ function generateBayInputs() {
         div.className = 'architect-form-group';
         const label = document.createElement('label');
         label.setAttribute('for', `bay_height_${i}`);
-        label.textContent = `Bay ${i} height:`;
+        label.textContent = `Bay ${i} height`;
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `bay_height_${i}`;
