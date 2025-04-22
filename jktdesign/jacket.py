@@ -30,6 +30,10 @@ class Jacket:
         self.batter_2_width = self.jacket_footprint
         self.batter_2_theta = None  # float, degrees!
         self.batter_2_elev = -self.water_depth + self.stickup + self.btm_vert_leg_length
+        # top and bottom allowables
+        self.batter_1_elevation_min = None
+        self.batter_1_elevation_max = None
+
 
         # kjt and braces
         self.kjt_elevs = {f"kjt_1": self.tp_btm - self.tp_btm_k1_voffset}  # we know k1 elevation from inputs
@@ -45,7 +49,7 @@ class Jacket:
             self._calculate_single_batter()
         else:
             self._calculate_2nd_batter()
-
+        self._calculate_batter_elevation_limits()
         self._check_bay_heights()
         self._calculate_kjt_elevation()
         self._calculate_kjt_widths()
@@ -56,7 +60,7 @@ class Jacket:
             raise Exception(
                 f"TP bottom {self.tp_btm} must be below the tower interface elevation {self.interface_elev}. Check inputs. Exiting...")
 
-        if self.batter_1_theta > 90:
+        if self.batter_1_theta is not None and self.batter_1_theta > 90:
             raise Exception(f"Batter angle at the top of jacket must not exceed vertical ({self.batter_1_theta} degree input)")
 
     def _raise_warning_strings(self):
@@ -88,6 +92,10 @@ class Jacket:
         btm_batter_height = self.batter_1_elev - self.batter_2_elev
         b = (self.jacket_footprint - self.batter_1_width) / 2
         self.batter_2_theta = np.degrees(np.atan(btm_batter_height / b))
+
+    def _calculate_batter_elevation_limits(self):
+        self.batter_1_elevation_min = self.pile_top_elev + self.btm_vert_leg_length
+        self.batter_1_elevation_max = self.tp_btm - self.tp_btm_k1_voffset
 
     def _check_bay_heights(self):
         bay_height_sum = sum(self.bay_heights)

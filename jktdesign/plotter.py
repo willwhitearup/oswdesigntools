@@ -82,9 +82,9 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
 
     # Pile stickups
     fig.add_trace(go.Scatter(x=[-jacket_footprint / 2, -jacket_footprint / 2], y=[-water_depth, -water_depth + stickup],
-                             mode='lines', name='stickup', line=dict(color='black')))
+                             mode='lines', name='stickup', line=dict(color='black', width=5)))
     fig.add_trace(go.Scatter(x=[jacket_footprint / 2, jacket_footprint / 2], y=[-water_depth, -water_depth + stickup],
-                             mode='lines', line=dict(color='black'), showlegend=False))
+                             mode='lines', line=dict(color='black', width=5), showlegend=False))
 
     # Tower and TP----------------------------------------------------------------------------------------------
     if show_tower:

@@ -52,6 +52,7 @@
             <div class="architect-form-group">
                 <label for="jacket_footprint">Jacket Footprint</label>
                 <input type="text" id="jacket_footprint" name="jacket_footprint" value="{{ defaults.jacket_footprint }}">
+                <input type="range" id="jacket_footprint_slider" min="{{ jacket_footprint_min }}" max="{{ jacket_footprint_max }}" value="{{ defaults.jacket_footprint }}">
             </div>
             <div class="architect-form-group">
                 <label for="stickup">Stickup</label>
@@ -79,6 +80,7 @@
             <div class="architect-form-group">
                 <label for="batter_1_theta">Batter 1 Theta</label>
                 <input type="text" id="batter_1_theta" name="batter_1_theta" value="{{ defaults.batter_1_theta }}">
+                <input type="range" id="batter_1_theta_slider" min="{{ batter_1_theta_min }}" max="{{ batter_1_theta_max }}" value="{{ defaults.batter_1_theta }}">
             </div>
             <div class="architect-form-group">
                 <label for="batter_1_elev">Batter 1 Elevation</label>
@@ -102,7 +104,11 @@
 document.querySelectorAll('.architect-input-form input').forEach(input => {
     input.addEventListener('input', function() {
         updatePlot();
-        fetchBatter2Theta();
+        clearTimeout(this.fetchTimeout);
+        this.fetchTimeout = setTimeout(() => {
+            fetchBatter2Theta();
+            fetchSingleBatterData();
+        }, 500); // 500 milliseconds delay
     });
 });
 
@@ -114,7 +120,11 @@ document.querySelectorAll('.architect-input-form input[type="range"]').forEach(s
             correspondingInput.value = this.value;
         }
         updatePlot();
-        fetchBatter2Theta();
+        clearTimeout(this.fetchTimeout);
+        this.fetchTimeout = setTimeout(() => {
+            fetchBatter2Theta();
+            fetchSingleBatterData();
+        }, 500); // 500 milliseconds delay
     });
 });
 
@@ -126,7 +136,11 @@ document.querySelectorAll('.architect-input-form input[type="text"]').forEach(te
             correspondingSlider.value = this.value;
         }
         updatePlot();
-        fetchBatter2Theta();
+        clearTimeout(this.fetchTimeout);
+        this.fetchTimeout = setTimeout(() => {
+            fetchBatter2Theta();
+            fetchSingleBatterData();
+        }, 500); // 500 milliseconds delay
     });
 });
 
@@ -174,6 +188,23 @@ function fetchBatter2Theta() {
 }
 
 
+function fetchSingleBatterData() {
+    const formData = new FormData(document.querySelector('.architect-input-form'));
+    fetch('/architect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.batter_1_theta !== undefined) {
+            const batter1Input = document.getElementById('batter_1_theta');
+            batter1Input.value = data.batter_1_theta.toFixed(3);
+        }
+    })
+    .catch(error => console.error('Error fetching batter_1_theta:', error));
+}
+
+
 window.addEventListener('resize', function() {
     Plotly.Plots.resize('plot');
 });
@@ -211,7 +242,10 @@ function generateBayInputs() {
 
 
 function toggleBatterInputs() {
-    var mbool = document.getElementById('single_batter').checked;
+    var mbool = !document.getElementById('single_batter').checked;
+    document.getElementById('batter_1_theta').disabled = !mbool;
+    document.getElementById('batter_1_elev').disabled = !mbool;
+    fetchSingleBatterData()
 }
 
 
