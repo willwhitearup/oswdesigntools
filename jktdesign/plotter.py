@@ -103,7 +103,7 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
                       y0=xjt_elev, y1=xjt_elev, line=dict(color='grey', dash="dot"), showlegend=False)
         # add some text
         fig.add_trace(go.Scatter(x=[-1.5 * water_levels_x_ext * jacket_footprint], y=[xjt_elev], mode='text',
-                                 text=[f'x{idx+1} EL {xjt_elev:.1f}'],
+                                 text=[f'x{xidx+1} EL {xjt_elev:.1f}'],
                                  textposition='top right', textfont=dict(color='grey'), showlegend=False))
 
 
