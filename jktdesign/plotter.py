@@ -34,24 +34,25 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
     stickup = jkt_obj.stickup
     kjt_elevs = jkt_obj.kjt_elevs
     kjt_widths = jkt_obj.kjt_widths
+    xjt_elevs = jkt_obj.xjt_elevs
 
     # Create the plot
     fig = go.Figure()
 
     # WATER LEVELS------------------------------------------------------------------------------------------
-    water_levels_x_ext = 2  # multiplier on the jacket footprint
+    water_levels_x_ext = 1  # multiplier on the jacket footprint
     # LAT
     fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=lat, y1=lat, line=dict(color='blue', dash='dash'), showlegend=False)
     fig.add_trace(go.Scatter(x=[1 * jacket_footprint], y=[lat], mode='text', text=['LAT'], textposition='top right', textfont=dict(color='blue'), showlegend=False))
     # MSL
     fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=msl, y1=msl, line=dict(color='grey', dash='dash'), showlegend=False)
-    fig.add_trace(go.Scatter(x=[1.5*jacket_footprint], y=[msl], mode='text', text=['MSL'], textposition='top right', textfont=dict(color='grey'), showlegend=False))
+    fig.add_trace(go.Scatter(x=[1.2 * jacket_footprint], y=[msl], mode='text', text=['MSL'], textposition='top right', textfont=dict(color='grey'), showlegend=False))
     # splash lower
-    fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=splash_lower, y1=splash_lower, line=dict(color='red', dash='dash'), showlegend=False)
-    fig.add_trace(go.Scatter(x=[-1.5 * jacket_footprint], y=[splash_lower], mode='text', text=['splash_lower'], textposition='top left', textfont=dict(color='red'), showlegend=False))
+    fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=splash_lower, y1=splash_lower, line=dict(color='dodgerblue', dash='dash'), showlegend=False)
+    fig.add_trace(go.Scatter(x=[1 * jacket_footprint], y=[splash_lower], mode='text', text=['splash_lower'], textposition='top right', textfont=dict(color='dodgerblue'), showlegend=False))
     # splash upper
-    fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=splash_upper, y1=splash_upper, line=dict(color='red', dash='dash'), showlegend=False)
-    fig.add_trace(go.Scatter(x=[-1.5 * jacket_footprint], y=[splash_upper], mode='text', text=['splash_upper'], textposition='top left', textfont=dict(color='red'), showlegend=False))
+    fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=splash_upper, y1=splash_upper, line=dict(color='dodgerblue', dash='dash'), showlegend=False)
+    fig.add_trace(go.Scatter(x=[1 * jacket_footprint], y=[splash_upper], mode='text', text=['splash_upper'], textposition='top right', textfont=dict(color='dodgerblue'), showlegend=False))
 
     # MUDLINE----------------------------------------------------------------------------------------------
     fig.add_shape(type='line', x0=-water_levels_x_ext*jacket_footprint, x1=water_levels_x_ext*jacket_footprint, y0=-water_depth, y1=-water_depth, line=dict(color='brown'), showlegend=False)
@@ -60,25 +61,51 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
     # JKT LEGS
     fig.add_trace(go.Scatter(x=[-tp_width / 2, -batter_1_width / 2, -jacket_footprint / 2, -jacket_footprint / 2],
                              y=[tp_btm, batter_1_elev, batter_2_elev, -water_depth + stickup],
-                             mode='lines', line=dict(color='red'), name='legs'))
+                             mode='lines', line=dict(color='red'), name='jacket'))
     fig.add_trace(go.Scatter(x=[tp_width / 2, batter_1_width / 2, jacket_footprint / 2, jacket_footprint / 2],
                              y=[tp_btm, batter_1_elev, batter_2_elev, -water_depth + stickup],
                              mode='lines', line=dict(color='red'), showlegend=False))
 
+    xof = 1500  # dotted lines to be slightly offset from the plot
     # JKT BRACES----------------------------------------------------------------------------------------------
     for idx, (kjt, this_kjt_elev) in enumerate(kjt_elevs.items()):
-        if idx == len(kjt_elevs) - 1:
-            break
+
         # get the k numbering
         k_this, k_next = idx + 1, idx + 2
+
+        # get the elevation of the current k joint and add some info to the plot figure
         this_kjt_width = kjt_widths[f"kjt_{k_this}"]
+
+        # add a dotted line from the k joint
+        fig.add_shape(type='line', x0=-xof - this_kjt_width / 2, x1=-2 * water_levels_x_ext * jacket_footprint,
+                      y0=this_kjt_elev, y1=this_kjt_elev, line=dict(color='grey', dash="dot"), showlegend=False)
+        # add some text
+        fig.add_trace(go.Scatter(x=[-2 * water_levels_x_ext * jacket_footprint], y=[this_kjt_elev], mode='text',
+                                 text=[f'k{k_this} EL {this_kjt_elev}'],
+                                 textposition='top right', textfont=dict(color='grey'), showlegend=False))
+
+
+        if idx == len(kjt_elevs) - 1:
+            break
+
         next_kjt_width = kjt_widths[f"kjt_{k_next}"]
         next_kjt_elev = kjt_elevs[f"kjt_{k_next}"]
         # do one brace at a time
         fig.add_trace(go.Scatter(x=[-this_kjt_width / 2, next_kjt_width / 2], y=[this_kjt_elev, next_kjt_elev],
-                                 mode='lines', line=dict(color='red'), name=f'brace_bay_{k_this}'))
+                                 mode='lines', line=dict(color='red'), showlegend=False))
         fig.add_trace(go.Scatter(x=[this_kjt_width / 2, -next_kjt_width / 2], y=[this_kjt_elev, next_kjt_elev],
                                  mode='lines', line=dict(color='red'), showlegend=False))
+
+    # X BRACE elevations
+    for xidx, (xjt, xjt_elev) in enumerate(xjt_elevs.items()):
+        # add a dotted line from the k joint
+        fig.add_shape(type='line', x0=-xof, x1=-1.5 * water_levels_x_ext * jacket_footprint,
+                      y0=xjt_elev, y1=xjt_elev, line=dict(color='grey', dash="dot"), showlegend=False)
+        # add some text
+        fig.add_trace(go.Scatter(x=[-1.5 * water_levels_x_ext * jacket_footprint], y=[xjt_elev], mode='text',
+                                 text=[f'x{idx+1} EL {xjt_elev:.1f}'],
+                                 textposition='top right', textfont=dict(color='grey'), showlegend=False))
+
 
     # Pile stickups
     fig.add_trace(go.Scatter(x=[-jacket_footprint / 2, -jacket_footprint / 2], y=[-water_depth, -water_depth + stickup],

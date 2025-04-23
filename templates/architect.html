@@ -10,7 +10,7 @@
                 <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %} onchange="toggleTowerInputs()">
 
                 <div class="architect-units-container">
-                    <div class="architect-star-circle" onclick="showMessage()">★</div>
+                    <div class="architect-star-circle" onclick="showMessage()">i</div>
                     <span id="architect-units-message" class="architect-units-message">! Units: N, mm, degrees !</span>
                 </div>
 
@@ -459,8 +459,10 @@ function checkBatter2Theta(batter2Input) {
 
 function showMessage() {
     const message = document.getElementById('architect-units-message');
-    message.style.display = message.style.display === 'none' ? 'inline' : 'none';
+    const isHidden = window.getComputedStyle(message).display === 'none';
+    message.style.display = isHidden ? 'inline' : 'none';
 }
+
 
 </script>
 

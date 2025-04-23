@@ -38,6 +38,7 @@ class Jacket:
         # kjt and braces
         self.kjt_elevs = {f"kjt_1": self.tp_btm - self.tp_btm_k1_voffset}  # we know k1 elevation from inputs
         self.kjt_widths = {}
+        self.xjt_elevs = {}  # store the x joint elevations as well (note the x values are always 0 in the centre)
 
         self.warning_strings = []  # todo
 
@@ -53,6 +54,7 @@ class Jacket:
         self._check_bay_heights()
         self._calculate_kjt_elevation()
         self._calculate_kjt_widths()
+        self._calculate_x_brace_elevations()
 
     def _jacket_validity(self):
         # error checking before plotting...
@@ -128,3 +130,59 @@ class Jacket:
                 d = self.batter_2_elev - kjt_elev
                 w = d / np.tan(np.radians(90.))  # above pile leg section is always vertical
                 self.kjt_widths[kjt] = self.batter_2_width + 2 * w
+
+    @staticmethod
+    def line_intersection(x1, y1, x2, y2, x3, y3, x4, y4):
+        """
+        (x1, y1) and (x2, y2) represent the endpoints of Line 1.
+        (x3, y3) and (x4, y4) represent the endpoints of Line 2.
+        """
+        # Calculate slopes (m1, m2) and y-intercepts (b1, b2)
+        m1 = (y2 - y1) / (x2 - x1)
+        m2 = (y4 - y3) / (x4 - x3)
+        b1 = y1 - m1 * x1
+        b2 = y3 - m2 * x3
+
+        # Solve for intersection point
+        x_intersection = (b2 - b1) / (m1 - m2)
+        y_intersection = m1 * x_intersection + b1
+
+        return x_intersection, y_intersection
+
+    def _calculate_x_brace_elevations(self):
+
+        if not self.kjt_widths:
+            return None
+
+        for idx, (kjt, this_kjt_elev) in enumerate(self.kjt_elevs.items()):
+            if idx == len(self.kjt_elevs) - 1:
+                break
+
+            # get the k numbering
+            k_this, k_next = idx + 1, idx + 2
+            # get the elevation of the current k joint and add some info to the plot figure
+            this_kjt_width = self.kjt_widths[f"kjt_{k_this}"]
+            next_kjt_width = self.kjt_widths[f"kjt_{k_next}"]
+            next_kjt_elev = self.kjt_elevs[f"kjt_{k_next}"]
+
+            # through brace 1
+            x1, y1 = -this_kjt_width / 2, this_kjt_elev
+            x2, y2 = next_kjt_width / 2, next_kjt_elev
+
+            # other brace 2
+            x3, y3 = this_kjt_width / 2, this_kjt_elev
+            x4, y4 = -next_kjt_width / 2, next_kjt_elev
+
+            x_intersection, y_intersection = Jacket.line_intersection(x1, y1, x2, y2, x3, y3, x4, y4)
+
+            assert np.isclose(x_intersection, 0.), "Error with x joint calc.."
+
+            self.xjt_elevs[f"xjt_{k_this}"] = y_intersection
+            print(self.xjt_elevs)
+
+
+
+
+
+
+
