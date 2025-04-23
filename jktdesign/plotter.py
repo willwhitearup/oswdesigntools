@@ -110,7 +110,7 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
     # Add labels and title
     water_levels_x_ext=0.1
     fig.update_layout(
-        yaxis_title='elevation rel LAT [units]',
+        yaxis_title='elevation rel LAT [mm]',
         #xaxis=dict(range=[-water_levels_x_ext * jacket_footprint, water_levels_x_ext * jacket_footprint]),  #set the x-axis extents
         yaxis=dict(scaleanchor="x", scaleratio=1),
         legend=dict(x=1, y=1)

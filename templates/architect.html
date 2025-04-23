@@ -60,11 +60,11 @@
                 <input type="range" id="stickup_slider" min="{{ stickup_min }}" max="{{ stickup_max }}" step = "{{ stickup_step }}" value="{{ defaults.stickup }}">
             </div>
             <div class="architect-form-group">
-                <label for="tp_btm_k1_voffset">TP bottom k1 voffset</label>
+                <label for="tp_btm_k1_voffset">k1 voffset from TP</label>
                 <input type="text" id="tp_btm_k1_voffset" name="tp_btm_k1_voffset" value="{{ defaults.tp_btm_k1_voffset }}">
             </div>
             <div class="architect-form-group">
-                <label for="btm_vert_leg_length">Bottom vleg length</label>
+                <label for="btm_vert_leg_length">Vleg length bottom</label>
                 <input type="text" id="btm_vert_leg_length" name="btm_vert_leg_length" value="{{ defaults.btm_vert_leg_length }}">
             </div>
             <div class="architect-form-group">
@@ -187,7 +187,6 @@ window.addEventListener('resize', function() {
 generateBayInputs();
 updatePlot(); // Initial plot update with default values
 
-
 function syncAndTrigger(id, callback) {
     const textInput = document.getElementById(id);
     const slider = document.getElementById(`${id}_slider`);
@@ -206,9 +205,6 @@ function syncAndTrigger(id, callback) {
         });
     }
 }
-
-
-
 
 function toggleTowerInputs() {
     var showTower = document.getElementById('show_tower').checked;
@@ -315,8 +311,9 @@ function generateBayInputs() {
     const water_depth = parseFloat(document.getElementById('water_depth').value);
     const stickup = parseFloat(document.getElementById('stickup').value);
 
-    const xxx = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup)) / nBays;
-    const bayHeightValue = Math.floor(xxx);
+    const jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup))
+    const equal_bay_height = jacket_height / nBays;
+    const bayHeightValue = Math.floor(equal_bay_height);
 
     for (let i = 1; i <= nBays; i++) {
         const div = document.createElement('div');
@@ -324,14 +321,38 @@ function generateBayInputs() {
         const label = document.createElement('label');
         label.setAttribute('for', `bay_height_${i}`);
         label.textContent = `Bay ${i} height`;
+
+        // text input
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `bay_height_${i}`;
         input.name = `bay_height_${i}`;
         input.value = bayHeightValue.toFixed(1); // Set default value
-        input.addEventListener('input', updatePlot); // Add event listener to dynamic inputs
+
+        // Slider Input
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = `bay_height_${i}_slider`;
+        slider.min = 100;  // small number above 0
+        slider.max = jacket_height / 2; // max allowed bay height
+        slider.step = 100;
+        slider.value = bayHeightValue.toFixed(1);
+
+        // Sync slider -> text
+        slider.addEventListener('input', () => {
+            input.value = slider.value;
+            updatePlot();
+        });
+
+        // Sync text -> slider
+        input.addEventListener('input', () => {
+            slider.value = input.value;
+            updatePlot();
+        });
+
         div.appendChild(label);
         div.appendChild(input);
+        div.appendChild(slider);
         container.appendChild(div);
     }
 }
