@@ -50,10 +50,9 @@ def jacket_architect():
             tp_btm_k1_voffset = float(request.form['tp_btm_k1_voffset'])
             btm_vert_leg_length = float(request.form['btm_vert_leg_length'])
             n_bays = int(request.form['n_bays'])
-
             # Collect bay heights dynamically
             bay_heights = [float(request.form[f'bay_height_{i}']) for i in range(1, n_bays + 1)]
-            print(bay_heights)
+
             # Create objects
             jkt_obj = Jacket(interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev,
                              jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter)

@@ -112,16 +112,12 @@
             width: 100%;
             height: 100%;
         }
-
-
-
         .architect-export-button-container {
             display: flex;
             justify-content: flex-start; /* Align button to the left */
             text-align: center;
             margin-top: 30px;
         }
-
         .architect-export-button-container button {
             padding: 12px 12px;
             font-size: 0.85rem;
@@ -134,11 +130,44 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
         }
-
         .architect-export-button-container input[type="range"] {
             display: block;
             margin-left: 0;
         }
+
+        .architect-units-container {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 16px;
+        }
+
+        .architect-star-circle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #FF2400; /* Scarlet red */
+            color: white;
+            font-weight: bold;
+            font-size: 10px; /* smaller for better fit */
+            margin-left: 8px;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1; /* remove vertical offset */
+        }
+
+        .architect-units-message {
+            display: none;
+            margin-left: 8px;
+            color: #FF2400;
+            //font-style: italic;
+            font-size: 0.85rem; /* smaller */
+        }
+
+
+
     </style>
 </head>
 <body>

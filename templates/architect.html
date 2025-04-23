@@ -8,6 +8,12 @@
             <div class="architect-form-group">
                 <label for="show_tower">Show WTG</label>
                 <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %} onchange="toggleTowerInputs()">
+
+                <div class="architect-units-container">
+                    <div class="architect-star-circle" onclick="showMessage()">★</div>
+                    <span id="architect-units-message" class="architect-units-message">! Units: N, mm, degrees !</span>
+                </div>
+
             </div>
             <div class="architect-form-group">
                 <label for="rna_cog">RNA CoG</label>
@@ -76,7 +82,7 @@
             </div>
             <div class="architect-form-group">
                 <label for="single_batter">Single batter</label>
-                <input type="checkbox" id="single_batter" name="single_batter" {% if defaults.single_tower %}checked{% endif %} onchange="toggleBatterInputs()">
+                <input type="checkbox" id="single_batter" name="single_batter" {% if defaults.single_batter %}checked{% endif %} onchange="toggleBatterInputs()">
             </div>
             <div class="architect-form-group">
                 <label for="batter_1_theta">Batter 1 Theta</label>
@@ -107,45 +113,62 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 
+const debounce = (func, delay = 300) => {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+};
+
+function syncAndTrigger(id, callback) {
+    const textInput = document.getElementById(id);
+    const slider = document.getElementById(`${id}_slider`);
+
+    if (textInput) {
+        textInput.addEventListener('input', debounce(() => {
+            if (slider) slider.value = textInput.value;
+            callback();
+        }));
+    }
+
+    if (slider) {
+        slider.addEventListener('input', debounce(() => {
+            if (textInput) textInput.value = slider.value;
+            callback();
+        }));
+    }
+}
+
 document.querySelectorAll('.architect-input-form input').forEach(input => {
-    input.addEventListener('input', function() {
+    input.addEventListener('input', debounce(function() {
 
         fetchBatter2Theta();
         fetchBatterElevationLimits();
         fetchStickUpLimits();
-
-        clearTimeout(this.fetchTimeout);
-        this.fetchTimeout = setTimeout(() => {
-            fetchSingleBatterData();
-        }, 500); // 500 milliseconds delay
-
+        fetchSingleBatterData();
+        checkBatter2Theta();
         updatePlot();
-    });
+    }));
 });
 
-
 document.querySelectorAll('.architect-input-form input[type="range"]').forEach(slider => {
-    slider.addEventListener('input', function() {
+    slider.addEventListener('input', debounce(function() {
         const correspondingInput = document.getElementById(this.id.replace('_slider', ''));
         if (correspondingInput) {
             correspondingInput.value = this.value;
         }
+
         fetchBatter2Theta();
         fetchBatterElevationLimits();
         fetchStickUpLimits();
-
-        clearTimeout(this.fetchTimeout);
-        this.fetchTimeout = setTimeout(() => {
-            fetchSingleBatterData();
-        }, 500); // 500 milliseconds delay
-
+        fetchSingleBatterData();
         updatePlot();
-    });
+    }));
 });
 
-
 document.querySelectorAll('.architect-input-form input[type="text"]').forEach(textInput => {
-    textInput.addEventListener('input', function() {
+    textInput.addEventListener('input', debounce(function() {
         const correspondingSlider = document.getElementById(this.id + '_slider');
         if (correspondingSlider) {
             correspondingSlider.value = this.value;
@@ -154,57 +177,31 @@ document.querySelectorAll('.architect-input-form input[type="text"]').forEach(te
         fetchBatter2Theta();
         fetchBatterElevationLimits();
         fetchStickUpLimits();
-
-        clearTimeout(this.fetchTimeout);
-        this.fetchTimeout = setTimeout(() => {
-            fetchSingleBatterData();
-        }, 500); // 500 milliseconds delay
-
+        fetchSingleBatterData();
         updatePlot();
-
-    });
+    }));
 });
-
 
 ['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'stickup_slider', 'n_bays'].forEach(id => {
     const input = document.getElementById(id);
     if (input) {
-        input.addEventListener('input', () => {
+        input.addEventListener('input', debounce(() => {
             generateBayInputs();
             fetchBatter2Theta();
             fetchBatterElevationLimits();
             fetchStickUpLimits();
             updatePlot();
-        });
+        }));
     }
 });
 
-window.addEventListener('resize', function() {
+window.addEventListener('resize', debounce(function() {
     Plotly.Plots.resize('plot');
-});
+}));
 
 // Generate initial bay inputs based on default n_bays value
 generateBayInputs();
 updatePlot(); // Initial plot update with default values
-
-function syncAndTrigger(id, callback) {
-    const textInput = document.getElementById(id);
-    const slider = document.getElementById(`${id}_slider`);
-
-    if (textInput) {
-        textInput.addEventListener('input', () => {
-            if (slider) slider.value = textInput.value;
-            callback();
-        });
-    }
-
-    if (slider) {
-        slider.addEventListener('input', () => {
-            if (textInput) textInput.value = slider.value;
-            callback();
-        });
-    }
-}
 
 function toggleTowerInputs() {
     var showTower = document.getElementById('show_tower').checked;
@@ -231,7 +228,6 @@ function updatePlot() {
     .catch(error => console.error('Error:', error));
 }
 
-
 function fetchBatter2Theta() {
     const formData = new FormData(document.querySelector('.architect-input-form'));
     fetch('/architect', {
@@ -243,11 +239,12 @@ function fetchBatter2Theta() {
         if (data.batter_2_theta !== undefined) {
             const batter2Input = document.getElementById('batter_2_theta');
             batter2Input.value = data.batter_2_theta.toFixed(3);
+            checkBatter2Theta(batter2Input);
         }
     })
+
     .catch(error => console.error('Error fetching batter_2_theta:', error));
 }
-
 
 function fetchBatterElevationLimits() {
     const formData = new FormData(document.querySelector('.architect-input-form'));
@@ -304,14 +301,13 @@ function fetchSingleBatterData() {
 function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;
     const container = document.getElementById('bay_heights_container');
-    container.innerHTML = ''; // Clear existing inputs
+    container.innerHTML = '';
 
     const tp_btm = parseFloat(document.getElementById('tp_btm').value);
     const tp_btm_k1_voffset = parseFloat(document.getElementById('tp_btm_k1_voffset').value);
     const water_depth = parseFloat(document.getElementById('water_depth').value);
     const stickup = parseFloat(document.getElementById('stickup').value);
-
-    const jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup))
+    const jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup));
     const equal_bay_height = jacket_height / nBays;
     const bayHeightValue = Math.floor(equal_bay_height);
 
@@ -322,50 +318,47 @@ function generateBayInputs() {
         label.setAttribute('for', `bay_height_${i}`);
         label.textContent = `Bay ${i} height`;
 
-        // text input
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `bay_height_${i}`;
         input.name = `bay_height_${i}`;
-        input.value = bayHeightValue.toFixed(1); // Set default value
+        input.value = bayHeightValue.toFixed(1);
 
-        // Slider Input
         const slider = document.createElement('input');
         slider.type = 'range';
         slider.id = `bay_height_${i}_slider`;
-        slider.min = 100;  // small number above 0
-        slider.max = jacket_height / 2; // max allowed bay height
+        slider.min = 100;
+        slider.max = jacket_height / 2;
         slider.step = 100;
         slider.value = bayHeightValue.toFixed(1);
 
-        // Sync slider -> text
-        slider.addEventListener('input', () => {
+        slider.addEventListener('input', debounce(() => {
             input.value = slider.value;
             updatePlot();
-        });
+            checkBayHeightsVsJacket();
+        }));
 
-        // Sync text -> slider
-        input.addEventListener('input', () => {
+        input.addEventListener('input', debounce(() => {
             slider.value = input.value;
             updatePlot();
-        });
+            checkBayHeightsVsJacket();
+        }));
+
 
         div.appendChild(label);
         div.appendChild(input);
         div.appendChild(slider);
         container.appendChild(div);
     }
+    checkBayHeightsVsJacket();
 }
-
 
 function toggleBatterInputs() {
     var mbool = !document.getElementById('single_batter').checked;
     document.getElementById('batter_1_theta').disabled = !mbool;
     document.getElementById('batter_1_elev').disabled = !mbool;
-    fetchSingleBatterData()
+    fetchSingleBatterData();
 }
-
-
 
 function exportFormData() {
     const formElements = document.querySelectorAll('.architect-form-container input, .architect-form-container select');
@@ -378,13 +371,98 @@ function exportFormData() {
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
     downloadAnchor.setAttribute("download", "form_data.json");
-    document.body.appendChild(downloadAnchor); // Required for Firefox
+    document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
 }
+
+function checkBayHeightsVsJacket() {
+    const nBays = parseInt(document.getElementById('n_bays').value);
+    let sum = 0;
+    for (let i = 1; i <= nBays; i++) {
+        const h = parseFloat(document.getElementById(`bay_height_${i}`).value);
+        sum += h;
+    }
+
+    const tp_btm = parseFloat(document.getElementById('tp_btm').value);
+    const tp_btm_k1_voffset = parseFloat(document.getElementById('tp_btm_k1_voffset').value);
+    const water_depth = parseFloat(document.getElementById('water_depth').value);
+    const stickup = parseFloat(document.getElementById('stickup').value);
+    const jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup));
+
+    const exMarkId = 'bay-warning';
+    const existing = document.getElementById(exMarkId);
+    if (existing) existing.remove();
+
+    if (sum > jacket_height) {
+        const warning = document.createElement('span');
+        warning.id = exMarkId;
+        warning.textContent = '!';
+        warning.style.display = 'inline-block';
+        warning.style.width = '20px';
+        warning.style.height = '20px';
+        warning.style.lineHeight = '20px';
+        warning.style.borderRadius = '50%';
+        warning.style.backgroundColor = 'red';
+        warning.style.color = 'white';
+        warning.style.textAlign = 'center';
+        warning.style.fontWeight = 'bold';
+        warning.style.marginLeft = '8px';
+        warning.style.cursor = 'pointer';
+        warning.addEventListener('click', () => {
+            alert("Bay height inputs exceed jacket height! Reduce some of the bay heights to continue...! \
+            \nBraces are allowed to span between the 'k1voffset from TP' to the top of pile stickup.\
+            \nReduce the bay heights to continue your design.");
+        });
+
+        const target = document.getElementById('n_bays');
+        target.parentNode.insertBefore(warning, target.nextSibling);
+    }
+
+}
+
+function checkBatter2Theta(batter2Input) {
+    // If batter2Input is an input element, we retrieve the value
+    const value = batter2Input ? parseFloat(batter2Input.value) : parseFloat(batter2Input);
+
+    if (isNaN(value) || value < 0) {
+        let existingWarning = document.getElementById('batter_2_theta_warning');
+        if (!existingWarning) {
+            const warning = document.createElement('span');
+            warning.id = 'batter_2_theta_warning';
+            warning.textContent = '!';
+            warning.style.display = 'inline-block';
+            warning.style.width = '20px';
+            warning.style.height = '20px';
+            warning.style.lineHeight = '20px';
+            warning.style.borderRadius = '50%';
+            warning.style.backgroundColor = 'red';
+            warning.style.color = 'white';
+            warning.style.textAlign = 'center';
+            warning.style.fontWeight = 'bold';
+            warning.style.marginLeft = '8px';
+            warning.style.cursor = 'pointer';
+
+            warning.addEventListener('click', () => {
+                alert("Warning: Negative Batter 2 angle encountered!");
+            });
+
+            batter2Input?.parentNode.appendChild(warning);  // append warning to input's parent if it's an element
+        }
+    } else {
+        let existingWarning = document.getElementById('batter_2_theta_warning');
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+    }
+}
+
+function showMessage() {
+    const message = document.getElementById('architect-units-message');
+    message.style.display = message.style.display === 'none' ? 'inline' : 'none';
+}
+
 </script>
 
 
-
-</script>
 {% endblock %}
