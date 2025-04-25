@@ -15,7 +15,7 @@ STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 def jacket_architect():
     if request.method == 'POST':
         try:
-
+            print(request.form)
             show_tower = request.form.get('show_tower') == 'on'
             single_batter = request.form.get('single_batter') == 'on'
 
@@ -27,7 +27,6 @@ def jacket_architect():
                 rna_cog = 999
                 moment_interface_del = 999
                 shear_interface_del = 999
-
 
             if single_batter:
                 batter_1_theta = None
@@ -52,10 +51,13 @@ def jacket_architect():
             n_bays = int(request.form['n_bays'])
             # Collect bay heights dynamically
             bay_heights = [float(request.form[f'bay_height_{i}']) for i in range(1, n_bays + 1)]
-
+            # collect bay horizontals dynamically
+            bay_horizontals = [f'bay_horizontal_{i}' in request.form for i in range(1, n_bays + 1)]
+            bay_horizontals.insert(0, False)  # artificially insert a False to indicate the top k brace has no horizontal
+            print(bay_horizontals)
             # Create objects
             jkt_obj = Jacket(interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev,
-                             jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter)
+                             jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter, bay_horizontals)
 
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
             # Plot jacket
@@ -110,10 +112,12 @@ def jacket_architect():
 
     defaults['bay_heights'] = ','.join([str(bay_height_value)] * defaults['n_bays'])
 
+    defaults['bay_horizontals'] = [False] * defaults['n_bays']
     # Calculate batter_2_theta
     jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],
-                     [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'], defaults['single_batter'])
+                     [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'],
+                     defaults['single_batter'], defaults['bay_horizontals'])
 
     return render_template('architect.html',
                            defaults=defaults,

@@ -4,7 +4,7 @@ import numpy as np
 class Jacket:
 
     def __init__(self, interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev, jacket_footprint,
-                 stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter: bool):
+                 stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter: bool, bay_horizontals: list):
 
         self.interface_elev = interface_elev
         self.tp_width = tp_width
@@ -24,6 +24,7 @@ class Jacket:
         self.n_bays = len(self.bay_heights)
 
         self.btm_vert_leg_length = btm_vert_leg_length
+        self.bay_horizontals = bay_horizontals  # list of bools defining whether a horizontal brace is present of not
 
         # batter angle data
         self.batter_1_width = None
@@ -178,7 +179,6 @@ class Jacket:
             assert np.isclose(x_intersection, 0.), "Error with x joint calc.."
 
             self.xjt_elevs[f"xjt_{k_this}"] = y_intersection
-            print(self.xjt_elevs)
 
 
 

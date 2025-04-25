@@ -10,7 +10,7 @@
                 <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %} onchange="toggleTowerInputs()">
 
                 <div class="architect-units-container">
-                    <div class="architect-star-circle" onclick="showMessage()">i</div>
+                    <div class="architect-info-circle" onclick="showMessage()">i</div>
                     <span id="architect-units-message" class="architect-units-message">! Units: N, mm, degrees !</span>
                 </div>
 
@@ -73,12 +73,28 @@
                 <label for="btm_vert_leg_length">Vleg length bottom</label>
                 <input type="text" id="btm_vert_leg_length" name="btm_vert_leg_length" value="{{ defaults.btm_vert_leg_length }}">
             </div>
-            <div class="architect-form-group">
-                <label for="n_bays">No. bays</label>
-                <input type="text" id="n_bays" name="n_bays" value="{{ defaults.n_bays }}" oninput="generateBayInputs(); updatePlot();">
+
+
+            <div class="architect-form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex-grow: 1;">
+                    <label for="n_bays">No. bays</label>
+                    <input type="text" id="n_bays" name="n_bays" value="{{ defaults.n_bays }}" oninput="generateBayInputs(); updatePlot();" style="margin-left: 32px;">
+                </div>
+                <div style="position: relative; white-space: nowrap;">
+                    bay horizontal
+                    <div style="position: absolute; top: 100%; left: 90%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 10px solid black;"></div>
+                </div>
             </div>
+
+
+
             <div id="bay_heights_container" class="architect-form-group">
                 <!-- Bay heights inputs will be generated here -->
+            </div>
+
+
+            <div id="bay-inputs-container">
+                <!-- Bay horizontals inputs will be generated here -->
             </div>
             <div class="architect-form-group">
                 <label for="single_batter">Single batter</label>
@@ -143,6 +159,8 @@ function syncAndTrigger(id, callback) {
 document.querySelectorAll('.architect-input-form input').forEach(input => {
     input.addEventListener('input', debounce(function() {
 
+
+        InterfaceElevationValidity()
         fetchBatter2Theta();
         fetchBatterElevationLimits();
         fetchStickUpLimits();
@@ -159,6 +177,7 @@ document.querySelectorAll('.architect-input-form input[type="range"]').forEach(s
             correspondingInput.value = this.value;
         }
 
+        InterfaceElevationValidity()
         fetchBatter2Theta();
         fetchBatterElevationLimits();
         fetchStickUpLimits();
@@ -174,6 +193,7 @@ document.querySelectorAll('.architect-input-form input[type="text"]').forEach(te
             correspondingSlider.value = this.value;
         }
 
+        InterfaceElevationValidity()
         fetchBatter2Theta();
         fetchBatterElevationLimits();
         fetchStickUpLimits();
@@ -186,6 +206,8 @@ document.querySelectorAll('.architect-input-form input[type="text"]').forEach(te
     const input = document.getElementById(id);
     if (input) {
         input.addEventListener('input', debounce(() => {
+
+            InterfaceElevationValidity()
             generateBayInputs();
             fetchBatter2Theta();
             fetchBatterElevationLimits();
@@ -298,6 +320,14 @@ function fetchSingleBatterData() {
     .catch(error => console.error('Error fetching batter_1_theta:', error));
 }
 
+
+
+
+
+
+
+
+
 function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;
     const container = document.getElementById('bay_heights_container');
@@ -311,12 +341,25 @@ function generateBayInputs() {
     const equal_bay_height = jacket_height / nBays;
     const bayHeightValue = Math.floor(equal_bay_height);
 
+    // Array to store checkbox states
+    const bayHorizontalStates = [];
+
     for (let i = 1; i <= nBays; i++) {
         const div = document.createElement('div');
         div.className = 'architect-form-group';
+
         const label = document.createElement('label');
         label.setAttribute('for', `bay_height_${i}`);
         label.textContent = `Bay ${i} height`;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `bay_horizontal_${i}`;
+        checkbox.name = `bay_horizontal_${i}`;
+        checkbox.value = 'on';
+
+        // Store checkbox state in array
+        bayHorizontalStates.push(checkbox.checked);
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -332,6 +375,13 @@ function generateBayInputs() {
         slider.step = 100;
         slider.value = bayHeightValue.toFixed(1);
 
+        // Append elements in the desired order: label, input, checkbox, and slider
+        div.appendChild(label);
+        div.appendChild(input);
+        div.appendChild(slider);
+        div.appendChild(checkbox);
+
+        // Adding event listeners to sync input and slider
         slider.addEventListener('input', debounce(() => {
             input.value = slider.value;
             updatePlot();
@@ -344,14 +394,32 @@ function generateBayInputs() {
             checkBayHeightsVsJacket();
         }));
 
+        // Add checkbox listener
+        checkbox.addEventListener('change', () => {
+            updatePlot(); // or any other relevant function
+        });
 
-        div.appendChild(label);
-        div.appendChild(input);
-        div.appendChild(slider);
+        // Appending the div to the container
         container.appendChild(div);
+
+        console.log(`Bay ${i} horizontal:`, checkbox.checked);
     }
+
+    // Function to retrieve checkbox states
+    function getBayHorizontalStates() {
+        return bayHorizontalStates;
+    }
+
     checkBayHeightsVsJacket();
 }
+
+
+
+
+
+
+
+
 
 function toggleBatterInputs() {
     var mbool = !document.getElementById('single_batter').checked;
@@ -398,25 +466,34 @@ function checkBayHeightsVsJacket() {
         const warning = document.createElement('span');
         warning.id = exMarkId;
         warning.textContent = '!';
-        warning.style.display = 'inline-block';
-        warning.style.width = '20px';
-        warning.style.height = '20px';
-        warning.style.lineHeight = '20px';
+
+        // css styling
+        warning.style.position = 'absolute';
+        warning.style.top = '50%';  // Vertically center it
+        warning.style.left = '50%';  // Horizontally center it
+        warning.style.transform = 'translate(-50%, -50%)';  // Offset to truly center it
+        warning.style.width = '30px';
+        warning.style.height = '30px';
+        warning.style.lineHeight = '30px';
         warning.style.borderRadius = '50%';
         warning.style.backgroundColor = 'red';
         warning.style.color = 'white';
         warning.style.textAlign = 'center';
         warning.style.fontWeight = 'bold';
-        warning.style.marginLeft = '8px';
+        warning.style.fontSize = '28px';
+        warning.style.zIndex = '10';  // Ensure it's on top of other content
         warning.style.cursor = 'pointer';
+
+        // event listener
         warning.addEventListener('click', () => {
             alert("Bay height inputs exceed jacket height! Reduce some of the bay heights to continue...! \
             \nBraces are allowed to span between the 'k1voffset from TP' to the top of pile stickup.\
             \nReduce the bay heights to continue your design.");
         });
 
-        const target = document.getElementById('n_bays');
-        target.parentNode.insertBefore(warning, target.nextSibling);
+        const target = document.getElementById('bay_heights_container');
+        target.style.position = 'relative';  // Make sure this container is relative to hold the absolute warning
+        target.appendChild(warning);  // Append the warning to the container
     }
 
 }
@@ -436,7 +513,7 @@ function checkBatter2Theta(batter2Input) {
             warning.style.height = '20px';
             warning.style.lineHeight = '20px';
             warning.style.borderRadius = '50%';
-            warning.style.backgroundColor = 'red';
+            warning.style.backgroundColor = 'orange';
             warning.style.color = 'white';
             warning.style.textAlign = 'center';
             warning.style.fontWeight = 'bold';
@@ -456,6 +533,54 @@ function checkBatter2Theta(batter2Input) {
         }
     }
 }
+
+function InterfaceElevationValidity() {
+    const tp_btm = parseFloat(document.getElementById('tp_btm').value);
+    const interface_elev = parseFloat(document.getElementById('interface_elev').value);
+
+    const warningId = 'interface-warning';  // ID for the warning element
+
+    // Check if the warning already exists
+    const existingWarning = document.getElementById(warningId);
+
+    if (interface_elev < tp_btm) {
+        // If warning does not exist, create it
+        if (!existingWarning) {
+            const warning = document.createElement('span');
+            warning.id = warningId;  // Set the warning's id
+            warning.textContent = '!';
+
+            // CSS styling for the warning
+            warning.style.display = 'inline-block';
+            warning.style.width = '20px';
+            warning.style.height = '20px';
+            warning.style.lineHeight = '20px';
+            warning.style.borderRadius = '50%';
+            warning.style.backgroundColor = 'red';
+            warning.style.color = 'white';
+            warning.style.textAlign = 'center';
+            warning.style.fontWeight = 'bold';
+            warning.style.marginLeft = '8px';  // Space between input and warning
+            warning.style.cursor = 'pointer';
+
+            // Event listener for the warning
+            warning.addEventListener('click', () => {
+                alert("interface elev is below the bottom of the TP. \n\nUpdate design to continue!");
+            });
+
+            // Find the parent container and append the warning next to the input
+            const target = document.querySelector('.architect-form-group');
+            target.appendChild(warning);  // Append the warning to the container (next to input)
+        }
+    } else {
+        // If the issue is fixed and the warning exists, remove it
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+    }
+}
+
+
 
 function showMessage() {
     const message = document.getElementById('architect-units-message');

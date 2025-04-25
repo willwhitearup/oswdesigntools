@@ -34,6 +34,9 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
     stickup = jkt_obj.stickup
     kjt_elevs = jkt_obj.kjt_elevs
     kjt_widths = jkt_obj.kjt_widths
+
+    bay_horizontals = jkt_obj.bay_horizontals
+
     xjt_elevs = jkt_obj.xjt_elevs
 
     # Create the plot
@@ -79,12 +82,18 @@ def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, spla
         # add a dotted line from the k joint
         fig.add_shape(type='line', x0=-xof - this_kjt_width / 2, x1=-2 * water_levels_x_ext * jacket_footprint,
                       y0=this_kjt_elev, y1=this_kjt_elev, line=dict(color='grey', dash="dot"), showlegend=False)
-        # add some text
+        # add some elevation data text
         fig.add_trace(go.Scatter(x=[-2 * water_levels_x_ext * jacket_footprint], y=[this_kjt_elev], mode='text',
                                  text=[f'k{k_this} EL {this_kjt_elev}'],
                                  textposition='top right', textfont=dict(color='grey'), showlegend=False))
 
+        # plot a horizontal brace between this k joint elevation
+        if bay_horizontals[idx]:
+            fig.add_trace(go.Scatter(x=[-this_kjt_width / 2, this_kjt_width / 2], y=[this_kjt_elev, this_kjt_elev],
+                                     mode='lines', line=dict(color='red'), showlegend=False))
 
+
+        # as we are plotting a diagonal brace from this k joints to next, at the last k joint we cant go any further!
         if idx == len(kjt_elevs) - 1:
             break
 
