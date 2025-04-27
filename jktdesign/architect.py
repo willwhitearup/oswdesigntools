@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, jsonify
-import numpy as np
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 from jktdesign.jacket import Jacket
 from jktdesign.plotter import jacket_plotter
 from jktdesign.tower import Tower
@@ -15,7 +14,7 @@ STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 def jacket_architect():
     if request.method == 'POST':
         try:
-            print(request.form)
+            # print(request.form)
             show_tower = request.form.get('show_tower') == 'on'
             single_batter = request.form.get('single_batter') == 'on'
 
@@ -54,7 +53,7 @@ def jacket_architect():
             # collect bay horizontals dynamically
             bay_horizontals = [f'bay_horizontal_{i}' in request.form for i in range(1, n_bays + 1)]
             bay_horizontals.insert(0, False)  # artificially insert a False to indicate the top k brace has no horizontal
-            print(bay_horizontals)
+
             # Create objects
             jkt_obj = Jacket(interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev,
                              jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter, bay_horizontals)
@@ -80,8 +79,9 @@ def jacket_architect():
                             "stickup_step": STICKUP_STEP
                             })
 
-        except KeyError as e:
-            return f"Missing form field: {e}", 400
+        except Exception as e:
+            flash(f"An error occurred: {e}")
+            return redirect(url_for('architect'))
 
     # Default values for GET request
     defaults = {

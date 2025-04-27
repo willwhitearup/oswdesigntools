@@ -15,6 +15,6 @@ class Tower:
 
     def _calculate_coa(self):
         # centre of action calculation
-        print(f"WTG interface DELs have been provided. Centre of action can be calculated..!")
+        # print(f"WTG interface DELs have been provided. Centre of action can be calculated..!")
         c_o_a_interface = self.moment_interface_del / self.shear_interface_del
         self.c_o_a_LAT = c_o_a_interface + self.interface_elev

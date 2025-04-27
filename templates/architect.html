@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+
+<!-- error message text styled using flash styling -->
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="error-message">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
 <div class="architect-container">
     <div class="architect-form-container">
         <form method="POST" action="/architect" class="architect-input-form">
@@ -85,14 +98,9 @@
                     <div style="position: absolute; top: 100%; left: 90%; transform: translateX(-50%); width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 10px solid black;"></div>
                 </div>
             </div>
-
-
-
             <div id="bay_heights_container" class="architect-form-group">
                 <!-- Bay heights inputs will be generated here -->
             </div>
-
-
             <div id="bay-inputs-container">
                 <!-- Bay horizontals inputs will be generated here -->
             </div>
@@ -121,14 +129,20 @@
     </div>
 </div>
 
+
+
 <div class="architect-export-button-container">
     <button type="button" onclick="exportFormData()">OPTIF export</button>
 </div>
 
 
+
+
+
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 
+// ====== Debounce Helper ======
 const debounce = (func, delay = 300) => {
     let timeout;
     return function(...args) {
@@ -137,93 +151,73 @@ const debounce = (func, delay = 300) => {
     };
 };
 
-function syncAndTrigger(id, callback) {
-    const textInput = document.getElementById(id);
-    const slider = document.getElementById(`${id}_slider`);
+// ====== Validation Helper ======
+function validateAllNumberInputs() {
+    const inputs = document.querySelectorAll('.architect-input-form input[type="text"]');
+    inputs.forEach(input => {
+        const value = input.value.trim();
+        if (value !== '' && isNaN(parseFloat(value))) {
+            input.style.borderColor = 'red';
+        } else {
+            input.style.borderColor = '';
+        }
+    });
+}
 
-    if (textInput) {
-        textInput.addEventListener('input', debounce(() => {
-            if (slider) slider.value = textInput.value;
-            callback();
-        }));
-    }
+// ====== Core Update Trigger ======
+function runAllUpdates(extra = {}) {
+    validateAllNumberInputs()
+    InterfaceElevationValidity();
+    fetchBatter2Theta();
+    fetchBatterElevationLimits();
+    fetchStickUpLimits();
+    fetchSingleBatterData();
+    updatePlot();
 
-    if (slider) {
-        slider.addEventListener('input', debounce(() => {
-            if (textInput) textInput.value = slider.value;
-            callback();
-        }));
+    if (extra.generateBayInputs) {
+        generateBayInputs();
     }
 }
 
-document.querySelectorAll('.architect-input-form input').forEach(input => {
-    input.addEventListener('input', debounce(function() {
+// ====== Sync Slider and Input Text Fields ======
+function syncTextAndSlider(inputElem) {
+    const isSlider = inputElem.type === 'range';
+    const isText = inputElem.type === 'text';
 
-
-        InterfaceElevationValidity()
-        fetchBatter2Theta();
-        fetchBatterElevationLimits();
-        fetchStickUpLimits();
-        fetchSingleBatterData();
-        checkBatter2Theta();
-        updatePlot();
-    }));
-});
-
-document.querySelectorAll('.architect-input-form input[type="range"]').forEach(slider => {
-    slider.addEventListener('input', debounce(function() {
-        const correspondingInput = document.getElementById(this.id.replace('_slider', ''));
-        if (correspondingInput) {
-            correspondingInput.value = this.value;
-        }
-
-        InterfaceElevationValidity()
-        fetchBatter2Theta();
-        fetchBatterElevationLimits();
-        fetchStickUpLimits();
-        fetchSingleBatterData();
-        updatePlot();
-    }));
-});
-
-document.querySelectorAll('.architect-input-form input[type="text"]').forEach(textInput => {
-    textInput.addEventListener('input', debounce(function() {
-        const correspondingSlider = document.getElementById(this.id + '_slider');
-        if (correspondingSlider) {
-            correspondingSlider.value = this.value;
-        }
-
-        InterfaceElevationValidity()
-        fetchBatter2Theta();
-        fetchBatterElevationLimits();
-        fetchStickUpLimits();
-        fetchSingleBatterData();
-        updatePlot();
-    }));
-});
-
-['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'stickup_slider', 'n_bays'].forEach(id => {
-    const input = document.getElementById(id);
-    if (input) {
-        input.addEventListener('input', debounce(() => {
-
-            InterfaceElevationValidity()
-            generateBayInputs();
-            fetchBatter2Theta();
-            fetchBatterElevationLimits();
-            fetchStickUpLimits();
-            updatePlot();
-        }));
+    if (isSlider) {
+        const correspondingInput = document.getElementById(inputElem.id.replace('_slider', ''));
+        if (correspondingInput) correspondingInput.value = inputElem.value;
+    } else if (isText) {
+        const correspondingSlider = document.getElementById(inputElem.id + '_slider');
+        if (correspondingSlider) correspondingSlider.value = inputElem.value;
     }
-});
+}
 
+// ====== Attach Event Listeners ======
+function setupInputListeners() {
+    document.querySelectorAll('.architect-input-form input').forEach(input => {
+        input.addEventListener('input', debounce(function() {
+            syncTextAndSlider(this);
+
+            // Special case: some inputs trigger bay re-generation
+            if (['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'stickup_slider', 'n_bays'].includes(this.id)) {
+                runAllUpdates({ generateBayInputs: true });
+            } else {
+                runAllUpdates();
+            }
+        }));
+    });
+}
+
+// ====== Handle Plot Resize ======
 window.addEventListener('resize', debounce(function() {
     Plotly.Plots.resize('plot');
 }));
 
-// Generate initial bay inputs based on default n_bays value
+// ====== Initial Setup ======
 generateBayInputs();
-updatePlot(); // Initial plot update with default values
+updatePlot();
+setupInputListeners();
 
 function toggleTowerInputs() {
     var showTower = document.getElementById('show_tower').checked;
@@ -322,12 +316,6 @@ function fetchSingleBatterData() {
 
 
 
-
-
-
-
-
-
 function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;
     const container = document.getElementById('bay_heights_container');
@@ -414,13 +402,6 @@ function generateBayInputs() {
 }
 
 
-
-
-
-
-
-
-
 function toggleBatterInputs() {
     var mbool = !document.getElementById('single_batter').checked;
     document.getElementById('batter_1_theta').disabled = !mbool;
@@ -463,26 +444,16 @@ function checkBayHeightsVsJacket() {
     if (existing) existing.remove();
 
     if (sum > jacket_height) {
-        const warning = document.createElement('span');
+        const warning = createWarningCircle('red', 30); // red circle, 30px size
         warning.id = exMarkId;
-        warning.textContent = '!';
 
-        // css styling
+        // add extra positioning on top of the base style
         warning.style.position = 'absolute';
-        warning.style.top = '50%';  // Vertically center it
-        warning.style.left = '50%';  // Horizontally center it
-        warning.style.transform = 'translate(-50%, -50%)';  // Offset to truly center it
-        warning.style.width = '30px';
-        warning.style.height = '30px';
-        warning.style.lineHeight = '30px';
-        warning.style.borderRadius = '50%';
-        warning.style.backgroundColor = 'red';
-        warning.style.color = 'white';
-        warning.style.textAlign = 'center';
-        warning.style.fontWeight = 'bold';
+        warning.style.top = '50%';
+        warning.style.left = '50%';
+        warning.style.transform = 'translate(-50%, -50%)';
         warning.style.fontSize = '28px';
-        warning.style.zIndex = '10';  // Ensure it's on top of other content
-        warning.style.cursor = 'pointer';
+        warning.style.zIndex = '10';
 
         // event listener
         warning.addEventListener('click', () => {
@@ -505,20 +476,8 @@ function checkBatter2Theta(batter2Input) {
     if (isNaN(value) || value < 0) {
         let existingWarning = document.getElementById('batter_2_theta_warning');
         if (!existingWarning) {
-            const warning = document.createElement('span');
+            const warning = createWarningCircle('orange', 20);
             warning.id = 'batter_2_theta_warning';
-            warning.textContent = '!';
-            warning.style.display = 'inline-block';
-            warning.style.width = '20px';
-            warning.style.height = '20px';
-            warning.style.lineHeight = '20px';
-            warning.style.borderRadius = '50%';
-            warning.style.backgroundColor = 'orange';
-            warning.style.color = 'white';
-            warning.style.textAlign = 'center';
-            warning.style.fontWeight = 'bold';
-            warning.style.marginLeft = '8px';
-            warning.style.cursor = 'pointer';
 
             warning.addEventListener('click', () => {
                 alert("Warning: Negative Batter 2 angle encountered!");
@@ -538,48 +497,48 @@ function InterfaceElevationValidity() {
     const tp_btm = parseFloat(document.getElementById('tp_btm').value);
     const interface_elev = parseFloat(document.getElementById('interface_elev').value);
 
-    const warningId = 'interface-warning';  // ID for the warning element
-
-    // Check if the warning already exists
-    const existingWarning = document.getElementById(warningId);
+    const warningId = 'interfaceElevWarning';
+    let existingWarning = document.getElementById(warningId);
 
     if (interface_elev < tp_btm) {
-        // If warning does not exist, create it
         if (!existingWarning) {
-            const warning = document.createElement('span');
-            warning.id = warningId;  // Set the warning's id
-            warning.textContent = '!';
+            const warning = createWarningCircle('red', 20);
+            warning.id = warningId;
 
-            // CSS styling for the warning
-            warning.style.display = 'inline-block';
-            warning.style.width = '20px';
-            warning.style.height = '20px';
-            warning.style.lineHeight = '20px';
-            warning.style.borderRadius = '50%';
-            warning.style.backgroundColor = 'red';
-            warning.style.color = 'white';
-            warning.style.textAlign = 'center';
-            warning.style.fontWeight = 'bold';
-            warning.style.marginLeft = '8px';  // Space between input and warning
-            warning.style.cursor = 'pointer';
-
-            // Event listener for the warning
             warning.addEventListener('click', () => {
-                alert("interface elev is below the bottom of the TP. \n\nUpdate design to continue!");
+                alert("Interface elevation is below the bottom of the TP.\n\nUpdate design to continue!");
             });
 
-            // Find the parent container and append the warning next to the input
-            const target = document.querySelector('.architect-form-group');
-            target.appendChild(warning);  // Append the warning to the container (next to input)
+            const targetInput = document.getElementById('interface_elev');
+            targetInput.parentNode.appendChild(warning); // add warning right after the input
         }
     } else {
-        // If the issue is fixed and the warning exists, remove it
         if (existingWarning) {
             existingWarning.remove();
         }
     }
 }
 
+
+
+
+
+function createWarningCircle(color, size = 20) {
+    const warning = document.createElement('span');
+    warning.textContent = '!';
+    warning.style.display = 'inline-block';
+    warning.style.width = `${size}px`;
+    warning.style.height = `${size}px`;
+    warning.style.lineHeight = `${size}px`;
+    warning.style.borderRadius = '50%';
+    warning.style.backgroundColor = color;
+    warning.style.color = 'white';
+    warning.style.textAlign = 'center';
+    warning.style.fontWeight = 'bold';
+    warning.style.marginLeft = '8px';
+    warning.style.cursor = 'pointer';
+    return warning;
+}
 
 
 function showMessage() {
@@ -589,7 +548,32 @@ function showMessage() {
 }
 
 
+// ====== Validation Helper ====== checks input is numeric!
+function validateAllNumberInputs() {
+    const inputs = document.querySelectorAll('.architect-input-form input[type="text"]');
+    inputs.forEach(input => {
+        const value = input.value.trim();
+
+        // Check if the value is a valid number using a regular expression for numbers, including floats and integers
+        const isValidNumber = /^-?\d+(\.\d+)?$/.test(value);
+
+        // If the value is not valid or it's empty, highlight the input
+        if (value !== '' && !isValidNumber) {
+            // Enhance visibility with a thicker border and a shadow effect
+            input.style.borderColor = 'red';
+            input.style.borderWidth = '2px';  // Thicker border
+            input.style.boxShadow = '0 0 5px red';  // Add a red glow/shadow for extra emphasis
+        } else {
+            input.style.borderColor = ''; // Reset border color
+            input.style.borderWidth = ''; // Reset border width
+            input.style.boxShadow = ''; // Remove shadow effect
+        }
+    });
+}
+
+
 </script>
+
 
 
 {% endblock %}
