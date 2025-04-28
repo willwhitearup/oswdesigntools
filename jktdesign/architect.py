@@ -81,7 +81,7 @@ def jacket_architect():
 
         except Exception as e:
             flash(f"An error occurred: {e}")
-            return redirect(url_for('architect'))
+            return jsonify({'error': f"An error occurred: {e}"}), 400
 
     # Default values for GET request
     defaults = {

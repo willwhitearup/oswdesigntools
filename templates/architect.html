@@ -3,16 +3,7 @@
 {% block content %}
 
 
-<!-- error message text styled using flash styling -->
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div class="error-message">
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endwith %}
+<div id="flash-messages"></div>
 
 <div class="architect-container">
     <div class="architect-form-container">
@@ -151,31 +142,25 @@ const debounce = (func, delay = 300) => {
     };
 };
 
-// ====== Validation Helper ======
-function validateAllNumberInputs() {
-    const inputs = document.querySelectorAll('.architect-input-form input[type="text"]');
-    inputs.forEach(input => {
-        const value = input.value.trim();
-        if (value !== '' && isNaN(parseFloat(value))) {
-            input.style.borderColor = 'red';
-        } else {
-            input.style.borderColor = '';
-        }
-    });
-}
 
 // ====== Core Update Trigger ======
 function runAllUpdates(extra = {}) {
-    validateAllNumberInputs()
+    const allValid = validateAllNumberInputs();
     InterfaceElevationValidity();
     fetchBatter2Theta();
     fetchBatterElevationLimits();
     fetchStickUpLimits();
     fetchSingleBatterData();
-    updatePlot();
 
     if (extra.generateBayInputs) {
         generateBayInputs();
+    }
+
+    if (allValid) {
+        clearFlashMessage();
+        updatePlot();
+    } else {
+        showFlashMessage("Please correct invalid input values before updating.", "danger");
     }
 }
 
@@ -550,27 +535,52 @@ function showMessage() {
 
 // ====== Validation Helper ====== checks input is numeric!
 function validateAllNumberInputs() {
+    let allValid = true;  // Assume all valid initially
     const inputs = document.querySelectorAll('.architect-input-form input[type="text"]');
+
     inputs.forEach(input => {
         const value = input.value.trim();
 
         // Check if the value is a valid number using a regular expression for numbers, including floats and integers
         const isValidNumber = /^-?\d+(\.\d+)?$/.test(value);
 
-        // If the value is not valid or it's empty, highlight the input
         if (value !== '' && !isValidNumber) {
-            // Enhance visibility with a thicker border and a shadow effect
+            // Not valid -> highlight input
             input.style.borderColor = 'red';
             input.style.borderWidth = '2px';  // Thicker border
-            input.style.boxShadow = '0 0 5px red';  // Add a red glow/shadow for extra emphasis
+            input.style.boxShadow = '0 0 5px red';  // Red glow
+            allValid = false;  // Mark that we have invalid input
         } else {
-            input.style.borderColor = ''; // Reset border color
-            input.style.borderWidth = ''; // Reset border width
-            input.style.boxShadow = ''; // Remove shadow effect
+            // Valid -> reset styles
+            input.style.borderColor = '';
+            input.style.borderWidth = '';
+            input.style.boxShadow = '';
         }
     });
+
+    return allValid;  // Return whether everything was valid
 }
 
+
+function clearFlashMessage() {
+    const flashContainer = document.getElementById('flash-messages');
+    if (flashContainer) {
+        flashContainer.innerHTML = '';
+    }
+}
+
+
+function showFlashMessage(message, category) {
+    const flashContainer = document.getElementById('flash-messages');
+    if (!flashContainer) return;
+
+    flashContainer.innerHTML = `
+        <div class="alert alert-${category} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+}
 
 </script>
 
