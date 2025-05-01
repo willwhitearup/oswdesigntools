@@ -159,22 +159,10 @@ function runAllUpdates(extra = {}) {
     if (allValid) {
         clearFlashMessage();
         updatePlot();
+        //handleArchitectResponse();  // updates session storage
+
     } else {
         showFlashMessage("Please correct invalid input values before updating.", "danger");
-    }
-}
-
-// ====== Sync Slider and Input Text Fields ======
-function syncTextAndSlider(inputElem) {
-    const isSlider = inputElem.type === 'range';
-    const isText = inputElem.type === 'text';
-
-    if (isSlider) {
-        const correspondingInput = document.getElementById(inputElem.id.replace('_slider', ''));
-        if (correspondingInput) correspondingInput.value = inputElem.value;
-    } else if (isText) {
-        const correspondingSlider = document.getElementById(inputElem.id + '_slider');
-        if (correspondingSlider) correspondingSlider.value = inputElem.value;
     }
 }
 
@@ -193,6 +181,22 @@ function setupInputListeners() {
         }));
     });
 }
+
+
+// ====== Sync Slider and Input Text Fields ======
+function syncTextAndSlider(inputElem) {
+    const isSlider = inputElem.type === 'range';
+    const isText = inputElem.type === 'text';
+
+    if (isSlider) {
+        const correspondingInput = document.getElementById(inputElem.id.replace('_slider', ''));
+        if (correspondingInput) correspondingInput.value = inputElem.value;
+    } else if (isText) {
+        const correspondingSlider = document.getElementById(inputElem.id + '_slider');
+        if (correspondingSlider) correspondingSlider.value = inputElem.value;
+    }
+}
+
 
 // ====== Handle Plot Resize ======
 window.addEventListener('resize', debounce(function() {
@@ -299,8 +303,6 @@ function fetchSingleBatterData() {
     .catch(error => console.error('Error fetching batter_1_theta:', error));
 }
 
-
-
 function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;
     const container = document.getElementById('bay_heights_container');
@@ -385,7 +387,6 @@ function generateBayInputs() {
 
     checkBayHeightsVsJacket();
 }
-
 
 function toggleBatterInputs() {
     var mbool = !document.getElementById('single_batter').checked;
@@ -505,9 +506,6 @@ function InterfaceElevationValidity() {
 }
 
 
-
-
-
 function createWarningCircle(color, size = 20) {
     const warning = document.createElement('span');
     warning.textContent = '!';
@@ -561,14 +559,12 @@ function validateAllNumberInputs() {
     return allValid;  // Return whether everything was valid
 }
 
-
 function clearFlashMessage() {
     const flashContainer = document.getElementById('flash-messages');
     if (flashContainer) {
         flashContainer.innerHTML = '';
     }
 }
-
 
 function showFlashMessage(message, category) {
     const flashContainer = document.getElementById('flash-messages');
@@ -582,8 +578,19 @@ function showFlashMessage(message, category) {
     `;
 }
 
-</script>
 
+//function handleArchitectResponse(data) {
+   // if (data && data.plot_json) {
+   //     console.log('Received plot_json:', data.plot_json);  // Debug log
+  //      sessionStorage.setItem('plot_json', JSON.stringify(data.plot_json));
+  //      sessionStorage.setItem('plot_id', data.plot_id);
+ //   } else {
+ //       console.error('No plot_json found in response:', data);  // Error logging
+ //   }
+//}
+
+
+</script>
 
 
 {% endblock %}

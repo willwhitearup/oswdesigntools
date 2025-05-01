@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
 from jktdesign.jacket import Jacket
 from jktdesign.plotter import jacket_plotter
 from jktdesign.tower import Tower
+import uuid
+import json
+
 
 app = Flask(__name__)
 
@@ -59,9 +62,20 @@ def jacket_architect():
                              jacket_footprint, stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter, bay_horizontals)
 
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
-            # Plot jacket
             lat = 0.
-            plot_json = jacket_plotter(twr_obj, jkt_obj, lat, msl, splash_lower, splash_upper, show_tower)
+
+            # convert to json to pass around
+            jkt_dict = {k: v for k, v in jkt_obj.__dict__.items() if v is not None}
+            jkt_dict['msl'] = msl
+            jkt_dict['lat'] = lat
+            jkt_dict['splash_lower'] = splash_lower
+            jkt_dict['splash_upper'] = splash_upper
+            # set up the session dict
+            jkt_json = json.dumps(jkt_dict)
+            session['jkt_json'] = jkt_json
+
+            # Plot jacket
+            plot_json = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower, twr_obj)
 
             return jsonify({'plot_json': plot_json,
                             "batter_2_theta": jkt_obj.batter_2_theta,

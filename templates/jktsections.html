@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "jktsections_styles.html" %}
+
+<form id="myForm" class="sections-input-form">
+    <div class="sections-grid">
+        <div></div>
+        <div class="sections-grid-header">Can OD</div>
+        <div class="sections-grid-header">Can thk</div>
+        <div class="sections-grid-header">Brace upper OD</div>
+        <div class="sections-grid-header">Brace upper thk</div>
+        <div class="sections-grid-header">Brace lower OD</div>
+        <div class="sections-grid-header">Brace lower thk</div>
+
+        {% for i in range(jkt_dict['bay_heights'] | length) %}
+        <div class="sections-grid-row">
+            <div class="sections-grid-label">k{{ i + 1 }}</div>
+            <input type="text" name="can_od_{{ i }}" id="can_od_{{ i }}">
+            <input type="text" name="can_thk_{{ i }}" id="can_thk_{{ i }}">
+            <input type="text" name="brace_upper_od_{{ i }}" id="brace_upper_od_{{ i }}">
+            <input type="text" name="brace_upper_thk_{{ i }}" id="brace_upper_thk_{{ i }}">
+            <input type="text" name="brace_lower_od_{{ i }}" id="brace_lower_od_{{ i }}">
+            <input type="text" name="brace_lower_thk_{{ i }}" id="brace_lower_thk_{{ i }}">
+        </div>
+        {% endfor %}
+    </div>
+
+    <button type="submit" class="sections-submit-button">Submit</button>
+</form>
+
+<div id="response" class="message"></div>
+<div id="plot"></div>
+
+<!-- Load Plotly -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Parse the plot_json from server
+        let plot_json = {{ plot_json | tojson | safe }};
+
+        // Render the initial plot
+        if (plot_json && plot_json.data && plot_json.layout) {
+            Plotly.newPlot('plot', plot_json.data, plot_json.layout);
+        } else {
+            console.error('Initial plot_json is invalid:', plot_json);
+        }
+
+        // Handle form submission
+        document.getElementById('myForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            // Create an object to hold form values
+            const formData = new FormData(this);
+            const formObject = {};
+
+            // Convert FormData to a regular object
+            formData.forEach((value, key) => {
+                formObject[key] = value;
+            });
+
+            // Create the payload with both form data and plot_json
+            const payload = {
+                form_data: formObject,
+                plot_json: plot_json
+            };
+
+            // Send as JSON
+            fetch('/jktsections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Display success message
+                document.getElementById('response').textContent = data.message;
+                document.getElementById('response').style.color = 'green';
+
+                // Parse the updated plot JSON if it's a string
+                let updatedPlot;
+                try {
+                    updatedPlot = typeof data.plot_json === 'string' ?
+                        JSON.parse(data.plot_json) : data.plot_json;
+                } catch (e) {
+                    console.error('Error parsing plot_json:', e);
+                    return;
+                }
+
+                // Update the plot and store the new plot_json
+                if (updatedPlot && updatedPlot.data && updatedPlot.layout) {
+                    plot_json = updatedPlot;
+                    Plotly.react('plot', updatedPlot.data, updatedPlot.layout);
+                } else {
+                    console.error('Updated plot_json has invalid format:', updatedPlot);
+                }
+
+
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('response').textContent = 'Error: ' + error.message;
+                document.getElementById('response').style.color = 'red';
+            });
+        });
+    });
+</script>
+
+
+{% endblock %}

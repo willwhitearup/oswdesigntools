@@ -1,5 +1,5 @@
 import numpy as np
-
+import json
 
 class Jacket:
 
@@ -179,6 +179,14 @@ class Jacket:
             assert np.isclose(x_intersection, 0.), "Error with x joint calc.."
 
             self.xjt_elevs[f"xjt_{k_this}"] = y_intersection
+
+    def to_JSON(self):
+        return json.dumps(
+            self,
+            default=lambda o: o.__dict__,
+            sort_keys=True,
+            indent=4)
+
 
 
 

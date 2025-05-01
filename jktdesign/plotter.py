@@ -16,12 +16,13 @@ def c_o_a_targetline(pt1, pt2, tp_btm, tp_width, c_o_a_LAT):
     return x4, y4
 
 
-def jacket_plotter(twr_obj: Tower, jkt_obj: Jacket, lat: float, msl: float, splash_lower: float, splash_upper: float, show_tower: bool):
+def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float, splash_upper: float, show_tower: bool, twr_obj: Tower=None):
 
-    # tower object
-    rna_cog = twr_obj.rna_cog
-    interface_elev = twr_obj.interface_elev
-    c_o_a_LAT = twr_obj.c_o_a_LAT
+    if twr_obj is not None:
+        # tower object
+        rna_cog = twr_obj.rna_cog
+        interface_elev = twr_obj.interface_elev
+        c_o_a_LAT = twr_obj.c_o_a_LAT
 
     # jacket object
     tp_width = jkt_obj.tp_width
