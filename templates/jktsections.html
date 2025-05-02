@@ -4,30 +4,38 @@
 {% include "jktsections_styles.html" %}
 
 <form id="myForm" class="sections-input-form">
-    <div class="sections-grid">
-        <div></div>
-        <div class="sections-grid-header">Can OD</div>
-        <div class="sections-grid-header">Can thk</div>
-        <div class="sections-grid-header">Brace upper OD</div>
-        <div class="sections-grid-header">Brace upper thk</div>
-        <div class="sections-grid-header">Brace lower OD</div>
-        <div class="sections-grid-header">Brace lower thk</div>
-
-        {% for i in range(jkt_dict['bay_heights'] | length) %}
-        <div class="sections-grid-row">
-            <div class="sections-grid-label">k{{ i + 1 }}</div>
-            <input type="text" name="can_od_{{ i }}" id="can_od_{{ i }}">
-            <input type="text" name="can_thk_{{ i }}" id="can_thk_{{ i }}">
-            <input type="text" name="brace_upper_od_{{ i }}" id="brace_upper_od_{{ i }}">
-            <input type="text" name="brace_upper_thk_{{ i }}" id="brace_upper_thk_{{ i }}">
-            <input type="text" name="brace_lower_od_{{ i }}" id="brace_lower_od_{{ i }}">
-            <input type="text" name="brace_lower_thk_{{ i }}" id="brace_lower_thk_{{ i }}">
-        </div>
-        {% endfor %}
+    <div class="table-responsive-wrapper">
+        <table class="sections-grid-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Can OD</th>
+                    <th>Can thk</th>
+                    <th>Brace upper OD</th>
+                    <th>Brace upper thk</th>
+                    <th>Brace lower OD</th>
+                    <th>Brace lower thk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(jkt_dict['bay_heights'] | length) %}
+                <tr>
+                    <td>k{{ i + 1 }}</td>
+                    <td><input type="text" name="can_od_{{ i }}" id="can_od_{{ i }}"></td>
+                    <td><input type="text" name="can_thk_{{ i }}" id="can_thk_{{ i }}"></td>
+                    <td><input type="text" name="brace_upper_od_{{ i }}" id="brace_upper_od_{{ i }}"></td>
+                    <td><input type="text" name="brace_upper_thk_{{ i }}" id="brace_upper_thk_{{ i }}"></td>
+                    <td><input type="text" name="brace_lower_od_{{ i }}" id="brace_lower_od_{{ i }}"></td>
+                    <td><input type="text" name="brace_lower_thk_{{ i }}" id="brace_lower_thk_{{ i }}"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-
     <button type="submit" class="sections-submit-button">Submit</button>
 </form>
+
+
 
 <div id="response" class="message"></div>
 <div id="plot"></div>
@@ -110,6 +118,57 @@
             });
         });
     });
+
+    document.querySelector(".sections-grid-table").addEventListener("paste", function (e) {
+        const startInput = document.activeElement;
+        if (!startInput || startInput.tagName !== "INPUT") return;
+
+        e.preventDefault();
+        const clipboard = (e.clipboardData || window.clipboardData).getData("text");
+        const rows = clipboard.split("\n").map(r => r.split("\t"));
+
+        // Extract starting cell's row and column from its name, e.g. "brace_upper_thk_2"
+        const match = startInput.name.match(/(\w+?)_(\d+)/);
+        if (!match) return;
+
+        const baseName = match[1];  // e.g. "brace_upper_thk"
+        const startRow = parseInt(match[2]);
+
+        const allFields = Array.from(document.querySelectorAll("input[type='text']"));
+
+        // Build a lookup of inputs by row and column index
+        const inputsByRow = {};
+        allFields.forEach(input => {
+            const match = input.name.match(/(\w+?)_(\d+)/);
+            if (!match) return;
+            const [_, key, row] = match;
+            const rowIndex = parseInt(row);
+            inputsByRow[rowIndex] = inputsByRow[rowIndex] || {};
+            inputsByRow[rowIndex][key] = input;
+        });
+
+        // Get all keys in column order by header row
+        const headerRow = document.querySelector("thead tr");
+        const keysInOrder = Array.from(headerRow.querySelectorAll("th")).slice(1).map(th => {
+            return th.textContent.trim().toLowerCase().replace(/\s+/g, "_");
+        });
+
+        rows.forEach((cols, r) => {
+            const rowInputs = inputsByRow[startRow + r];
+            if (!rowInputs) return;
+
+            cols.forEach((val, c) => {
+                const key = keysInOrder[c];
+                if (rowInputs[key]) {
+                    rowInputs[key].value = val.trim();
+                }
+            });
+        });
+    });
+</script>
+
+
+
 </script>
 
 

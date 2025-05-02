@@ -1,28 +1,41 @@
 <style>
-    .sections-grid {
-        display: grid;
-        grid-template-columns: 80px repeat(6, 1fr); /* First column for row labels */
-        gap: 10px;
-        align-items: center;
+    .table-responsive-wrapper {
+        overflow-x: auto;
+        max-width: 100%;
     }
 
-    .sections-grid-header {
-        font-weight: bold;
+    .sections-grid-table {
+        border-collapse: collapse;
+        width: max-content;
+        table-layout: fixed;
+    }
+
+    .sections-grid-table th,
+    .sections-grid-table td {
+        border: 1px solid #ccc;
+        margin: 0;
+        padding: 0;
+        height: 30px;
+    }
+
+    .sections-grid-table th {
+        white-space: normal;
         text-align: center;
-    }
-
-    .sections-grid-label {
         font-weight: bold;
-        text-align: right;
-        padding-right: 8px;
+        padding: 4px; /* slight extra padding for readability */
     }
 
-    .sections-grid-row {
-        display: contents; /* Aligns row children with grid columns */
+    .sections-grid-table td {
+        white-space: nowrap;
+        min-width: 100px;
     }
 
-    .sections-grid input[type="text"] {
+    .sections-grid-table input[type="text"] {
         width: 100%;
+        height: 100%;
+        border: none;
+        padding: 0 4px;
         box-sizing: border-box;
+        font-family: monospace;
     }
 </style>

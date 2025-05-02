@@ -17,16 +17,16 @@ def jacket_sections_plot():
 
     # get the form data back (input boxes)
     form_data = data.get('form_data', {})
-    print(form_data)
 
     # get the original jacket data (from architect page
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
-    lat, msl, splash_lower = jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower']
+    jkt_obj = create_jacket_from_session()
+    # reconstruct the plot each time a new post is generated (so that the existing plot is not scattered with new data everytime a post request happens)
+    plot_json_str = jacket_plotter(jkt_obj, jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper'], show_tower=False, twr_obj=None)
+    plot_json = json.loads(plot_json_str)
 
-    # get the plot back in its current form and make updates!
-    plot_json = data.get('plot_json')
-    # print(plot_json)
+    # now convert back to
     fig = go.Figure(plot_json)
     fig.add_trace(go.Scatter(x=[0, 5000], y=[0,5000], mode='markers', name='New Point', marker=dict(size=20), showlegend=True))
     updated_plot_json = pio.to_json(fig)  # convert it back to json to feed back

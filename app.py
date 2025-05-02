@@ -7,7 +7,7 @@ from routing.routes_kjoint import k_joint_route
 from routing.routes_xjoint import x_joint_route
 from routing.routes_tyjoint import ty_joint_route
 from routing.routes_ktjoint import kt_joint_route
-from routing.placeholder import placeholder_route, butt_weld_mps_route
+from routing.placeholder import placeholder_route, joint_detailing
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -24,7 +24,7 @@ app.add_url_rule('/k_joint', 'k_joint', k_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/x_joint', 'x_joint', x_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/ty_joint', 'ty_joint', ty_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/kt_joint', 'kt_joint', kt_joint_route, methods=['GET', 'POST'])
-app.add_url_rule('/butt_weld_mps', 'butt_weld_mps', butt_weld_mps_route, methods=['GET', 'POST'])
+app.add_url_rule('/joint_detailing', 'joint_detailing', joint_detailing, methods=['GET', 'POST'])
 app.add_url_rule('/placeholder', 'placeholder', placeholder_route)
 
 
