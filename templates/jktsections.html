@@ -5,28 +5,36 @@
 
 <form id="myForm" class="sections-input-form">
     <div class="table-responsive-wrapper">
+        <!--defines tubular sections using IDs or centre line Ds. to be used in backend-->
+        <label for="joint_type_geometry">Joint geometry</label>
+        <select name="joint_type_geometry" id="joint_type_geometry">
+            <option value="ID_constant">ID constant (IDs defined)</option>
+            <option value="MD_constant">MidDia constant (MidDias defined)</option>
+        </select>
+
+
         <table class="sections-grid-table">
             <thead>
                 <tr>
                     <th></th>
                     <th>Can OD</th>
                     <th>Can thk</th>
-                    <th>Brace upper OD</th>
-                    <th>Brace upper thk</th>
-                    <th>Brace lower OD</th>
-                    <th>Brace lower thk</th>
+                    <th>Brace top OD</th>
+                    <th>Brace top thk</th>
+                    <th>Brace btm OD</th>
+                    <th>Brace btm thk</th>
                 </tr>
             </thead>
             <tbody>
                 {% for i in range(jkt_dict['bay_heights'] | length) %}
                 <tr>
                     <td>k{{ i + 1 }}</td>
-                    <td><input type="text" name="can_od_{{ i }}" id="can_od_{{ i }}"></td>
-                    <td><input type="text" name="can_thk_{{ i }}" id="can_thk_{{ i }}"></td>
-                    <td><input type="text" name="brace_upper_od_{{ i }}" id="brace_upper_od_{{ i }}"></td>
-                    <td><input type="text" name="brace_upper_thk_{{ i }}" id="brace_upper_thk_{{ i }}"></td>
-                    <td><input type="text" name="brace_lower_od_{{ i }}" id="brace_lower_od_{{ i }}"></td>
-                    <td><input type="text" name="brace_lower_thk_{{ i }}" id="brace_lower_thk_{{ i }}"></td>
+                    <td><input type="text" name="k{{ i }}_can_od" id="k{{ i }}_can_od"></td>
+                    <td><input type="text" name="k{{ i }}_can_thk" id="k{{ i }}_can_thk"></td>
+                    <td><input type="text" name="k{{ i }}_brc_top_od" id="k{{ i }}_brc_top_od"></td>
+                    <td><input type="text" name="k{{ i }}_brc_top_thk" id="k{{ i }}_brc_top_thk"></td>
+                    <td><input type="text" name="k{{ i }}_brc_btm_od" id="k{{ i }}_brc_btm_od"></td>
+                    <td><input type="text" name="k{{ i }}_brc_btm_thk" id="k{{ i }}_brc_btm_thk"></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -119,6 +127,7 @@
         });
     });
 
+    // allows the k joint table to have data directly pasted in from Excel (long function to do just this!)
     document.querySelector(".sections-grid-table").addEventListener("paste", function (e) {
         const startInput = document.activeElement;
         if (!startInput || startInput.tagName !== "INPUT") return;

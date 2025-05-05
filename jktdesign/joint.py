@@ -1,0 +1,276 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import copy
+
+"""
+Joint geometry calculated using Joint Detailing guidance.
+See ISO 19902 2020 figure 14.2-3 (pg. 162)
+Units passed to Object are mm and degrees throughout
+"""
+
+class Joint2D:
+    """defines the Joint2D object
+    """
+
+    def __init__(self, Dc, tc,
+                 d1, t1, d1_theta,
+                 d2=None, t2=None, d2_theta=None,
+                 d3=None, t3=None, d3_theta=None,
+                 joint_gap=100):
+
+        # define the joint
+        self.Dc, self.tc = Dc, tc
+        # define brace stubs
+        self.d1, self.t1, self.d1_theta = d1, t1, d1_theta
+        self.d2, self.t2, self.d2_theta = d2, t2, d2_theta
+        self.d3, self.t3, self.d3_theta = d3, t3, d3_theta
+        self.joint_gap = joint_gap
+
+        # populate the following attributes using Joint Detailing rules in ISO 19902
+        self.can_length = None
+        self.can_poly_coords = None
+        # wire end coords
+        self.b1_wire_end_coords = None
+        self.b2_wire_end_coords = None
+        self.b3_wire_end_coords = None
+        # brace polygon coords
+        self.b1_poly_coords = None
+        self.b2_poly_coords = None
+        self.b3_poly_coords = None
+        # Can coords
+        self.can_poly_coords = None
+        # joint poly coords in a dict
+        self.joint_poly_coords = {}
+        self.joint_poly_coords_transf = None
+        # tranformations
+        self._transf_method_called = False
+        self.batter_angle = None
+        self.translate_by = None
+        self.mirror = None
+
+    def create_joint(self):
+        self.calc_brace_wire_end_coords()
+        self.calc_brace_coords()
+        self.calc_can_length()
+        self.calc_can_poly_coords()
+        # store the coords in dict
+        self.get_joint_poly_coords()
+
+    @staticmethod
+    def chord_brace_attachment_length(d, d_theta):
+        """define brace attachment length of brace straight to chord (in 2D view only)
+        d, d_theta: floats, brace diameter and brace angle in degrees
+        """
+        return abs(d / np.sin(np.radians(d_theta)))
+
+    @staticmethod
+    def get_stub_length(d):
+        """when brace attaches to chord at an angle some of it overlaps into the chord surface (either at top or bottom)
+        d, d_theta: floats, brace diameter and brace angle in degrees
+        """
+        return max(d, 600)
+
+    def get_brace_wire_end_coords(self, d, d_theta):
+        # end at chord surf
+        m1x, m1y = 0.5 * self.Dc, (0.5 * self.Dc) / np.tan(np.radians(d_theta))
+        # end at stub end
+        stub_length = self.get_stub_length(d)
+        m2x = m1x + stub_length * np.sin(np.radians(d_theta))
+        m2y = m1y + stub_length * np.cos(np.radians(d_theta))
+        # put in list
+        wire_end_coords = [[m1x, m2x], [m1y, m2y]]
+        return wire_end_coords
+
+    def calc_brace_wire_end_coords(self):
+        self.b1_wire_end_coords = self.get_brace_wire_end_coords(self.d1, self.d1_theta)
+        self.b2_wire_end_coords = self.get_brace_wire_end_coords(self.d2, self.d2_theta) if self.d2 is not None else None
+        self.b3_wire_end_coords = self.get_brace_wire_end_coords(self.d3, self.d3_theta) if self.d3 is not None else None
+
+    @staticmethod
+    def get_brace_coords(wire_end_coords, d, d_theta):
+        """brace polygon
+        """
+        # unpack wire end coords
+        m1x, m2x, m1y, m2y = wire_end_coords[0][0], wire_end_coords[0][1], wire_end_coords[1][0], wire_end_coords[1][1]
+        # vertical distance up and down the chord surf from centre pt
+        v = (0.5 * d) / np.sin(np.radians(d_theta))
+        # stub points on the chord surface
+        x1, x2 = m1x, m1x
+        y1, y2 = m1y - v, m1y + v
+        # x and y dist at brace stub end to the end pt
+        oo = (0.5 * d) * np.sin(np.radians(d_theta))
+        aa = (0.5 * d) * np.cos(np.radians(d_theta))
+        # stub points at the stub end (continuing in clockwise rotation from pts 1 and 2
+        x3, x4 = m2x - aa, m2x + aa
+        y3, y4 = m2y + oo, m2y - oo
+        return [[x1, x2, x3, x4, x1], [y1, y2, y3, y4, y1]]
+
+    def calc_brace_coords(self):
+        self.b1_poly_coords = Joint2D.get_brace_coords(self.b1_wire_end_coords, self.d1, self.d1_theta)
+        self.b2_poly_coords = Joint2D.get_brace_coords(self.b2_wire_end_coords, self.d2, self.d2_theta) if self.d2 is not None else None
+        self.b3_poly_coords = Joint2D.get_brace_coords(self.b3_wire_end_coords, self.d3, self.d3_theta) if self.d3 is not None else None
+
+    def calc_can_length(self):
+        """get joint can total length and brace stub lengths
+
+            diameters (floats) defined as ODs
+            theta angles (floats) defined in degrees
+        """
+        if self.d3 is not None and self.d2 is None:
+            raise Exception("Braces numbering must be defined in ascending order. Exiting...")
+
+        # chord can length------------------------------------------------------
+        c_ends = 2 * max(self.Dc / 4, 300)  # top and bottom of chord Can length
+        b1_att_len = self.chord_brace_attachment_length(self.d1, self.d1_theta)
+        b2_att_len = self.chord_brace_attachment_length(self.d2, self.d2_theta) if self.d2 is not None else 0.
+        b3_att_len = self.chord_brace_attachment_length(self.d3, self.d3_theta) if self.d3 is not None else 0.
+
+        if self.d2 is not None:
+            self.can_length = c_ends + b1_att_len + b2_att_len + b3_att_len + self.joint_gap
+        elif self.d3 is not None:
+            self.can_length = c_ends + b1_att_len + b2_att_len + b3_att_len + 2 * self.joint_gap
+        else:
+            self.can_length = c_ends + b1_att_len + b2_att_len + b3_att_len  # no joint gap exists as 1 brace attachment only
+
+    def calc_can_poly_coords(self):
+
+        # translate the joint chord Can to be central about the braces
+        if self.d3 is None:
+            mtrans_ch_top = max(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0])
+            mtrans_ch_btm = min(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0])
+        elif self.d2 is None:
+            mtrans_ch_top = self.b1_wire_end_coords[1][0]
+            mtrans_ch_btm = self.b1_wire_end_coords[1][0]
+        else:
+            mtrans_ch_top = max(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0], self.b3_wire_end_coords[1][0])
+            mtrans_ch_btm = min(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0], self.b3_wire_end_coords[1][0])
+
+        self.can_poly_coords = [[-self.Dc / 2, -self.Dc / 2, self.Dc / 2, self.Dc / 2, -self.Dc / 2],
+                                [mtrans_ch_btm - self.can_length / 2, mtrans_ch_top + self.can_length / 2,
+                                 mtrans_ch_top + self.can_length / 2, mtrans_ch_btm - self.can_length / 2,
+                                 mtrans_ch_btm - self.can_length / 2]]
+
+    def get_joint_poly_coords(self):
+        # put everything into a single dict, cos then easy to do transforms on
+        self.joint_poly_coords["can"] = self.can_poly_coords
+        self.joint_poly_coords["brc1"] = self.b1_poly_coords
+        if self.d2 is not None:
+            self.joint_poly_coords["brc2"] = self.b2_poly_coords
+        if self.d3 is not None:
+            self.joint_poly_coords["brc3"] = self.b3_poly_coords
+
+    @staticmethod
+    def rotation_matrix(theta):  # 2D rotation matrix: rotates anticlockwise
+        return np.array([[np.cos(theta), -np.sin(theta)],
+                         [np.sin(theta), np.cos(theta)]])
+
+    def transform_joint(self, batter_angle: float = None, translate_by: list = None, mirror: bool = False):
+        """transform the 2D joint (centred about 0,0) to the WP of the actual joint and at correct batter angle.
+        Can also mirror if needed about the x=0 (y-axis) line.
+
+        Args:
+            translate_by: list, to translate the joint to e.g. [10, 0]
+            rotate_by: float, degrees of rotate
+            mirror: bool, True to mirror about the x=0 (y-axis) line
+
+        Returns:
+            updates the self.joint_poly_coords_transf attribute
+        """
+
+        if self._transf_method_called:
+            raise RuntimeError("Transformation method already ran. It can only be called once! Exiting...!")
+
+        self.batter_angle = batter_angle
+        self.translate_by = translate_by
+        self.mirror = mirror
+
+        self.joint_poly_coords_transf = copy.deepcopy(self.joint_poly_coords)
+
+        # rotate first about the 0, 0
+        if batter_angle is not None:
+            # convert to kink angle (i.e.
+            rotate_by = -90 + batter_angle if batter_angle >= 0 else 90 + batter_angle
+
+            for k, (xs, ys) in self.joint_poly_coords_transf.items():
+                polygon = np.array(list(zip(xs, ys)))
+                r_matrix = Joint2D.rotation_matrix(np.radians(rotate_by))
+                rotated_polygon = np.dot(polygon, r_matrix.T)
+                self.joint_poly_coords_transf[k][0] = rotated_polygon[:, 0].tolist()
+                self.joint_poly_coords_transf[k][1] = rotated_polygon[:, 1].tolist()
+
+        # translate to where it needs to be
+        if translate_by is not None:
+            for k, (xs, ys) in self.joint_poly_coords_transf.items():
+                self.joint_poly_coords_transf[k][0] = [x + translate_by[0] for x in xs]
+                self.joint_poly_coords_transf[k][1] = [y + translate_by[1] for y in ys]
+
+
+        if mirror:
+            for k, (xs, ys) in self.joint_poly_coords_transf.items():
+                x_mirrored = [-xi for xi in xs]
+                self.joint_poly_coords_transf[k][0] = x_mirrored
+
+        self._transf_method_called = True
+
+    def plot_2D_joint(self):
+        """plot the 2D joint using matplotlib
+        """
+        # plot can
+        plt.plot(self.can_poly_coords[0], self.can_poly_coords[1])
+        # plot brace 1 stub outlines
+        plt.plot(self.b1_poly_coords[0], self.b1_poly_coords[1])
+        plt.plot([0] + self.b1_wire_end_coords[0], [0] + self.b1_wire_end_coords[1])
+        # plot brace 2 and brace 3 stub outlines (if exists)
+        if self.d2 is not None:
+            plt.plot(self.b2_poly_coords[0], self.b2_poly_coords[1])
+            plt.plot([0] + self.b2_wire_end_coords[0], [0] + self.b2_wire_end_coords[1])
+        if self.d3 is not None:
+            plt.plot(self.b3_poly_coords[0], self.b3_poly_coords[1])
+            plt.plot([0] + self.b3_wire_end_coords[0], [0] + self.b3_wire_end_coords[1])
+
+        # plot 0, 0 lines
+        plt.axhline(y=0, color='r', linestyle='--')
+        plt.axvline(x=0, color='r', linestyle='--')
+
+        # plot the transformed joint
+        if self.joint_poly_coords_transf:
+            for k, v in self.joint_poly_coords_transf.items():
+                plt.plot(v[0], v[1])
+
+            # show horizontal and vertical lines to intersect at the centre of the transformed joint
+            if self.translate_by is not None:
+                xm = -self.translate_by[0] if self.mirror is not None and self.mirror else self.translate_by[0]
+                plt.axhline(y=self.translate_by[1], color='y', linestyle='--')
+                plt.axvline(x=xm, color='y', linestyle='--')
+
+        # plot it!
+        plt.axis('equal')
+        plt.show()
+
+
+if __name__ == "__main__":
+
+    # need brace stub coords
+    Dc, tc  = 4000, 80
+    # top brace
+    d1, t1 = 400, 40
+    d1_theta = 45  # degrees defined from vertical
+    # btm brace
+    d2, t2 = 400, 40
+    d2_theta = 90  # degrees defined from vertical
+
+    # btm brace
+    d3, t3 = 400, 40
+    d3_theta = 120  # degrees defined from vertical
+
+    jnt_obj = Joint2D(Dc, tc, d1, t1, d1_theta, d2, t2, d2_theta, d3, t3, d3_theta, joint_gap=100)
+    jnt_obj.create_joint()
+
+    # try out the transforms!
+    joint_poly_coords = jnt_obj.joint_poly_coords
+    jnt_obj.transform_joint(batter_angle=72, translate_by=[-21227, 9413], mirror=False)
+    jnt_obj.plot_2D_joint()
+
+
+
+

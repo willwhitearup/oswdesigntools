@@ -18,6 +18,9 @@ def jacket_sections_plot():
     # get the form data back (input boxes)
     form_data = data.get('form_data', {})
 
+    
+
+
     # get the original jacket data (from architect page
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
