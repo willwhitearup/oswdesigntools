@@ -11,11 +11,10 @@ Units passed to Object are mm and degrees throughout
 class Joint2D:
     """defines the Joint2D object
     """
-
     def __init__(self, Dc, tc,
-                 d1, t1, d1_theta,
+                 d1, t1, d1_theta=None,
                  d2=None, t2=None, d2_theta=None,
-                 d3=None, t3=None, d3_theta=None,
+                 d3=None, t3=None, d3_theta=None, jt_name=None,
                  joint_gap=100):
 
         # define the joint
@@ -24,7 +23,14 @@ class Joint2D:
         self.d1, self.t1, self.d1_theta = d1, t1, d1_theta
         self.d2, self.t2, self.d2_theta = d2, t2, d2_theta
         self.d3, self.t3, self.d3_theta = d3, t3, d3_theta
+        self.jt_name = jt_name  # k jt name e.g. 'kjt_1', 'kjt_2' ...
         self.joint_gap = joint_gap
+
+        # X joint checker
+        if self.d2_theta is not None and self.d2_theta < 0:
+            print(f"X joint identified for {self.jt_name}. Only 2 braces allowed! joint gaps are auto set to be 0.")
+            self.joint_gap = 0.  # joint gaps are irrelevant for X joints
+            assert self.d3 is None, "Check shows that 3 brace attachments specified for an X joint! Exiting...!"
 
         # populate the following attributes using Joint Detailing rules in ISO 19902
         self.can_length = None
@@ -47,6 +53,9 @@ class Joint2D:
         self.batter_angle = None
         self.translate_by = None
         self.mirror = None
+        # stub and can end points
+        self.stub_end_pts = {}  # dict of the stub ends only
+        self.can_pt_top, self.can_pt_btm = None, None  # list, of the top and bottom of the Can [xtop, ytop], [xbtm, ybtm]
 
     def create_joint(self):
         self.calc_brace_wire_end_coords()
@@ -56,6 +65,16 @@ class Joint2D:
         # store the coords in dict
         self.get_joint_poly_coords()
 
+    def brace_attachment_thetas(self, d1_theta=None, d2_theta=None, d3_theta=None):
+        """method allows brace theta angles to be defined after object initiated
+        """
+        if d1_theta is not None:
+            self.d1_theta = d1_theta
+        if d2_theta is not None:
+            self.d2_theta = d2_theta
+        if d3_theta is not None:
+            self.d3_theta = d3_theta
+
     @staticmethod
     def chord_brace_attachment_length(d, d_theta):
         """define brace attachment length of brace straight to chord (in 2D view only)
@@ -64,17 +83,21 @@ class Joint2D:
         return abs(d / np.sin(np.radians(d_theta)))
 
     @staticmethod
-    def get_stub_length(d):
+    def get_stub_length(d, d_theta):
         """when brace attaches to chord at an angle some of it overlaps into the chord surface (either at top or bottom)
         d, d_theta: floats, brace diameter and brace angle in degrees
         """
-        return max(d, 600)
+        stub_length = abs(0.5 * d / np.tan(np.radians(d_theta))) + max(d, 600)
+        return stub_length
 
     def get_brace_wire_end_coords(self, d, d_theta):
-        # end at chord surf
+        # start coord at chord surf
         m1x, m1y = 0.5 * self.Dc, (0.5 * self.Dc) / np.tan(np.radians(d_theta))
         # end at stub end
-        stub_length = self.get_stub_length(d)
+        stub_length = self.get_stub_length(d, d_theta)
+        if d_theta > 180:
+            m1x = -1 * m1x
+            m1y = -(0.5 * self.Dc) / np.tan(np.radians(d_theta))
         m2x = m1x + stub_length * np.sin(np.radians(d_theta))
         m2y = m1y + stub_length * np.cos(np.radians(d_theta))
         # put in list
@@ -82,6 +105,8 @@ class Joint2D:
         return wire_end_coords
 
     def calc_brace_wire_end_coords(self):
+        # wire end coords of the brace Joints centred about 0, 0 and orientated vertically
+        # wire end coords start at the chord surf and end at the end of the brace stub
         self.b1_wire_end_coords = self.get_brace_wire_end_coords(self.d1, self.d1_theta)
         self.b2_wire_end_coords = self.get_brace_wire_end_coords(self.d2, self.d2_theta) if self.d2 is not None else None
         self.b3_wire_end_coords = self.get_brace_wire_end_coords(self.d3, self.d3_theta) if self.d3 is not None else None
@@ -135,12 +160,12 @@ class Joint2D:
     def calc_can_poly_coords(self):
 
         # translate the joint chord Can to be central about the braces
-        if self.d3 is None:
-            mtrans_ch_top = max(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0])
-            mtrans_ch_btm = min(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0])
-        elif self.d2 is None:
+        if self.d2 is None:
             mtrans_ch_top = self.b1_wire_end_coords[1][0]
             mtrans_ch_btm = self.b1_wire_end_coords[1][0]
+        elif self.d3 is None:
+            mtrans_ch_top = max(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0])
+            mtrans_ch_btm = min(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0])
         else:
             mtrans_ch_top = max(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0], self.b3_wire_end_coords[1][0])
             mtrans_ch_btm = min(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0], self.b3_wire_end_coords[1][0])
@@ -167,6 +192,11 @@ class Joint2D:
     def transform_joint(self, batter_angle: float = None, translate_by: list = None, mirror: bool = False):
         """transform the 2D joint (centred about 0,0) to the WP of the actual joint and at correct batter angle.
         Can also mirror if needed about the x=0 (y-axis) line.
+
+        Transformations in order:
+            1. Rotate Joint
+            2. Translate Joint
+            3. Mirror Joint
 
         Args:
             translate_by: list, to translate the joint to e.g. [10, 0]
@@ -204,13 +234,37 @@ class Joint2D:
                 self.joint_poly_coords_transf[k][0] = [x + translate_by[0] for x in xs]
                 self.joint_poly_coords_transf[k][1] = [y + translate_by[1] for y in ys]
 
-
+        # mirror joint
         if mirror:
             for k, (xs, ys) in self.joint_poly_coords_transf.items():
                 x_mirrored = [-xi for xi in xs]
                 self.joint_poly_coords_transf[k][0] = x_mirrored
 
         self._transf_method_called = True
+
+        # get the end pts of the Can and stubs
+        self.get_transf_can_wire_end_pts()
+        self.get_transf_stub_end_pt()
+
+    def get_transf_can_wire_end_pts(self):
+        if self.joint_poly_coords_transf:
+            xt1, yt1 = self.joint_poly_coords_transf["can"][0][1], self.joint_poly_coords_transf["can"][1][1]
+            xt2, yt2 = self.joint_poly_coords_transf["can"][0][2], self.joint_poly_coords_transf["can"][1][2]
+            self.can_pt_top = [(xt1 + xt2) / 2, (yt1 + yt2) / 2]
+            xb1, yb1 = self.joint_poly_coords_transf["can"][0][3], self.joint_poly_coords_transf["can"][1][3]
+            xb2, yb2 = self.joint_poly_coords_transf["can"][0][4], self.joint_poly_coords_transf["can"][1][4]
+            self.can_pt_btm = [(xb1 + xb2) / 2, (yb1 + yb2) / 2]
+
+    def get_transf_stub_end_pt(self):
+        # get (x, y) pt of the transformed stub end
+        if self.joint_poly_coords_transf:
+            for k, v in self.joint_poly_coords_transf.items():
+                if k == "can":
+                    continue
+                else:
+                    x = (v[0][2] + v[0][3]) / 2
+                    y = (v[1][2] + v[1][3]) / 2
+                    self.stub_end_pts[k] = [x, y]
 
     def plot_2D_joint(self):
         """plot the 2D joint using matplotlib
@@ -250,25 +304,46 @@ class Joint2D:
 
 if __name__ == "__main__":
 
+    # K JOINT
     # need brace stub coords
-    Dc, tc  = 4000, 80
+    # Dc, tc  = 2000, 80
+    # # top brace
+    # d1, t1 = 400, 40
+    # d1_theta = 175  # degrees defined from vertical
+    # # btm brace
+    # d2, t2 = 400, 40
+    # d2_theta = 90  # degrees defined from vertical
+    #
+    # # btm brace
+    d3, t3 = 400, 40
+    # d3_theta = 150  # degrees defined from vertical
+    #
+    # jnt_obj = Joint2D(Dc, tc, d1, t1, d1_theta, d2, t2, d2_theta, d3, t3, d3_theta, joint_gap=100)
+    # jnt_obj.create_joint()
+    #
+    # # try out the transforms!
+    # joint_poly_coords = jnt_obj.joint_poly_coords
+    # #jnt_obj.transform_joint(batter_angle=72, translate_by=[-21227, 9413], mirror=False)
+    # jnt_obj.transform_joint(batter_angle=90, translate_by=[0, 0], mirror=False)
+    # jnt_obj.plot_2D_joint()
+
+    # X JOINT  # todo!!! make it work for x joint !!!
+    # need brace stub coords
+    Dc, tc  = 2000, 80
     # top brace
     d1, t1 = 400, 40
-    d1_theta = 45  # degrees defined from vertical
+    d1_theta = 120  # degrees defined from vertical
     # btm brace
-    d2, t2 = 400, 40
-    d2_theta = 90  # degrees defined from vertical
+    d2, t2 = 600, 40
+    d2_theta = 120 + 180  # degrees defined from vertical
 
-    # btm brace
-    d3, t3 = 400, 40
-    d3_theta = 120  # degrees defined from vertical
-
-    jnt_obj = Joint2D(Dc, tc, d1, t1, d1_theta, d2, t2, d2_theta, d3, t3, d3_theta, joint_gap=100)
+    jnt_obj = Joint2D(Dc, tc, d1, t1, d1_theta, d2, t2, d2_theta, joint_gap=0)
     jnt_obj.create_joint()
 
     # try out the transforms!
     joint_poly_coords = jnt_obj.joint_poly_coords
-    jnt_obj.transform_joint(batter_angle=72, translate_by=[-21227, 9413], mirror=False)
+    #jnt_obj.transform_joint(batter_angle=0, translate_by=[-21227, 9413], mirror=False)
+    #jnt_obj.transform_joint(batter_angle=90, translate_by=[0, 0], mirror=False)
     jnt_obj.plot_2D_joint()
 
 

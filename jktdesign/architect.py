@@ -114,7 +114,7 @@ def jacket_architect():
         'stickup': 4000,
         'tp_btm_k1_voffset': 1000,
         'btm_vert_leg_length': 5030,
-        'n_bays': 4,
+        'n_bays': 2,
         'batter_1_theta': 86,
         'batter_1_elev': -9700,
         'single_batter': False
@@ -126,7 +126,9 @@ def jacket_architect():
 
     defaults['bay_heights'] = ','.join([str(bay_height_value)] * defaults['n_bays'])
 
-    defaults['bay_horizontals'] = [False] * defaults['n_bays']
+    n_bays = defaults['n_bays']
+    defaults['bay_horizontals'] = [True] * defaults['n_bays']
+    defaults['bay_horizontals'] = [True] * 1 + [False] *(n_bays - 1)
     # Calculate batter_2_theta
     jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],

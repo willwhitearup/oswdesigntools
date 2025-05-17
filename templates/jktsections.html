@@ -3,6 +3,15 @@
 {% block content %}
 {% include "jktsections_styles.html" %}
 
+
+{% if error_message %}
+    <div class="alert alert-warning">
+        {{ error_message }}
+        <a href="/architect" class="btn btn-primary">Go to Architect Page</a>
+        <br><br>
+    </div>
+{% endif %}
+
 <form id="myForm" class="sections-input-form">
     <div class="table-responsive-wrapper">
         <!--defines tubular sections using IDs or centre line Ds. to be used in backend-->
@@ -11,34 +20,121 @@
             <option value="ID_constant">ID constant (IDs defined)</option>
             <option value="MD_constant">MidDia constant (MidDias defined)</option>
         </select>
-
-
+        <br><br>
         <table class="sections-grid-table">
             <thead>
                 <tr>
                     <th></th>
-                    <th>Can OD</th>
+                    <th>Can Dia</th>
                     <th>Can thk</th>
-                    <th>Brace top OD</th>
-                    <th>Brace top thk</th>
-                    <th>Brace btm OD</th>
-                    <th>Brace btm thk</th>
+                    <th>Stub1 Dia</th>
+                    <th>Stub1 thk</th>
+                    <th>Stub2 Dia</th>
+                    <th>Stub2 thk</th>
+                    <th>Stub3 Dia</th>
+                    <th>Stub3 thk</th>
+                </tr>
+            </thead>
+                <tbody>
+                    {% for kjt_key, brace_count in kjt_n_braces.items() %}
+                    <tr>
+                        <td>{{ kjt_key }}</td>
+                        <td><input type="text" name="{{ kjt_key }}_can_d" id="{{ kjt_key }}_can_d" value="2000"></td>
+                        <td><input type="text" name="{{ kjt_key }}_can_t" id="{{ kjt_key }}_can_t" value="100"></td>
+                        <td><input type="text" name="{{ kjt_key }}_stub_1_d" id="{{ kjt_key }}_stub_1_d" value="400"></td>
+                        <td><input type="text" name="{{ kjt_key }}_stub_1_t" id="{{ kjt_key }}_stub_1_t" value="40"></td>
+                        {% if brace_count > 1 %}
+                        <td><input type="text" name="{{ kjt_key }}_stub_2_d" id="{{ kjt_key }}_stub_2_d" value="600"></td>
+                        <td><input type="text" name="{{ kjt_key }}_stub_2_t" id="{{ kjt_key }}_stub_2_t" value="60"></td>
+                        {% else %}
+                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_d"></td>
+                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_t"></td>
+                        {% endif %}
+                        {% if brace_count > 2 %}
+                        <td><input type="text" name="{{ kjt_key }}_stub_3_d" id="{{ kjt_key }}_stub_3_d" value="600"></td>
+                        <td><input type="text" name="{{ kjt_key }}_stub_3_t" id="{{ kjt_key }}_stub_3_t" value="60"></td>
+                        {% else %}
+                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_d"></td>
+                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_t"></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+        </table>
+        <br>
+        <!--create a table for the x joints-->
+        <table class="sections-grid-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Can Dia</th>
+                    <th>Can thk</th>
+                    <th>Stub Dia</th>
+                    <th>Stub thk</th>
                 </tr>
             </thead>
             <tbody>
-                {% for i in range(jkt_dict['bay_heights'] | length) %}
+                {% for i in range(kjt_n_braces|length - 1) %}
                 <tr>
-                    <td>k{{ i + 1 }}</td>
-                    <td><input type="text" name="k{{ i }}_can_od" id="k{{ i }}_can_od"></td>
-                    <td><input type="text" name="k{{ i }}_can_thk" id="k{{ i }}_can_thk"></td>
-                    <td><input type="text" name="k{{ i }}_brc_top_od" id="k{{ i }}_brc_top_od"></td>
-                    <td><input type="text" name="k{{ i }}_brc_top_thk" id="k{{ i }}_brc_top_thk"></td>
-                    <td><input type="text" name="k{{ i }}_brc_btm_od" id="k{{ i }}_brc_btm_od"></td>
-                    <td><input type="text" name="k{{ i }}_brc_btm_thk" id="k{{ i }}_brc_btm_thk"></td>
+                    <td>xjt_{{ i + 1 }}</td>
+                    <td><input type="text" name="xjt_{{ i + 1 }}_can_d" id="xjt_{{ i + 1 }}_can_d" value="1000"></td>
+                    <td><input type="text" name="xjt_{{ i + 1 }}_can_t" id="xjt_{{ i + 1 }}_can_t" value="40"></td>
+                    <td><input type="text" name="xjt_{{ i + 1 }}_stub_d" id="xjt_{{ i + 1 }}_stub_d" value="1000"></td>
+                    <td><input type="text" name="xjt_{{ i + 1 }}_stub_t" id="xjt_{{ i + 1 }}_stub_t" value="40"></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        <br>
+
+
+
+        <!--create a table for the leg sections-->
+        <table class="sections-grid-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Leg Dia</th>
+                    <th>Leg thk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(kjt_n_braces|length - 1) %}
+                <tr>
+                    <td>leg_{{ i + 1 }}</td>
+                    <td><input type="text" name="leg_{{ i + 1 }}_d" id="leg_{{ i + 1 }}_d" value="2000"></td>
+                    <td><input type="text" name="leg_{{ i + 1 }}_t" id="leg_{{ i + 1 }}_t" value="80"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+
+
+
+        <!--create a table for the leg sections-->
+        <table class="sections-grid-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Brace Dia</th>
+                    <th>Brace thk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(kjt_n_braces|length - 1) %}
+                <tr>
+                    <td>bay_{{ i + 1 }}</td>
+                    <td><input type="text" name="bay_{{ i + 1 }}_d" id="bay_{{ i + 1 }}_d" value="1000"></td>
+                    <td><input type="text" name="bay_{{ i + 1 }}_t" id="bay_{{ i + 1 }}_t" value="40"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br>
+
+
+
     </div>
     <button type="submit" class="sections-submit-button">Submit</button>
 </form>
@@ -52,6 +148,8 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 <script>
+
+    // plot the plotly plot
     document.addEventListener("DOMContentLoaded", function () {
         // Parse the plot_json from server
         let plot_json = {{ plot_json | tojson | safe }};
@@ -127,53 +225,6 @@
         });
     });
 
-    // allows the k joint table to have data directly pasted in from Excel (long function to do just this!)
-    document.querySelector(".sections-grid-table").addEventListener("paste", function (e) {
-        const startInput = document.activeElement;
-        if (!startInput || startInput.tagName !== "INPUT") return;
-
-        e.preventDefault();
-        const clipboard = (e.clipboardData || window.clipboardData).getData("text");
-        const rows = clipboard.split("\n").map(r => r.split("\t"));
-
-        // Extract starting cell's row and column from its name, e.g. "brace_upper_thk_2"
-        const match = startInput.name.match(/(\w+?)_(\d+)/);
-        if (!match) return;
-
-        const baseName = match[1];  // e.g. "brace_upper_thk"
-        const startRow = parseInt(match[2]);
-
-        const allFields = Array.from(document.querySelectorAll("input[type='text']"));
-
-        // Build a lookup of inputs by row and column index
-        const inputsByRow = {};
-        allFields.forEach(input => {
-            const match = input.name.match(/(\w+?)_(\d+)/);
-            if (!match) return;
-            const [_, key, row] = match;
-            const rowIndex = parseInt(row);
-            inputsByRow[rowIndex] = inputsByRow[rowIndex] || {};
-            inputsByRow[rowIndex][key] = input;
-        });
-
-        // Get all keys in column order by header row
-        const headerRow = document.querySelector("thead tr");
-        const keysInOrder = Array.from(headerRow.querySelectorAll("th")).slice(1).map(th => {
-            return th.textContent.trim().toLowerCase().replace(/\s+/g, "_");
-        });
-
-        rows.forEach((cols, r) => {
-            const rowInputs = inputsByRow[startRow + r];
-            if (!rowInputs) return;
-
-            cols.forEach((val, c) => {
-                const key = keysInOrder[c];
-                if (rowInputs[key]) {
-                    rowInputs[key].value = val.trim();
-                }
-            });
-        });
-    });
 </script>
 
 

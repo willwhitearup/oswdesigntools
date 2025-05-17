@@ -142,6 +142,33 @@ const debounce = (func, delay = 300) => {
     };
 };
 
+const bayHorizontals = {{ defaults.bay_horizontals | tojson }};
+
+// ====== Handle Plot Resize ======
+window.addEventListener('resize', debounce(function() {
+    Plotly.Plots.resize('plot');
+}));
+
+// ====== Initial Setup ======
+generateBayInputs();
+updatePlot();
+setupInputListeners();
+
+// ====== Attach Event Listeners ======
+function setupInputListeners() {
+    document.querySelectorAll('.architect-input-form input').forEach(input => {
+        input.addEventListener('input', debounce(function() {
+            syncTextAndSlider(this);
+
+            // Special case: some inputs trigger bay re-generation
+            if (['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'stickup_slider', 'n_bays'].includes(this.id)) {
+                runAllUpdates({ generateBayInputs: true });
+            } else {
+                runAllUpdates();
+            }
+        }));
+    });
+}
 
 // ====== Core Update Trigger ======
 function runAllUpdates(extra = {}) {
@@ -166,21 +193,6 @@ function runAllUpdates(extra = {}) {
     }
 }
 
-// ====== Attach Event Listeners ======
-function setupInputListeners() {
-    document.querySelectorAll('.architect-input-form input').forEach(input => {
-        input.addEventListener('input', debounce(function() {
-            syncTextAndSlider(this);
-
-            // Special case: some inputs trigger bay re-generation
-            if (['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'stickup_slider', 'n_bays'].includes(this.id)) {
-                runAllUpdates({ generateBayInputs: true });
-            } else {
-                runAllUpdates();
-            }
-        }));
-    });
-}
 
 
 // ====== Sync Slider and Input Text Fields ======
@@ -197,16 +209,6 @@ function syncTextAndSlider(inputElem) {
     }
 }
 
-
-// ====== Handle Plot Resize ======
-window.addEventListener('resize', debounce(function() {
-    Plotly.Plots.resize('plot');
-}));
-
-// ====== Initial Setup ======
-generateBayInputs();
-updatePlot();
-setupInputListeners();
 
 function toggleTowerInputs() {
     var showTower = document.getElementById('show_tower').checked;
@@ -333,8 +335,22 @@ function generateBayInputs() {
         checkbox.name = `bay_horizontal_${i}`;
         checkbox.value = 'on';
 
+
+        // Set checkbox state using bayHorizontals from Flask
+        if (bayHorizontals && bayHorizontals[i - 1]) {
+            checkbox.checked = true;
+        }
+
+        // Store checkbox state in bayHorizontalStates
+        checkbox.addEventListener('change', () => {
+            // Update bayHorizontalStates array when checkbox changes
+            bayHorizontalStates[i - 1] = checkbox.checked;
+        });
+
+
+
         // Store checkbox state in array
-        bayHorizontalStates.push(checkbox.checked);
+        // bayHorizontalStates.push(checkbox.checked);
 
         const input = document.createElement('input');
         input.type = 'text';

@@ -1,4 +1,5 @@
 import numpy as np
+import random
 import plotly.graph_objs as go
 import plotly.io as pio
 
@@ -143,6 +144,18 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     else:
         # TP btm line only--------------------------------------------------------------------------------------------------
         fig.add_trace(go.Scatter(x=[-tp_width/2, tp_width/2], y=[tp_btm, tp_btm], line=dict(color='purple'), name='TP btm width'))
+
+
+    # plot the joint_objs if they exist
+    joint_objs = jkt_obj.joint_objs
+    for jidx, joint_obj in enumerate(joint_objs):
+        # make a random colour for each k joint
+        clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
+        for idx, (k, v) in enumerate(joint_obj.joint_poly_coords_transf.items()):
+            fig.add_trace(
+                go.Scatter(x=v[0], y=v[1], line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
+                           mode="lines", showlegend=(idx == 0)))
+
 
     # Add labels and title
     water_levels_x_ext=0.1
