@@ -124,6 +124,21 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     fig.add_trace(go.Scatter(x=[jacket_footprint / 2, jacket_footprint / 2], y=[-water_depth, -water_depth + stickup],
                              mode='lines', line=dict(color='black', width=5), showlegend=False))
 
+    # jacket batter
+    # add a dotted line from the batter elevations
+    batter_1_elev, batter_1_width = jkt_obj.batter_1_elev, jkt_obj.batter_1_width
+    fig.add_shape(type='line', x0=xof + batter_1_width / 2, x1=2 * water_levels_x_ext * jacket_footprint,
+                  y0=batter_1_elev, y1=batter_1_elev, line=dict(color='grey', dash="dot"), showlegend=False)
+    # add some elevation data text
+    fig.add_trace(go.Scatter(x=[2 * water_levels_x_ext * jacket_footprint], y=[batter_1_elev], mode='text',
+                             text=[f'batter 1 EL{batter_1_elev}'], textposition='top left', textfont=dict(color='grey'), showlegend=False))
+    batter_2_elev, batter_2_width = jkt_obj.batter_2_elev, jkt_obj.batter_2_width
+    fig.add_shape(type='line', x0=xof + batter_2_width / 2, x1=2 * water_levels_x_ext * jacket_footprint,
+                  y0=batter_2_elev, y1=batter_2_elev, line=dict(color='grey', dash="dot"), showlegend=False)
+    # add some elevation data text
+    fig.add_trace(go.Scatter(x=[2 * water_levels_x_ext * jacket_footprint], y=[batter_2_elev], mode='text',
+                             text=[f'batter 2 EL{batter_2_elev}'], textposition='top left', textfont=dict(color='grey'), showlegend=False))
+
     # Tower and TP----------------------------------------------------------------------------------------------
     if show_tower:
         # TP box-----------------------------------------------------------------------------------------------------
@@ -145,26 +160,12 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         # TP btm line only--------------------------------------------------------------------------------------------------
         fig.add_trace(go.Scatter(x=[-tp_width/2, tp_width/2], y=[tp_btm, tp_btm], line=dict(color='purple'), name='TP btm width'))
 
+    # plot jacket sections (2D plotting)
+    fig = plot_2D_plotly_sections(fig, jkt_obj)
 
-    # plot the joint_objs if they exist
-    joint_objs = jkt_obj.joint_objs
-    for jidx, joint_obj in enumerate(joint_objs):
-        # make a random colour for each k joint
-        clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
-        for idx, (k, v) in enumerate(joint_obj.joint_poly_coords_transf.items()):
-            fig.add_trace(
-                go.Scatter(x=v[0], y=v[1], line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
-                           mode="lines", showlegend=(idx == 0)))
+    # labels and title
+    fig.update_layout(yaxis_title='elevation rel LAT [mm]', yaxis=dict(scaleanchor="x", scaleratio=1), legend=dict(x=1, y=1))
 
-
-    # Add labels and title
-    water_levels_x_ext=0.1
-    fig.update_layout(
-        yaxis_title='elevation rel LAT [mm]',
-        #xaxis=dict(range=[-water_levels_x_ext * jacket_footprint, water_levels_x_ext * jacket_footprint]),  #set the x-axis extents
-        yaxis=dict(scaleanchor="x", scaleratio=1),
-        legend=dict(x=1, y=1)
-    )
     # Show the plot
     # fig.show()
 
@@ -172,3 +173,67 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     plot_json = pio.to_json(fig)
 
     return plot_json
+
+
+# 2D section plotting----------------------------------
+def plot_2D_plotly_sections(fig, jkt_obj):
+    """plot assigned jacket sections onto plotly figure
+
+    Args:
+        fig: plotly object
+        jkt_obj: see jacket.py
+
+    Returns:
+        fig, updated plotly object
+    """
+    # plot the K-Joint and X-Joint sections poly coordinates of the joint_objs (if they exist)
+    joint_objs = jkt_obj.joint_objs
+    for jidx, joint_obj in enumerate(joint_objs):
+        # make a random colour for each k joint
+        clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
+        for idx, (k, v) in enumerate(joint_obj.joint_poly_coords_transf.items()):
+            x, y = v[0], v[1]
+            # plot the polygon (use toself as polygon not closed)
+            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
+                                     mode="none", fill='toself', showlegend=(idx == 0)))
+            # line outline of polygon (with line, repeated first point)
+            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+
+    # plot legs and braces
+    fig = leg_object_plotting(fig, jkt_obj.leg_objs)  # plot the Leg sections
+    fig = leg_object_plotting(fig, jkt_obj.brace_a_objs)  # plot the Brace a sections
+    fig = leg_object_plotting(fig, jkt_obj.brace_b_objs)  # plot the Brace b sections
+    fig = leg_object_plotting(fig, jkt_obj.brace_hz_objs)  # plot the Brace horizontal sections
+
+    return fig
+
+def leg_object_plotting(fig, leg_objs):
+    # plot the Leg sections
+    for lidx, leg_obj in enumerate(leg_objs):
+        # make a random colour for each leg
+        clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
+        leg_a_poly_coords = leg_obj.leg_a_poly_coords
+        for idx, (xs, ys) in enumerate(leg_a_poly_coords):
+            x, y = list(xs), list(ys)
+            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=leg_obj.leg_name if idx == 0 else None,
+                                     mode="none", fill='toself', showlegend=(idx == 0)))
+            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+
+        # plot the leg_b (the bit that has been split at the kink) of the leg section
+        leg_b_poly_coords = leg_obj.leg_b_poly_coords  # may be None
+        if leg_b_poly_coords is not None:
+            for idx, (xs, ys) in enumerate(leg_b_poly_coords):
+                x, y = list(xs), list(ys)
+                fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=leg_obj.leg_name if idx == 0 else None,
+                                         mode="none", fill='toself', showlegend=(idx == 0)))
+                fig.add_trace(
+                    go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+
+        cone_poly_coords = leg_obj.cone_poly_coords
+        if cone_poly_coords is not None:
+            x, y = cone_poly_coords[0], cone_poly_coords[1]
+            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr),
+                                     mode="none", fill='toself', showlegend=False))
+            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+
+    return fig

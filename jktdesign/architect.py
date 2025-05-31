@@ -116,13 +116,13 @@ def jacket_architect():
         'btm_vert_leg_length': 5030,
         'n_bays': 2,
         'batter_1_theta': 86,
-        'batter_1_elev': -9700,
+        'batter_1_elev': -8500,
         'single_batter': False
     }
 
     # Calculate default bay heights
-    bay_height_value = ((defaults['tp_btm'] - defaults['tp_btm_k1_voffset']) - (
-                -defaults['water_depth'] + defaults['stickup'] + defaults['tp_btm_k1_voffset'])) / defaults['n_bays']
+    jacket_height = ((defaults['tp_btm'] - defaults['tp_btm_k1_voffset']) - (-defaults['water_depth'] + defaults['stickup'] + defaults['tp_btm_k1_voffset']))
+    bay_height_value =  jacket_height / defaults['n_bays']
 
     defaults['bay_heights'] = ','.join([str(bay_height_value)] * defaults['n_bays'])
 

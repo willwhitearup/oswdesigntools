@@ -59,7 +59,7 @@ class Joint2D:
 
     def create_joint(self):
         self.calc_brace_wire_end_coords()
-        self.calc_brace_coords()
+        self.calc_brace_poly_coords()
         self.calc_can_length()
         self.calc_can_poly_coords()
         # store the coords in dict
@@ -128,9 +128,10 @@ class Joint2D:
         # stub points at the stub end (continuing in clockwise rotation from pts 1 and 2
         x3, x4 = m2x - aa, m2x + aa
         y3, y4 = m2y + oo, m2y - oo
-        return [[x1, x2, x3, x4, x1], [y1, y2, y3, y4, y1]]
+        # 4 points only to define the polygon (do not close the polygon)
+        return [[x1, x2, x3, x4], [y1, y2, y3, y4]]
 
-    def calc_brace_coords(self):
+    def calc_brace_poly_coords(self):
         self.b1_poly_coords = Joint2D.get_brace_coords(self.b1_wire_end_coords, self.d1, self.d1_theta)
         self.b2_poly_coords = Joint2D.get_brace_coords(self.b2_wire_end_coords, self.d2, self.d2_theta) if self.d2 is not None else None
         self.b3_poly_coords = Joint2D.get_brace_coords(self.b3_wire_end_coords, self.d3, self.d3_theta) if self.d3 is not None else None
@@ -145,7 +146,7 @@ class Joint2D:
             raise Exception("Braces numbering must be defined in ascending order. Exiting...")
 
         # chord can length------------------------------------------------------
-        c_ends = 2 * max(self.Dc / 4, 300)  # top and bottom of chord Can length
+        c_ends = 2 * max(self.Dc / 4, 300)  # top and bottom of chord Can length, see ISO 19902
         b1_att_len = self.chord_brace_attachment_length(self.d1, self.d1_theta)
         b2_att_len = self.chord_brace_attachment_length(self.d2, self.d2_theta) if self.d2 is not None else 0.
         b3_att_len = self.chord_brace_attachment_length(self.d3, self.d3_theta) if self.d3 is not None else 0.
@@ -170,10 +171,11 @@ class Joint2D:
             mtrans_ch_top = max(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0], self.b3_wire_end_coords[1][0])
             mtrans_ch_btm = min(self.b1_wire_end_coords[1][0], self.b2_wire_end_coords[1][0], self.b3_wire_end_coords[1][0])
 
-        self.can_poly_coords = [[-self.Dc / 2, -self.Dc / 2, self.Dc / 2, self.Dc / 2, -self.Dc / 2],
+        # joint Can poly coords, about the 0, 0 point (list of [[x1, x2...], [y1, y2...]]
+        # 4 points only to define a polygon rectangle
+        self.can_poly_coords = [[-self.Dc / 2, -self.Dc / 2, self.Dc / 2, self.Dc / 2],# -self.Dc / 2],
                                 [mtrans_ch_btm - self.can_length / 2, mtrans_ch_top + self.can_length / 2,
-                                 mtrans_ch_top + self.can_length / 2, mtrans_ch_btm - self.can_length / 2,
-                                 mtrans_ch_btm - self.can_length / 2]]
+                                 mtrans_ch_top + self.can_length / 2, mtrans_ch_btm - self.can_length / 2]]
 
     def get_joint_poly_coords(self):
         # put everything into a single dict, cos then easy to do transforms on
@@ -247,12 +249,17 @@ class Joint2D:
         self.get_transf_stub_end_pt()
 
     def get_transf_can_wire_end_pts(self):
+        """get the start and end point of the line defining the Can
+        """
         if self.joint_poly_coords_transf:
+            # top 2 points of the Can
             xt1, yt1 = self.joint_poly_coords_transf["can"][0][1], self.joint_poly_coords_transf["can"][1][1]
             xt2, yt2 = self.joint_poly_coords_transf["can"][0][2], self.joint_poly_coords_transf["can"][1][2]
             self.can_pt_top = [(xt1 + xt2) / 2, (yt1 + yt2) / 2]
+
+            # bottom 2 points of the Can
             xb1, yb1 = self.joint_poly_coords_transf["can"][0][3], self.joint_poly_coords_transf["can"][1][3]
-            xb2, yb2 = self.joint_poly_coords_transf["can"][0][4], self.joint_poly_coords_transf["can"][1][4]
+            xb2, yb2 = self.joint_poly_coords_transf["can"][0][0], self.joint_poly_coords_transf["can"][1][0]
             self.can_pt_btm = [(xb1 + xb2) / 2, (yb1 + yb2) / 2]
 
     def get_transf_stub_end_pt(self):

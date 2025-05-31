@@ -78,7 +78,6 @@
                 <input type="text" id="btm_vert_leg_length" name="btm_vert_leg_length" value="{{ defaults.btm_vert_leg_length }}">
             </div>
 
-
             <div class="architect-form-group" style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="flex-grow: 1;">
                     <label for="n_bays">No. bays</label>
@@ -121,13 +120,9 @@
 </div>
 
 
-
 <div class="architect-export-button-container">
-    <button type="button" onclick="exportFormData()">OPTIF export</button>
+    <button type="button" onclick="exportFormData()">Export</button>
 </div>
-
-
-
 
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -309,15 +304,14 @@ function generateBayInputs() {
     const nBays = document.getElementById('n_bays').value;
     const container = document.getElementById('bay_heights_container');
     container.innerHTML = '';
-
     const tp_btm = parseFloat(document.getElementById('tp_btm').value);
     const tp_btm_k1_voffset = parseFloat(document.getElementById('tp_btm_k1_voffset').value);
     const water_depth = parseFloat(document.getElementById('water_depth').value);
     const stickup = parseFloat(document.getElementById('stickup').value);
-    const jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup));
-    const equal_bay_height = jacket_height / nBays;
-    const bayHeightValue = Math.floor(equal_bay_height);
-
+    const vleg_bottom = parseFloat(document.getElementById('btm_vert_leg_length').value);
+    const total_jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup));
+    const bay_h_tot = total_jacket_height - vleg_bottom/2;
+    const bayHeightValue = Math.floor(bay_h_tot / nBays);
     // Array to store checkbox states
     const bayHorizontalStates = [];
 
@@ -347,11 +341,7 @@ function generateBayInputs() {
             bayHorizontalStates[i - 1] = checkbox.checked;
         });
 
-
-
         // Store checkbox state in array
-        // bayHorizontalStates.push(checkbox.checked);
-
         const input = document.createElement('input');
         input.type = 'text';
         input.id = `bay_height_${i}`;
@@ -362,7 +352,7 @@ function generateBayInputs() {
         slider.type = 'range';
         slider.id = `bay_height_${i}_slider`;
         slider.min = 100;
-        slider.max = jacket_height / 2;
+        slider.max = total_jacket_height / 2;
         slider.step = 100;
         slider.value = bayHeightValue.toFixed(1);
 

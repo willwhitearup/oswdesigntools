@@ -6,8 +6,10 @@ from jktdesign.plotter import jacket_plotter
 import plotly.graph_objects as go
 import plotly.io as pio
 
-from jktdesign.create2Dsections import get_kjt_geom_form_data, create_2D_kjoint_data, get_xjt_geom_form_data, \
-    create_2D_xjoint_data
+from jktdesign.create2Dsections import (get_kjt_geom_form_data, create_2D_kjoint_data, get_xjt_geom_form_data,
+                                        get_leg_geom_form_data, create_2D_xjoint_data, create_2D_leg_data,
+                                        get_brace_geom_form_data, create_2D_brace_a_data, create_2D_brace_b_data,
+                                        create_2D_brace_hz_data)
 
 app = Flask(__name__)
 
@@ -21,11 +23,15 @@ def jacket_sections_plot():
 
     # get the form data back (input boxes)
     form_data = data.get('form_data', {})
-    # print("form_data", form_data)
+    print("form_data", form_data)
 
     kjt_geom_data = get_kjt_geom_form_data(form_data)
     xjt_geom_data = get_xjt_geom_form_data(form_data)
-    print("xjt_geom_data", xjt_geom_data)
+    leg_geom_data = get_leg_geom_form_data(form_data)
+    brace_geom_data, brace_hz_geom_data = get_brace_geom_form_data(form_data)
+    # print("xjt_geom_data", xjt_geom_data)
+    print("brace_geom_data", brace_geom_data)
+    print("brace_hz_geom_data", brace_hz_geom_data)
 
     # get the original jacket data (from architect page
     jkt_json_str = session.get('jkt_json', '{}')
@@ -39,10 +45,35 @@ def jacket_sections_plot():
     for kjt_2D_obj in kjt_2D_objs:
         jkt_obj.add_joint_obj(kjt_2D_obj, jt_type="kjt")
 
+    extend_k1 = True
+    jkt_obj.extend_k1_to_TP(extend_k1)
+
     # create the X-Joint 2DJoint objects
     xjt_2D_objs = create_2D_xjoint_data(xjt_geom_data)
     for xjt_2D_obj in xjt_2D_objs:
         jkt_obj.add_joint_obj(xjt_2D_obj, jt_type="xjt")
+
+    # create the leg 2D sections (functionality for cones, kinks and straight legs)
+    leg_objs = create_2D_leg_data(leg_geom_data, kjt_geom_data)
+    for leg_obj in leg_objs:
+        jkt_obj.add_leg_obj(leg_obj)
+
+    # create the brace a 2D sections (spans kjts to xjts)
+    brace_a_objs = create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data)
+    for brace_a_obj in brace_a_objs:
+        jkt_obj.add_brace_a_obj(brace_a_obj)
+
+    # create the brace b 2D sections (spans xjts to kjts)
+    brace_b_objs = create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data)
+    for brace_b_obj in brace_b_objs:
+        jkt_obj.add_brace_b_obj(brace_b_obj)
+
+    # todo all the thicknesses applied for the brace and leg objs are incorrect! doesnt matter until MTO calculation
+
+    # create bay horizontals 2D sections (spans kjts)
+    brace_hz_objs = create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data)
+    for brace_hz_obj in brace_hz_objs:
+        jkt_obj.add_brace_hz_obj(brace_hz_obj)
 
     # reconstruct the plot each time a new post is generated (so that the existing plot is not scattered with new data everytime a post request happens)
     updated_plot_json = jacket_plotter(jkt_obj, jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper'], show_tower=False, twr_obj=None)
@@ -70,9 +101,14 @@ def jacket_sections():
     # create the jacket object
     jkt_obj = create_jacket_from_session()
     kjt_n_braces = jkt_obj.kjt_n_braces
+    bay_horizontals = jkt_obj.bay_horizontals
+
     plot_json_str = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower=False)
     plot_json = json.loads(plot_json_str)
-    return render_template('jktsections.html', jkt_dict=jkt_dict, plot_json=plot_json, kjt_n_braces=kjt_n_braces)
+    print(len(kjt_n_braces))
+    print(len(bay_horizontals))
+    return render_template('jktsections.html', jkt_dict=jkt_dict, plot_json=plot_json, kjt_n_braces=kjt_n_braces,
+                           bay_horizontals=bay_horizontals, bay_horizontals_json=json.dumps(bay_horizontals))
 
 
 def create_jacket_from_session():

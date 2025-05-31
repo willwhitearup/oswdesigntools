@@ -1,13 +1,13 @@
 from flask import request, render_template, flash
-from routing.core import create_plot, create_joint_plots
+from routing.core import create_joint_plots
 import numpy as np
 from routing.scfs_kt_jts import KTJointSCFManager, ChordPropertyManager
 
 # Define default values
 DEFAULT_VALUES_K = {'D': 1000, 'T': 20, 'dA': 500, 'tA': 15, 'thetaA': 45,
-    'dB': 500, 'tB': 15, 'thetaB': 45, 'g_ab': 75, 'L': 5000, 'C': 0.7,
+                    'dB': 500, 'tB': 15, 'thetaB': 45, 'g_ab': 75, 'L': 5000, 'C': 0.7,
                     # calculation options (strings)
-    'load_type': 'balanced_axial_unbalanced_moment', 'x_axis_desc': 'D', 'scf_options': 'scf_only'
+                    'load_type': 'balanced_axial_unbalanced_moment', 'x_axis_desc': 'D', 'scf_options': 'scf_only'
                     }
 
 def k_joint_route():

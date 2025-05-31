@@ -1,8 +1,8 @@
 import numpy as np
-import json
-
-from jktdesign.geom_utils import line_intersection, calculate_angle_3pts
+import copy
+from jktdesign.geom_utils import line_intersection, calculate_angle_3pts, extend_middle_points_to_target_y
 from jktdesign.joint import Joint2D
+from jktdesign.leg import Leg
 
 
 class Jacket:
@@ -35,6 +35,7 @@ class Jacket:
         self.batter_2_width = self.jacket_footprint
         self.batter_2_theta = None  # float, degrees!
         self.batter_2_elev = -self.water_depth + self.stickup + self.btm_vert_leg_length
+        self.batter_1_wp, self.batter_2_wp = None, None
         # top and bottom allowables
         self.batter_1_elevation_min = None
         self.batter_1_elevation_max = None
@@ -52,9 +53,12 @@ class Jacket:
         self.xjt_angles = {}  # brace angles measured from the vertical axis (similar to a batter angle, but for braces)
         self.xjt_wps = {}
 
-
-        # Joint2D objects storage
+        # Joint2D (k and x jts), Leg (leg and brace section) objects storage
         self.joint_objs = []  # list to store Joint2D objects
+        self.leg_objs = []  # list to store Leg objects (for leg sections)
+        self.brace_a_objs = []  # list to store Leg objects (for brace a sections)
+        self.brace_b_objs = []  # list to store Leg objects (for brace b sections)
+        self.brace_hz_objs = []  # list to store Leg objects (for braze horizontals)
 
         self.warning_strings = []  # todo
 
@@ -109,6 +113,8 @@ class Jacket:
             self.batter_1_width = 2 * a + self.tp_width
 
     def _calculate_2nd_batter(self):
+        """2nd batter is generally just above the top of piles
+        """
 
         # get width 1st batter elevation
         top_batter_dist = self.tp_btm - self.batter_1_elev  # vertical dist
@@ -209,9 +215,8 @@ class Jacket:
         # there are 4 points that can be used as an initial point in the angle calculation
 
         tp_wp = [-self.tp_width / 2, self.tp_btm]
-        batter_1_wp = [-self.batter_1_width / 2, self.batter_1_elev]
-        batter_2_wp = [-self.batter_2_width / 2, self.batter_2_elev]
-
+        self.batter_1_wp = [-self.batter_1_width / 2, self.batter_1_elev]
+        self.batter_2_wp = [-self.batter_2_width / 2, self.batter_2_elev]
         for kjt, kjt_wp in self.kjt_wps.items():
             kjt_no = int(kjt.split("_")[1])
             kjt_elev = kjt_wp[1]
@@ -224,9 +229,9 @@ class Jacket:
             if kjt_elev >= self.batter_1_elev:
                 leg_pt_1 = tp_wp  # defines x, y
             elif kjt_elev >= self.batter_2_elev and kjt_elev < self.batter_1_elev:
-                leg_pt_1 = batter_1_wp  # defines x, y
+                leg_pt_1 = self.batter_1_wp  # defines x, y
             elif kjt_elev <= self.batter_2_elev:
-                leg_pt_1 = batter_2_wp  # defines x, y
+                leg_pt_1 = self.batter_2_wp  # defines x, y
 
             # now the 3rd point will be the x joint above or below (or both)
             d1_pt_3 = [0, xjt_elev_above] if xjt_elev_above is not None else None
@@ -256,11 +261,9 @@ class Jacket:
             this_kjt_width = self.kjt_widths[f"kjt_{k_this}"]
             next_kjt_width = self.kjt_widths[f"kjt_{k_next}"]
             next_kjt_elev = self.kjt_elevs[f"kjt_{k_next}"]
-
             # through brace 1
             x1, y1 = -this_kjt_width / 2, this_kjt_elev
             x2, y2 = next_kjt_width / 2, next_kjt_elev
-
             # other brace 2
             x3, y3 = this_kjt_width / 2, this_kjt_elev
             x4, y4 = -next_kjt_width / 2, next_kjt_elev
@@ -278,14 +281,12 @@ class Jacket:
             batter_theta = self.batter_2_theta
         elif elevation < self.batter_2_elev:
             batter_theta = 90.
-
         return batter_theta
 
     def add_joint_obj(self, jnt_obj: Joint2D, jt_type="kjt"):
-
         # get joint name from Joint2D objects
         jt_name = jnt_obj.jt_name  # get the joint name from the Joint2D obj
-
+        # define other variables required of a joint e.g. angles in order to create the joint
         if jt_type == "kjt":
             # add the k joint brace attachment angles
             k_brace_angles = self.kjt_brace_angles[jt_name]
@@ -296,7 +297,12 @@ class Jacket:
             kjt_wps = self.kjt_wps[jt_name]  # get kjt wp
             # create the joint and transform it
             jnt_obj.create_joint()
+            # create a copy of the joint and mirror it to get k joint on both legs in 2D
+            jnt_obj_mirr = copy.deepcopy(jnt_obj)
+            jnt_obj_mirr.jt_name = jt_name + "_mirr"
             jnt_obj.transform_joint(batter_angle=kjt_batter_angle, translate_by=kjt_wps, mirror=False)
+            jnt_obj_mirr.transform_joint(batter_angle=kjt_batter_angle, translate_by=kjt_wps, mirror=True)
+            self.joint_objs.append(jnt_obj_mirr)
 
         elif jt_type == "xjt":
             xjt_angle = self.xjt_angles[jt_name]
@@ -309,6 +315,180 @@ class Jacket:
 
         self.joint_objs.append(jnt_obj)
 
+    def add_leg_obj(self, leg_obj: Leg, leg_cone_split_len=2500):
+        """Leg objects are constructed in descending elevation. Leg sections are created using kjt co-ordinates
+        Leg sections (diameters and thicknesses) have been defined by User in web app
+        """
+        leg_name = leg_obj.leg_name  # get the name
+        leg_no = int(leg_name.split("_")[1])
+        pt2_found = False
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            jt_type = jt_name.split("_")[0]
+            jt_no = int(jt_name.split("_")[1])
+            if jt_type == "kjt":
+                if jt_no == leg_no:
+                    pt1 = jnt_obj.can_pt_btm
+                elif jt_no == leg_no + 1:
+                    pt2 = jnt_obj.can_pt_top
+                    pt2_found = True  # found pt2, so leg is definitely between 2 k joints :)
+                elif not pt2_found:
+                    # for the leg bottom section (between bottom k and top of pile), the pt2 resides at top of pile
+                    pt2 = [-self.jacket_footprint / 2, self.pile_top_elev]
+
+        # legs pt1 and pt2 are ALWAYS constructed from top to bottom i.e. k1 -> k2, then k2 -> k3 (descending elevation)
+        y1, y2 = pt1[1], pt2[1]  # y1 must be ABOVE y2
+        assert y1 > y2, f"{y1} and {y2}: K joint elevations must be in descending elevation order when defining a leg section. Exiting..."
+        leg_obj.define_leg_pts(pt1, pt2)
+
+        # add intermediate points
+        # now find if any of the kink points are between the bottom of k above and above the k below
+        assert self.batter_1_elev > self.batter_2_elev, "Batter elevations must be defined by descending elevation. Exiting..."
+        if y2 < self.batter_1_elev < y1:
+            leg_obj.define_intermediate_leg_point(self.batter_1_wp)
+        if y2 < self.batter_2_elev < y1:
+            leg_obj.define_intermediate_leg_point(self.batter_2_wp)
+
+        # create the leg polygons, call all public methods
+        leg_obj.construct_leg(split_len1=leg_cone_split_len)
+
+        # create copy of leg object and mirror it
+        leg_obj_mirr = copy.deepcopy(leg_obj)
+        leg_obj_mirr.mirror_leg()
+        leg_obj_mirr.leg_name = leg_name + "_mirr"
+
+        self.leg_objs.append(leg_obj)
+        self.leg_objs.append(leg_obj_mirr)
+
+    def add_brace_a_obj(self, brace_obj: Leg, brace_cone_split_len=500):
+        """brace a sections go in descending order from k- down to x-joints. e.g. bay 1 brace a sections go from
+        k1 to x1
+        """
+        brace_name = brace_obj.leg_name  # get the name
+        brace_no = int(brace_name.split("_")[1])
+        bay_side = brace_obj.bay_side
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            kjt_mirror_flag = True if "mirr" in jt_name else False  # check if mirror
+            jt_no = int(jt_name.split("_")[1])
+            jt_type = jt_name.split("_")[0]
+            # find k joint that attaches to bay brace e.g. bay 1 'brace a' attaches to k1
+            if jt_type == "kjt" and jt_no == brace_no:
+                # Initialize variables to track the lowest elevation stub
+                min_y, lowest_stub = None, None
+
+                # Loop through all stub end points to find the one with the lowest elevation (smallest y)
+                for pt in jnt_obj.stub_end_pts.values():
+                    x, y = pt[0], pt[1]
+                    if min_y is None or y < min_y:
+                        min_y = y
+                        lowest_stub = pt
+
+                # Assign to appropriate variable based on bay side and mirror flag
+                if bay_side == "L" and not kjt_mirror_flag:
+                    k_stub_pt = lowest_stub
+                elif bay_side == "R" and kjt_mirror_flag:
+                    k_stub_pt_mirr = lowest_stub
+
+            # find x joint that attaches to bay brace e.g. bay 1 'brace a' attaches to x1
+            if jt_type == "xjt" and jt_no == brace_no:
+                # get the x brace stub with the highest elevation in the same bay (which will attach to original k joint stub)
+                max_y, min_y = None, None
+                for k, v in jnt_obj.stub_end_pts.items():
+                    x, y = v[0], v[1]
+                    if max_y is None or y > max_y:
+                        max_y = y
+                        x_stub_pt = v
+
+                x_can_pt_top = jnt_obj.can_pt_top
+
+        # define brace start and end pts - use descending order approach
+        if bay_side == "L": brace_obj.define_leg_pts(k_stub_pt, x_stub_pt)
+        else: brace_obj.define_leg_pts(k_stub_pt_mirr, x_can_pt_top)
+
+        brace_obj.construct_leg(split_len1=brace_cone_split_len)  # construct obj using public method
+        # store the brace a objs
+        self.brace_a_objs.append(brace_obj)
+
+    def add_brace_b_obj(self, brace_obj: Leg, brace_cone_split_len=500):
+        """brace b sections go in descending order from x- down to k-joints. e.g. bay 1 brace b sections go from
+        x1 Can section to k2 (upper stub)
+        """
+        brace_name = brace_obj.leg_name  # get the name
+        bay_side = brace_obj.bay_side
+        brace_no = int(brace_name.split("_")[1])
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            kjt_mirror_flag = True if "mirr" in jt_name else False
+            jt_no = int(jt_name.split("_")[1])
+            jt_type = jt_name.split("_")[0]
+            # find x joint that attaches to bay brace e.g. bay 1 'brace b' attaches to x1
+            if jt_type == "xjt" and jt_no == brace_no:
+                # get the x brace bottom most Can point (i.e. bottom of Can)
+                x_can_pt = jnt_obj.can_pt_btm
+                # get the x brace stub with lowest point
+                min_y = None
+                for k, v in jnt_obj.stub_end_pts.items():
+                    x, y = v[0], v[1]
+                    if min_y is None or y < min_y:
+                        min_y = y
+                        x_stub_pt = v
+
+            # Find k joint that attaches to bay brace (e.g. bay 1 'brace b' attaches to k2)
+            if jt_type == "kjt" and jt_no == brace_no + 1:
+                # Get the K brace stub with the highest elevation
+                max_y, max_stub = None, None
+                for _, (x, y) in jnt_obj.stub_end_pts.items():
+                    if max_y is None or y > max_y:
+                        max_y = y
+                        max_stub = (x, y)
+
+                if kjt_mirror_flag:
+                    k_stub_pt_mirr = max_stub
+                else:
+                    k_stub_pt = max_stub
+
+        if bay_side == "L": brace_obj.define_leg_pts(x_can_pt, k_stub_pt)
+        else: brace_obj.define_leg_pts(x_stub_pt, k_stub_pt_mirr)
+
+        brace_obj.construct_leg(split_len1=brace_cone_split_len)  # construct obj using public method
+        self.brace_b_objs.append(brace_obj)
+
+    def add_brace_hz_obj(self, brace_obj: Leg):
+        """add horizontal braces if exist
+        """
+        brace_name = brace_obj.leg_name  # get the name
+        bay_no = int(brace_name.split("_")[1])
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            kjt_mirror_flag = True if "mirr" in jt_name else False
+            jt_no = int(jt_name.split("_")[1])
+            jt_type = jt_name.split("_")[0]
+            if jt_no == bay_no + 1 and jt_type == "kjt" and not kjt_mirror_flag:
+                k_stub_pt_L = jnt_obj.stub_end_pts["brc2"]
+            if jt_no == bay_no + 1 and jt_type == "kjt" and kjt_mirror_flag:
+                k_stub_pt_R = jnt_obj.stub_end_pts["brc2"]
+
+        brace_obj.define_leg_pts(k_stub_pt_L, k_stub_pt_R)
+        brace_obj.construct_leg(split_len1=None)  # construct obj using public method
+        self.brace_hz_objs.append(brace_obj)
+
+    def extend_k1_to_TP(self, extend_k1: bool=True):
+        """extend the k1 Can to reach the underside of the TP
+        """
+        if not extend_k1:
+            return None
+
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            jt_type = jt_name.split("_")[0]
+            jt_no = int(jt_name.split("_")[1])
+            if jt_type == "kjt" and jt_no == 1:
+                for idx, (k, v) in enumerate(jnt_obj.joint_poly_coords_transf.items()):
+                    if "can" in k:
+                        xnew, ynew, can_pt_top = extend_middle_points_to_target_y(v[0], v[1], self.tp_btm)
+                        jnt_obj.joint_poly_coords_transf[k] = xnew, ynew
+                        jnt_obj.can_pt_top = can_pt_top  # update the co-ordinate of the top of the Can
 
 
 

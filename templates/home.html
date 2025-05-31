@@ -3,15 +3,225 @@
 {% block title %}Home Page{% endblock %}
 
 {% block content %}
-    <p><strong>Jacket design tools</strong></p>
-    <div class="links">
-        <p><a href="/architect">Architect</a> jacket architecture wire frame designer</p>
-        <p><a href="/jktsections">Jacket sections</a> apply jacket sections and generate MTO</p>
-        <p><a href="/ty_joint">TY Joint</a> efthymiou SCFs see Table B-1</p>
-        <p><a href="/x_joint">X Joint</a> efthymiou SCFs see Table B-2</p>
-        <p><a href="/k_joint">K Joint</a> efthymiou SCFs see Table B-3 and B-4</p>
-        <p><a href="/kt_joint">KT Joint</a> efthymiou SCFs see Table B-5</p>
-        <p><a href="/joint_detailing">Joint Detailing</a> for tubular joints and butt welds</p>
-        <p><a href="/placeholder">Grout materials</a> non-linear material properties to EC2 and DNV-RP-0419</p>
+<h3 style="text-align: left; margin-left: 90px; margin-bottom: 20px; font-family: Arial, sans-serif; color: #007BFF;">
+  Offshore wind jacket designer
+</h3>
+
+
+<style>
+  .flowchart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    font-family: Arial, sans-serif;
+    max-width: 320px;
+    margin-left: 20px;
+  }
+
+  /* Container that holds both vertical steps and diamond grid */
+  .centered-container {
+    position: relative;
+    width: 320px; /* fixed container width */
+  }
+
+  /* Vertical steps (Architect, Sections, MTO) */
+  .flow-steps {
+    display: flex;
+    flex-direction: column;  /* vertical stack */
+    align-items: center;     /* center horizontally */
+    gap: 10px;               /* spacing between buttons and arrows */
+    margin-bottom: 15px;
+    margin-left: 100px;  /* shift buttons all to left by x px */
+  }
+
+  /* Each step box */
+  .step-box {
+    background: #007BFF;
+    color: white;
+    padding: 12px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 200px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+    user-select: none;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .step-box:hover {
+    background: #0056b3;
+    /* Removed color change on hover as requested */
+    text-decoration: underline;
+  }
+
+  /* Arrows down - centered horizontally */
+  .arrow-down {
+    font-size: 20px;
+    color: #555;
+    user-select: none;
+    text-align: center;
+    line-height: 0.5;
+    width: 200px;
+    margin: 0 auto;
+  }
+
+  /* Diamond container */
+  .joint-diamond {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: repeat(3, auto);
+    gap: 0px 20px;
+    justify-items: center;
+    align-items: center;
+    width: 320px;
+  }
+
+  /* Joint buttons - smaller */
+  .joint-diamond a {
+    background: #f0f0f0;
+    border: 2px solid #007BFF;
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 100px;  /* half width */
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+    font-size: 0.9rem;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    margin-top: 20px;
+  }
+  .joint-diamond a:hover {
+    background: #007BFF;
+    color: white;
+    cursor: pointer;
+  }
+
+  /* Diamond button positions */
+  .joint-diamond a.top {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .joint-diamond a.middle-left {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .joint-diamond a.middle-right {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  .joint-diamond a.bottom {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  /* Center text in diamond */
+  .joint-diamond .center-text {
+    grid-column: 2;
+    grid-row: 2;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #007BFF;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+    transform: translateY(10px);
+  }
+
+  /* Side by side detailing and grout */
+  .joint-bottom-row {
+    display: flex;
+    justify-content: flex-start;
+    gap: 20px;
+    width: 320px;
+    margin-left: 50px;
+  }
+
+  .bottom-joint-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    margin-left: 100px;  /* shift these buttons right as well */
+  }
+
+  .joint-bottom-row a {
+    background: #f0f0f0;
+    border: 2px solid #007BFF;
+    border-radius: 8px;
+    padding: 12px 15px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+    flex: 1;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    user-select: none;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    min-width: 140px;
+  }
+  .joint-bottom-row a:hover {
+    background: #007BFF;
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  /* Description below buttons */
+  .joint-desc {
+    font-weight: normal;
+    font-size: 0.75rem;
+    color: #333;
+    margin-top: 6px;
+  }
+</style>
+
+<div class="flowchart" aria-label="Main flowchart container">
+
+  <div class="centered-container" aria-label="Container to center vertical steps and diamond">
+    <!-- Vertical steps aligned over diamond center -->
+    <div class="flow-steps" aria-label="Vertical steps aligned above TY Joint">
+      <a href="/architect" class="step-box">1D architect</a>
+      <div class="arrow-down">&#8595;</div>
+      <a href="/jktsections" class="step-box">2D sections</a>
+      <div class="arrow-down">&#8595;</div>
+      <a href="/mto" class="step-box">MTO</a>
     </div>
+
+    <!-- Joint buttons diamond -->
+    <div class="joint-diamond" aria-label="Joint buttons diamond">
+      <a href="/ty_joint" class="top">TY joint<div class="joint-desc">Table B-1</div></a>
+      <a href="/x_joint" class="middle-left">X joint<div class="joint-desc">Table B-2</div></a>
+
+      <div class="center-text">Efthymiou SCFs (see DNV-RP-C203)</div>
+
+      <a href="/k_joint" class="middle-right">K joint<div class="joint-desc">Tables B-3 & B-4</div></a>
+      <a href="/kt_joint" class="bottom">KT joint<div class="joint-desc">Table B-5</div></a>
+    </div>
+  </div>
+
+  <!-- Detailing and Grout buttons side by side -->
+  <div class="joint-bottom-row">
+    <a href="/joint_detailing">Joint detailing
+      <div class="joint-desc">ISO 19902 jacket joint</div>
+    </a>
+    <a href="/placeholder">Grout materials
+      <div class="joint-desc">non-linear material properties to EC2 & DNV-RP-0419</div>
+    </a>
+  </div>
+</div>
 {% endblock %}
