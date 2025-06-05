@@ -17,7 +17,7 @@ STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 def jacket_architect():
     if request.method == 'POST':
         try:
-            # print(request.form)
+
             show_tower = request.form.get('show_tower') == 'on'
             single_batter = request.form.get('single_batter') == 'on'
 
@@ -26,13 +26,10 @@ def jacket_architect():
                 moment_interface_del = float(request.form['moment_interface_del'])
                 shear_interface_del = float(request.form['shear_interface_del'])
             else:
-                rna_cog = 999
-                moment_interface_del = 999
-                shear_interface_del = 999
+                rna_cog, moment_interface_del, shear_interface_del = 0, 0, 0
 
             if single_batter:
-                batter_1_theta = None
-                batter_1_elev = None
+                batter_1_theta, batter_1_elev = None, None
             else:
                 batter_1_theta = float(request.form['batter_1_theta'])
                 batter_1_elev = float(request.form['batter_1_elev'])
@@ -70,10 +67,16 @@ def jacket_architect():
             jkt_dict['lat'] = lat
             jkt_dict['splash_lower'] = splash_lower
             jkt_dict['splash_upper'] = splash_upper
-            # set up the session dict
-            jkt_json = json.dumps(jkt_dict)
-            session['jkt_json'] = jkt_json
 
+            # get twr dict
+            twr_dict = {"show_tower": show_tower, "rna_cog": rna_cog, "moment_interface_del": moment_interface_del,
+                        "shear_interface_del": shear_interface_del}
+
+            # create a session dict
+            session_data = {**jkt_dict, **twr_dict}
+            # session_data = jkt_dict
+            session_json = json.dumps(session_data)
+            session['jkt_json'] = session_json
             # Plot jacket
             plot_json = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower, twr_obj)
 
@@ -90,49 +93,28 @@ def jacket_architect():
                             "jacket_footprint_step": JACKET_FOOTPRINT_STEP,
                             "stickup_min": STICKUP_MIN,
                             "stickup_max": STICKUP_MAX,
-                            "stickup_step": STICKUP_STEP
+                            "stickup_step": STICKUP_STEP,
+                            "bay_heights": bay_heights
                             })
 
         except Exception as e:
             flash(f"An error occurred: {e}")
             return jsonify({'error': f"An error occurred: {e}"}), 400
 
-    # Default values for GET request
-    defaults = {
-        'water_depth': 62800,
-        'msl': 2200,
-        'splash_lower': -6110,
-        'splash_upper': 12580,
-        'rna_cog': 250000,
-        'interface_elev': 42150,
-        'tp_btm': 33150,
-        'tp_width': 19300,
-        'moment_interface_del': 121587000000,
-        'shear_interface_del': 1198000,
-        'show_tower': True,
-        'jacket_footprint': 36000,
-        'stickup': 4000,
-        'tp_btm_k1_voffset': 1000,
-        'btm_vert_leg_length': 5030,
-        'n_bays': 2,
-        'batter_1_theta': 86,
-        'batter_1_elev': -8500,
-        'single_batter': False
-    }
 
-    # Calculate default bay heights
-    jacket_height = ((defaults['tp_btm'] - defaults['tp_btm_k1_voffset']) - (-defaults['water_depth'] + defaults['stickup'] + defaults['tp_btm_k1_voffset']))
-    bay_height_value =  jacket_height / defaults['n_bays']
+    print("SESSION CONTENTS:", dict(session))
+    WillTrue = False  # set to True when done todo
+    if 'jkt_json' in session:# and WillTrue:
+        # jacket wireframe session definition # todo rename from defaults to better?
+        defaults = json.loads(session.get('jkt_json', '{}'))
+    else:
+        # jacket wireframe defaults
+        defaults = get_default_config()
 
-    defaults['bay_heights'] = ','.join([str(bay_height_value)] * defaults['n_bays'])
-
-    n_bays = defaults['n_bays']
-    defaults['bay_horizontals'] = [True] * defaults['n_bays']
-    defaults['bay_horizontals'] = [True] * 1 + [False] *(n_bays - 1)
     # Calculate batter_2_theta
     jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],
-                     [bay_height_value] * defaults['n_bays'], defaults['btm_vert_leg_length'], defaults['water_depth'],
+                     defaults['bay_heights'], defaults['btm_vert_leg_length'], defaults['water_depth'],
                      defaults['single_batter'], defaults['bay_horizontals'])
 
     return render_template('architect.html',
@@ -152,6 +134,44 @@ def jacket_architect():
                            stickup_step=STICKUP_STEP
                            )
 
+
+
+def get_default_config():
+
+    tp_btm_k1_voffset = 1000
+    water_depth = 62800
+    stickup = 4000
+    tp_btm = 33150
+    n_bays = 2
+
+    # Calculate jacket height
+    seafloor_elevation = -water_depth + stickup + tp_btm_k1_voffset
+    jacket_height = (tp_btm - tp_btm_k1_voffset) - seafloor_elevation
+    bay_height = jacket_height / n_bays
+
+    return {
+        'water_depth': water_depth,
+        'msl': 2200,
+        'splash_lower': -6110,
+        'splash_upper': 12580,
+        'rna_cog': 250000,
+        'interface_elev': 42150,
+        'tp_btm': tp_btm,
+        'tp_width': 19300,
+        'moment_interface_del': 121587000000,
+        'shear_interface_del': 1198000,
+        'show_tower': True,
+        'jacket_footprint': 36000,
+        'stickup': stickup,
+        'tp_btm_k1_voffset': tp_btm_k1_voffset,
+        'btm_vert_leg_length': 5030,
+        'n_bays': n_bays,
+        'batter_1_theta': 86,
+        'batter_1_elev': -18500,
+        'single_batter': False,
+        'bay_horizontals': [True] + [False] * (n_bays - 1),
+        'bay_heights': [bay_height] * n_bays,
+    }
 
 if __name__ == "__main__":
     app.run(debug=True)

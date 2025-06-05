@@ -47,6 +47,7 @@ class Jacket:
         self.kjt_batter_angles = {}  # get the batter angle that the kjt resides on
         self.kjt_brace_angles = {}  # store the angles of each brace to leg [45, 90, 135..] etc.
         self.kjt_n_braces = {}
+        self.kjt_edits = {}  # defines whether kJoint Can needs to be edited as top or bottom is too close to a batter elev
 
         # xjt
         self.xjt_elevs = {}  # store the x joint elevations as well (note the x values are always 0 in the centre)
@@ -60,12 +61,12 @@ class Jacket:
         self.brace_b_objs = []  # list to store Leg objects (for brace b sections)
         self.brace_hz_objs = []  # list to store Leg objects (for braze horizontals)
 
-        self.warning_strings = []  # todo
+        self.warnings = {}  # todo
 
         # run methods
         # check validity of inputs for jackets
         self._jacket_validity()
-        self._raise_warning_strings()
+
 
         if self.single_batter:
             self._calculate_single_batter()
@@ -94,12 +95,6 @@ class Jacket:
         if self.batter_1_theta is not None and self.batter_1_theta > 90:
             raise Exception(f"Batter angle at the top of jacket must not exceed vertical ({self.batter_1_theta} degree input)")
 
-    def _raise_warning_strings(self):
-        # todo
-        # e.g. bottom k is within 1m of top of pile
-        # bay height n is too small compared to others etc!
-        self.warning_strings.append("this is a warning string example!")
-
     def _calculate_single_batter(self):
         if self.single_batter:
             o = self.tp_btm - (-self.water_depth + self.stickup + self.btm_vert_leg_length)
@@ -115,7 +110,6 @@ class Jacket:
     def _calculate_2nd_batter(self):
         """2nd batter is generally just above the top of piles
         """
-
         # get width 1st batter elevation
         top_batter_dist = self.tp_btm - self.batter_1_elev  # vertical dist
         a = top_batter_dist / np.tan(np.radians(self.batter_1_theta))  # triangle width, with vertical as above
@@ -315,6 +309,12 @@ class Jacket:
 
         self.joint_objs.append(jnt_obj)
 
+    def kjt_warnings_check(self):
+        """public method to check for errors and warnings for the K joint design e.g. interaction with batter elevations
+        """
+        self._check_batter_elevs_not_in_kjts()
+        self._check_kjt_ends_not_within_dist()
+
     def add_leg_obj(self, leg_obj: Leg, leg_cone_split_len=2500):
         """Leg objects are constructed in descending elevation. Leg sections are created using kjt co-ordinates
         Leg sections (diameters and thicknesses) have been defined by User in web app
@@ -490,8 +490,100 @@ class Jacket:
                         jnt_obj.joint_poly_coords_transf[k] = xnew, ynew
                         jnt_obj.can_pt_top = can_pt_top  # update the co-ordinate of the top of the Can
 
+    def _check_batter_elevs_not_in_kjts(self):
+        batter_1_elev, batter_2_elev = self.batter_1_elev, self.batter_2_elev
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            if jnt_obj.jt_type == "kjt":# and "mirr" not in jt_name:
+                joint_poly_coords_transf = jnt_obj.joint_poly_coords_transf
+                _, can_poly_ycoords = joint_poly_coords_transf["can"]
+                min_y, max_y = min(can_poly_ycoords), max(can_poly_ycoords)
+                # check batter 1 elevations vs k joints!
+                for idx, batter_elev in enumerate([batter_1_elev, batter_2_elev]):
+                    if min_y <= batter_elev <= max_y:
+                        dist_to_top = round(max_y - batter_elev, 1)
+                        dist_to_btm = round(batter_elev - min_y, 1)
+                        message = (f"{jt_name} Can spans batter {idx+1} elevation ({batter_elev}). "
+                                   f"Move the batter {idx+1} elevation up (by {dist_to_top}) or down (by {dist_to_btm}) to avoid clash")
 
+                        self.warnings[f"batter_{idx+1}_kjt_interaction"] = {"flag": "error", "message": message}
 
+    def _check_kjt_ends_not_within_dist(self, dist=1000, extension_beyond_kink=3000):
+        """if end of kjt is within 1000mm of the batter elevs then raise a warning a set a flag to edit the kjoint to
+        extend to batter (and then edit it separately)
+        """
+        batter_1_elev, batter_2_elev = self.batter_1_elev, self.batter_2_elev
+        for jnt_obj in self.joint_objs:
+            jt_name = jnt_obj.jt_name
+            if jnt_obj.jt_type == "kjt":# and "mirr" not in jt_name:
+                joint_poly_coords_transf = jnt_obj.joint_poly_coords_transf
+                _, can_poly_ycoords = joint_poly_coords_transf["can"]
+                min_y, max_y = min(can_poly_ycoords), max(can_poly_ycoords)
+                # check batter 1 and 2 elevations vs k joints!
+                for idx, batter_elev in enumerate([batter_1_elev, batter_2_elev]):
+                    # x, y batter point
+                    if max_y < batter_elev < max_y + dist:
+                        location, y_ref = "Top", max_y
+                    elif min_y > batter_elev > min_y - dist:
+                        location, y_ref = "Bottom", min_y
+                    else:
+                        location = None
+
+                    if location:
+                        message = (f"{jt_name} {location.lower()} of Can is within {dist} mm of batter {idx+1} elevation ({batter_elev}). "
+                                   f"It will be extended to the batter elevation plus {extension_beyond_kink} mm to avoid "
+                                   f"a combined kink and thickness transition SCF")
+
+                        self.warnings[f"batter_{idx+1}_kjt_interaction"] = {"flag": "warning", "message": message}
+
+                        # joint name: [batter_elev, "above"]
+                        kink_loc = "above_kjt" if location == "Top" else "below_kjt"
+                        self.kjt_edits[jnt_obj] = [f"batter_{idx + 1}", kink_loc]
+
+        if self.kjt_edits:
+            self._edit_kjt_Can(extension_beyond_kink)
+
+    def _edit_kjt_Can(self, extension_beyond_kink):
+        # original points all with negative x coord points
+        base_batter_1_pt = [-self.batter_1_width / 2, self.batter_1_elev]
+        base_batter_2_pt = [-self.batter_2_width / 2, self.batter_2_elev]
+        base_jkt_top_pt = [-self.tp_width / 2, self.tp_btm]
+        base_pile_top_pt = [-self.jacket_footprint / 2, self.pile_top_elev]
+
+        for jnt_obj, (batter, kink_loc) in self.kjt_edits.items():
+            if jnt_obj.mirror:
+                batter_1_pt = [-base_batter_1_pt[0], base_batter_1_pt[1]]
+                batter_2_pt = [-base_batter_2_pt[0], base_batter_2_pt[1]]
+                jkt_top_pt = [-base_jkt_top_pt[0], base_jkt_top_pt[1]]
+                pile_top_pt = [-base_pile_top_pt[0], base_pile_top_pt[1]]
+            else:
+                batter_1_pt = base_batter_1_pt[:]
+                batter_2_pt = base_batter_2_pt[:]
+                jkt_top_pt = base_jkt_top_pt[:]
+                pile_top_pt = base_pile_top_pt[:]
+
+            # define pt1 i.e. the point at which the kink is
+            pt1 = batter_1_pt if batter == "batter_1" else batter_2_pt
+            # calculate point in far distance to define the vector between the kink point and the location
+            # at which the kjt Can will be extended.
+            if kink_loc == "above_kjt" and batter == "batter_1":
+                pt_in_distance = jkt_top_pt
+            elif kink_loc == "above_kjt" and batter == "batter_2":
+                pt_in_distance = batter_1_pt
+            elif kink_loc == "below_kjt" and batter == "batter_1":
+                pt_in_distance = batter_2_pt
+            elif kink_loc == "below_kjt" and batter == "batter_2":
+                pt_in_distance = pile_top_pt
+
+            pt1_arr = np.array(pt1)
+            pt_dist_arr = np.array(pt_in_distance)
+            # Compute the direction vector from pt1 to pt_dist_arr
+            direction = pt_dist_arr - pt1
+            length = np.linalg.norm(direction)
+            unit_vector = direction / length # Normalize the direction vector
+            pt2_arr = pt1_arr + unit_vector * extension_beyond_kink
+            pt2 = pt2_arr.tolist()
+            jnt_obj.extend_kjt_Can_and_kink(pt1, pt2, kink_loc)
 
 
 

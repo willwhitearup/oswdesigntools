@@ -127,11 +127,14 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     # jacket batter
     # add a dotted line from the batter elevations
     batter_1_elev, batter_1_width = jkt_obj.batter_1_elev, jkt_obj.batter_1_width
-    fig.add_shape(type='line', x0=xof + batter_1_width / 2, x1=2 * water_levels_x_ext * jacket_footprint,
-                  y0=batter_1_elev, y1=batter_1_elev, line=dict(color='grey', dash="dot"), showlegend=False)
-    # add some elevation data text
-    fig.add_trace(go.Scatter(x=[2 * water_levels_x_ext * jacket_footprint], y=[batter_1_elev], mode='text',
-                             text=[f'batter 1 EL{batter_1_elev}'], textposition='top left', textfont=dict(color='grey'), showlegend=False))
+    # only plot the batter elevation line if 2 batter angles
+    if not jkt_obj.single_batter:
+        fig.add_shape(type='line', x0=xof + batter_1_width / 2, x1=2 * water_levels_x_ext * jacket_footprint,
+                      y0=batter_1_elev, y1=batter_1_elev, line=dict(color='grey', dash="dot"), showlegend=False)
+        # add some elevation data text
+        fig.add_trace(go.Scatter(x=[2 * water_levels_x_ext * jacket_footprint], y=[batter_1_elev], mode='text',
+                                 text=[f'batter 1 EL{batter_1_elev}'], textposition='top left', textfont=dict(color='grey'), showlegend=False))
+    # second batter i.e. where legs go vertical to go into piles
     batter_2_elev, batter_2_width = jkt_obj.batter_2_elev, jkt_obj.batter_2_width
     fig.add_shape(type='line', x0=xof + batter_2_width / 2, x1=2 * water_levels_x_ext * jacket_footprint,
                   y0=batter_2_elev, y1=batter_2_elev, line=dict(color='grey', dash="dot"), showlegend=False)
@@ -161,7 +164,11 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         fig.add_trace(go.Scatter(x=[-tp_width/2, tp_width/2], y=[tp_btm, tp_btm], line=dict(color='purple'), name='TP btm width'))
 
     # plot jacket sections (2D plotting)
-    fig = plot_2D_plotly_sections(fig, jkt_obj)
+    fig = jnt_object_plotting(fig, jkt_obj.joint_objs)  # plot k and x joints
+    fig = leg_object_plotting(fig, jkt_obj.leg_objs)  # plot the Leg sections
+    fig = leg_object_plotting(fig, jkt_obj.brace_a_objs)  # plot the Brace a sections
+    fig = leg_object_plotting(fig, jkt_obj.brace_b_objs)  # plot the Brace b sections
+    fig = leg_object_plotting(fig, jkt_obj.brace_hz_objs)  # plot the Brace horizontal sections
 
     # labels and title
     fig.update_layout(yaxis_title='elevation rel LAT [mm]', yaxis=dict(scaleanchor="x", scaleratio=1), legend=dict(x=1, y=1))
@@ -175,37 +182,36 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     return plot_json
 
 
-# 2D section plotting----------------------------------
-def plot_2D_plotly_sections(fig, jkt_obj):
-    """plot assigned jacket sections onto plotly figure
-
-    Args:
-        fig: plotly object
-        jkt_obj: see jacket.py
-
-    Returns:
-        fig, updated plotly object
+def jnt_object_plotting(fig, joint_objs):
+    """plot k and x joint objects
     """
-    # plot the K-Joint and X-Joint sections poly coordinates of the joint_objs (if they exist)
-    joint_objs = jkt_obj.joint_objs
     for jidx, joint_obj in enumerate(joint_objs):
         # make a random colour for each k joint
         clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
+        kinked_can = joint_obj.kinked_can
         for idx, (k, v) in enumerate(joint_obj.joint_poly_coords_transf.items()):
-            x, y = v[0], v[1]
-            # plot the polygon (use toself as polygon not closed)
-            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
-                                     mode="none", fill='toself', showlegend=(idx == 0)))
-            # line outline of polygon (with line, repeated first point)
-            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
 
-    # plot legs and braces
-    fig = leg_object_plotting(fig, jkt_obj.leg_objs)  # plot the Leg sections
-    fig = leg_object_plotting(fig, jkt_obj.brace_a_objs)  # plot the Brace a sections
-    fig = leg_object_plotting(fig, jkt_obj.brace_b_objs)  # plot the Brace b sections
-    fig = leg_object_plotting(fig, jkt_obj.brace_hz_objs)  # plot the Brace horizontal sections
+            # kinked Can section plotting logic...
+            if k == "can" and kinked_can:
+                can_poly_coords = v
+                for x, y in can_poly_coords:
+                    fig.add_trace(
+                        go.Scatter(x=x, y=y, line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
+                                   mode="none", fill='toself', showlegend=(idx == 0)))
+                    fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr),
+                                             showlegend=False))
+
+            # all other polygons of the Joint (including normal non-kinked Can, are just rectangles)
+            else:
+                x, y = v[0], v[1]
+                # plot the polygon (use toself as polygon not closed)
+                fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
+                                         mode="none", fill='toself', showlegend=(idx == 0)))
+                # line outline of polygon (with line, repeated first point)
+                fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
 
     return fig
+
 
 def leg_object_plotting(fig, leg_objs):
     # plot the Leg sections
@@ -213,8 +219,7 @@ def leg_object_plotting(fig, leg_objs):
         # make a random colour for each leg
         clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
         leg_a_poly_coords = leg_obj.leg_a_poly_coords
-        for idx, (xs, ys) in enumerate(leg_a_poly_coords):
-            x, y = list(xs), list(ys)
+        for idx, (x, y) in enumerate(leg_a_poly_coords):
             fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=leg_obj.leg_name if idx == 0 else None,
                                      mode="none", fill='toself', showlegend=(idx == 0)))
             fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
@@ -222,8 +227,7 @@ def leg_object_plotting(fig, leg_objs):
         # plot the leg_b (the bit that has been split at the kink) of the leg section
         leg_b_poly_coords = leg_obj.leg_b_poly_coords  # may be None
         if leg_b_poly_coords is not None:
-            for idx, (xs, ys) in enumerate(leg_b_poly_coords):
-                x, y = list(xs), list(ys)
+            for idx, (x, y) in enumerate(leg_b_poly_coords):
                 fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=leg_obj.leg_name if idx == 0 else None,
                                          mode="none", fill='toself', showlegend=(idx == 0)))
                 fig.add_trace(

@@ -59,9 +59,9 @@ def line_kink_intersection(p1, d1, p2, d2):
     t = np.linalg.solve(A, p2 - p1)
     return p1 + t[0] * d1
 
-def construct_true_constant_width_path(width, *more_pts):
-    #pts = [np.array(pt1), np.array(pt2)] + [np.array(p) for p in more_pts]
-
+def construct_true_constant_width_path(width: float, *more_pts):
+    """create a kinked leg with constant section width. *more_pts is also like pt1, pt2, pt3
+    """
     pts = [np.array(p) for p in more_pts]
 
     tangents = [normalize(pts[i+1] - pts[i]) for i in range(len(pts) - 1)]
@@ -101,9 +101,10 @@ def construct_true_constant_width_path(width, *more_pts):
     trapeziums = []
     for trap in trapo:
         xs, ys = trap[:, 0], trap[:, 1]
-        trapeziums.append([xs, ys])
+        trapeziums.append([xs.tolist(), ys.tolist()])
 
     return trapeziums
+
 
 def find_longest_segment(*points):
     """ e.g. pass in pt1, pt2, pt3, pt4
@@ -157,7 +158,8 @@ def create_2D_cone(pt1, pt2, w1, w2):
     return xvals, yvals
 
 def plot_bevelled_leg(trapeziums, *pts_list):
-
+    """plotting to check bevelled leg (kink)
+    """
     fig, ax = plt.subplots()
     colors = ['skyblue', 'lightgreen', 'salmon', 'plum', 'khaki', 'lightcoral', 'lightsteelblue']
     for i, (xs, ys) in enumerate(trapeziums):

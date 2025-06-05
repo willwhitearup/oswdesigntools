@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 
+from jktdesign.geom_utils import construct_true_constant_width_path
+
 """
 Joint geometry calculated using Joint Detailing guidance.
 See ISO 19902 2020 figure 14.2-3 (pg. 162)
@@ -15,6 +17,7 @@ class Joint2D:
                  d1, t1, d1_theta=None,
                  d2=None, t2=None, d2_theta=None,
                  d3=None, t3=None, d3_theta=None, jt_name=None,
+                 jt_type = None,  #
                  joint_gap=100):
 
         # define the joint
@@ -24,6 +27,7 @@ class Joint2D:
         self.d2, self.t2, self.d2_theta = d2, t2, d2_theta
         self.d3, self.t3, self.d3_theta = d3, t3, d3_theta
         self.jt_name = jt_name  # k jt name e.g. 'kjt_1', 'kjt_2' ...
+        self.jt_type = jt_type  # joint type, either "kjt", "xjt"
         self.joint_gap = joint_gap
 
         # X joint checker
@@ -56,6 +60,7 @@ class Joint2D:
         # stub and can end points
         self.stub_end_pts = {}  # dict of the stub ends only
         self.can_pt_top, self.can_pt_btm = None, None  # list, of the top and bottom of the Can [xtop, ytop], [xbtm, ybtm]
+        self.kinked_can = False  # set to True if the Can extends over a batter kink point
 
     def create_joint(self):
         self.calc_brace_wire_end_coords()
@@ -173,7 +178,7 @@ class Joint2D:
 
         # joint Can poly coords, about the 0, 0 point (list of [[x1, x2...], [y1, y2...]]
         # 4 points only to define a polygon rectangle
-        self.can_poly_coords = [[-self.Dc / 2, -self.Dc / 2, self.Dc / 2, self.Dc / 2],# -self.Dc / 2],
+        self.can_poly_coords = [[-self.Dc / 2, -self.Dc / 2, self.Dc / 2, self.Dc / 2],
                                 [mtrans_ch_btm - self.can_length / 2, mtrans_ch_top + self.can_length / 2,
                                  mtrans_ch_top + self.can_length / 2, mtrans_ch_btm - self.can_length / 2]]
 
@@ -249,7 +254,7 @@ class Joint2D:
         self.get_transf_stub_end_pt()
 
     def get_transf_can_wire_end_pts(self):
-        """get the start and end point of the line defining the Can
+        """get the start and end point of the line defining the Can. This must be called after the transformation!
         """
         if self.joint_poly_coords_transf:
             # top 2 points of the Can
@@ -262,7 +267,30 @@ class Joint2D:
             xb2, yb2 = self.joint_poly_coords_transf["can"][0][0], self.joint_poly_coords_transf["can"][1][0]
             self.can_pt_btm = [(xb1 + xb2) / 2, (yb1 + yb2) / 2]
 
+    def extend_kjt_Can_and_kink(self, pt1, pt2, kink_loc):
+        """pt1 = [x1, y1], pt2 = [x2, y2]
+        """
+        if kink_loc not in ["above_kjt", "below_kjt"]:
+            raise Exception("Define kink location correctly")
+
+        x1, y1 = pt1[0], pt1[1]
+        x2, y2 = pt2[0], pt2[1]
+        self.kinked_can = True
+        if kink_loc == "below_kjt":
+            assert y2 < y1, "Error with editing Can of kjt to include kink below btm of Can. Exiting..."
+            trapeziums = construct_true_constant_width_path(self.Dc, self.can_pt_top, pt1, pt2)
+            self.can_pt_btm = pt2
+
+        elif kink_loc == "above_kjt":
+            assert y2 > y1, "Error with editing Can of kjt to include kink above top of Can. Exiting..."
+            trapeziums = construct_true_constant_width_path(self.Dc, self.can_pt_btm, pt1, pt2)
+            self.can_pt_top = pt2
+
+        self.joint_poly_coords_transf["can"] = trapeziums
+
     def get_transf_stub_end_pt(self):
+        """get the start and end point of the line defining the Stubs. This must be called after the transformation!
+        """
         # get (x, y) pt of the transformed stub end
         if self.joint_poly_coords_transf:
             for k, v in self.joint_poly_coords_transf.items():

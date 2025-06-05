@@ -137,95 +137,132 @@
     <button type="submit" class="sections-submit-button">Submit</button>
 </form>
 
+<!-- Warning goes here -->
+<div id="jkt-warning-container" style="margin-top: 12px;"></div>
+
 
 <div id="response" class="message"></div>
 <div id="plot"></div>
 
 <!-- Load Plotly -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
 <script>
-    // plot the plotly plot
-    document.addEventListener("DOMContentLoaded", function () {
-        // Parse the plot_json from server
-        let plot_json = {{ plot_json | tojson | safe }};
+document.addEventListener("DOMContentLoaded", function () {
+    let plot_json = {{ plot_json | tojson | safe }};
 
-        // Render the initial plot
-        if (plot_json && plot_json.data && plot_json.layout) {
-            Plotly.newPlot('plot', plot_json.data, plot_json.layout);
-        } else {
-            console.error('Initial plot_json is invalid:', plot_json);
-        }
+    if (plot_json && plot_json.data && plot_json.layout) {
+        Plotly.newPlot('plot', plot_json.data, plot_json.layout);
+    } else {
+        console.error('Initial plot_json is invalid:', plot_json);
+    }
 
-        // Handle form submission
-        document.getElementById('myForm').addEventListener('submit', function (event) {
-            event.preventDefault();
+    document.getElementById('myForm').addEventListener('submit', function(event) {
+        event.preventDefault();
 
-            // Create an object to hold form values
-            const formData = new FormData(this);
-            const formObject = {};
+        const formData = new FormData(this);
+        const formObject = {};
+        formData.forEach((value, key) => {
+            formObject[key] = value;
+        });
 
-            // Convert FormData to a regular object
-            formData.forEach((value, key) => {
-                formObject[key] = value;
-            });
+        const payload = {
+            form_data: formObject,
+            plot_json: plot_json
+        };
 
-            // Create the payload with both form data and plot_json
-            const payload = {
-                form_data: formObject,
-                plot_json: plot_json
-            };
+        fetch('/jktsections', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('response').textContent = data.message;
+            document.getElementById('response').style.color = 'green';
 
-            // Send as JSON
-            fetch('/jktsections', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Display success message
-                document.getElementById('response').textContent = data.message;
-                document.getElementById('response').style.color = 'green';
+            clearJktWarning();
 
-                // Parse the updated plot JSON if it's a string
-                let updatedPlot;
-                try {
-                    updatedPlot = typeof data.plot_json === 'string' ?
-                        JSON.parse(data.plot_json) : data.plot_json;
-                } catch (e) {
-                    console.error('Error parsing plot_json:', e);
-                    return;
-                }
+            if (data.warnings) {
+                Object.values(data.warnings).forEach(warn => {
+                    if (warn.flag === 'error') {
+                        showJktWarning(warn.message, 'red');
+                    } else if (warn.flag === 'warning') {
+                        showJktWarning(warn.message, 'orange');
+                    }
+                    // No warning shown for 'none' or other flag values
+                });
+            }
 
-                // Update the plot and store the new plot_json
-                if (updatedPlot && updatedPlot.data && updatedPlot.layout) {
-                    plot_json = updatedPlot;
-                    Plotly.react('plot', updatedPlot.data, updatedPlot.layout);
-                } else {
-                    console.error('Updated plot_json has invalid format:', updatedPlot);
-                }
+            let updatedPlot;
+            try {
+                updatedPlot = typeof data.plot_json === 'string' ? JSON.parse(data.plot_json) : data.plot_json;
+            } catch (e) {
+                console.error('Error parsing plot_json:', e);
+                return;
+            }
 
-
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('response').textContent = 'Error: ' + error.message;
-                document.getElementById('response').style.color = 'red';
-            });
+            if (updatedPlot && updatedPlot.data && updatedPlot.layout) {
+                plot_json = updatedPlot;
+                Plotly.react('plot', updatedPlot.data, updatedPlot.layout);
+            } else {
+                console.error('Updated plot_json has invalid format:', updatedPlot);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('response').textContent = 'Error: ' + error.message;
+            document.getElementById('response').style.color = 'red';
+            clearJktWarning();
         });
     });
+});
 
+//
+// Functions at bottom of script
+//
+
+function showJktWarning(message, color = 'red') {
+    const container = document.getElementById('jkt-warning-container');
+    const warningWrapper = document.createElement('div');
+    warningWrapper.style.marginBottom = '6px';
+
+    const warningIcon = createWarningCircle(color, 20);
+    const text = document.createElement('span');
+    text.textContent = ` ${message}`;
+    text.style.marginLeft = '8px';
+    text.style.color = color;
+    text.style.fontWeight = 'bold';
+
+    warningWrapper.appendChild(warningIcon);
+    warningWrapper.appendChild(text);
+    container.appendChild(warningWrapper);
+}
+
+function clearJktWarning() {
+    document.getElementById('jkt-warning-container').innerHTML = '';
+}
+
+function createWarningCircle(color, size = 20) {
+    const warning = document.createElement('span');
+    warning.textContent = '!';
+    warning.style.display = 'inline-block';
+    warning.style.width = `${size}px`;
+    warning.style.height = `${size}px`;
+    warning.style.lineHeight = `${size}px`;
+    warning.style.borderRadius = '50%';
+    warning.style.backgroundColor = color;
+    warning.style.color = 'white';
+    warning.style.textAlign = 'center';
+    warning.style.fontWeight = 'bold';
+    warning.style.marginLeft = '8px';
+    warning.style.cursor = 'pointer';
+    return warning;
+}
 </script>
 
-
-
-</script>
 
 
 {% endblock %}

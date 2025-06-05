@@ -78,7 +78,7 @@ def create_2D_kjoint_data(kjt_geom_data):
         d3 = v["stub_3_d"]
         t3 = v["stub_3_t"]
         # create the Joint object and store
-        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d2, t2=t2, d3=d3, t3=t3, jt_name=k)
+        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d2, t2=t2, d3=d3, t3=t3, jt_name=k, jt_type="kjt")
         jnt_objs.append(jnt_obj)
     return jnt_objs
 
@@ -89,7 +89,7 @@ def create_2D_xjoint_data(xjt_geom_data):
         tc = v["can_t"]
         d1 = v["stub_d"]
         t1 = v["stub_t"]
-        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d1, t2=t1, jt_name=k)
+        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d1, t2=t1, jt_name=k, jt_type="xjt")
         jnt_objs.append(jnt_obj)
     return jnt_objs
 

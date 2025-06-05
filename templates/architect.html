@@ -128,6 +128,7 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
 
+
 // ====== Debounce Helper ======
 const debounce = (func, delay = 300) => {
     let timeout;
@@ -138,6 +139,7 @@ const debounce = (func, delay = 300) => {
 };
 
 const bayHorizontals = {{ defaults.bay_horizontals | tojson }};
+const bayHeights = {{ defaults.bay_heights | tojson }};
 
 // ====== Handle Plot Resize ======
 window.addEventListener('resize', debounce(function() {
@@ -187,7 +189,6 @@ function runAllUpdates(extra = {}) {
         showFlashMessage("Please correct invalid input values before updating.", "danger");
     }
 }
-
 
 
 // ====== Sync Slider and Input Text Fields ======
@@ -300,99 +301,85 @@ function fetchSingleBatterData() {
     .catch(error => console.error('Error fetching batter_1_theta:', error));
 }
 
+
 function generateBayInputs() {
-    const nBays = document.getElementById('n_bays').value;
+    const nBays = parseInt(document.getElementById('n_bays').value);
     const container = document.getElementById('bay_heights_container');
     container.innerHTML = '';
-    const tp_btm = parseFloat(document.getElementById('tp_btm').value);
-    const tp_btm_k1_voffset = parseFloat(document.getElementById('tp_btm_k1_voffset').value);
-    const water_depth = parseFloat(document.getElementById('water_depth').value);
-    const stickup = parseFloat(document.getElementById('stickup').value);
-    const vleg_bottom = parseFloat(document.getElementById('btm_vert_leg_length').value);
-    const total_jacket_height = ((tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup));
-    const bay_h_tot = total_jacket_height - vleg_bottom/2;
-    const bayHeightValue = Math.floor(bay_h_tot / nBays);
-    // Array to store checkbox states
-    const bayHorizontalStates = [];
 
-    for (let i = 1; i <= nBays; i++) {
+    // grab all required form inputs to calculate a default bayHeightValue (if not set by the User)
+    const ids = ['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'btm_vert_leg_length'];
+    const [tp_btm, tp_btm_k1_voffset, water_depth, stickup, vleg_bottom] = ids.map(id => parseFloat(document.getElementById(id).value));
+    const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup) - vleg_bottom / 2;
+    const bayHeightValue = Math.floor(bay_h_tot / nBays);
+
+
+    // Use bayHeights from server if valid, otherwise fallback to bayHeightValue
+    const useHeights = (typeof bayHeights !== 'undefined' && bayHeights.length === nBays)
+        ? bayHeights
+        : Array.from({ length: nBays }, () => bayHeightValue);
+
+    const horizontals = (Array.isArray(bayHorizontals) && bayHorizontals.length === nBays + 1)
+        ? bayHorizontals.slice(1)
+        : Array(nBays).fill(false);
+
+    for (let i = 0; i < nBays; i++) {
+        const bayNum = i + 1;
         const div = document.createElement('div');
         div.className = 'architect-form-group';
 
         const label = document.createElement('label');
-        label.setAttribute('for', `bay_height_${i}`);
-        label.textContent = `Bay ${i} height`;
+        label.setAttribute('for', `bay_height_${bayNum}`);
+        label.textContent = `Bay ${bayNum} height`;
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `bay_horizontal_${i}`;
-        checkbox.name = `bay_horizontal_${i}`;
-        checkbox.value = 'on';
-
-
-        // Set checkbox state using bayHorizontals from Flask
-        if (bayHorizontals && bayHorizontals[i - 1]) {
-            checkbox.checked = true;
-        }
-
-        // Store checkbox state in bayHorizontalStates
-        checkbox.addEventListener('change', () => {
-            // Update bayHorizontalStates array when checkbox changes
-            bayHorizontalStates[i - 1] = checkbox.checked;
-        });
-
-        // Store checkbox state in array
         const input = document.createElement('input');
         input.type = 'text';
-        input.id = `bay_height_${i}`;
-        input.name = `bay_height_${i}`;
-        input.value = bayHeightValue.toFixed(1);
+        input.id = `bay_height_${bayNum}`;
+        input.name = `bay_height_${bayNum}`;
+        input.value = useHeights[i].toFixed(1);
 
         const slider = document.createElement('input');
         slider.type = 'range';
-        slider.id = `bay_height_${i}_slider`;
-        slider.min = 100;
-        slider.max = total_jacket_height / 2;
+        slider.id = `bay_height_${bayNum}_slider`;
+        slider.min = 1000;
+        slider.max = bay_h_tot;  // Pick a high enough max to allow flexibility
         slider.step = 100;
-        slider.value = bayHeightValue.toFixed(1);
+        slider.value = useHeights[i].toFixed(1);
 
-        // Append elements in the desired order: label, input, checkbox, and slider
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `bay_horizontal_${bayNum}`;
+        checkbox.name = `bay_horizontal_${bayNum}`;
+        checkbox.value = 'on';
+
+        if (horizontals[i]) {  // Use horizontals (already sliced)
+            checkbox.checked = true;
+        }
+
         div.appendChild(label);
         div.appendChild(input);
         div.appendChild(slider);
         div.appendChild(checkbox);
+        container.appendChild(div);
 
-        // Adding event listeners to sync input and slider
         slider.addEventListener('input', debounce(() => {
             input.value = slider.value;
             updatePlot();
             checkBayHeightsVsJacket();
         }));
-
         input.addEventListener('input', debounce(() => {
             slider.value = input.value;
             updatePlot();
             checkBayHeightsVsJacket();
         }));
 
-        // Add checkbox listener
         checkbox.addEventListener('change', () => {
-            updatePlot(); // or any other relevant function
+            updatePlot();
         });
-
-        // Appending the div to the container
-        container.appendChild(div);
-
-        console.log(`Bay ${i} horizontal:`, checkbox.checked);
     }
-
-    // Function to retrieve checkbox states
-    function getBayHorizontalStates() {
-        return bayHorizontalStates;
-    }
-
     checkBayHeightsVsJacket();
 }
+
 
 function toggleBatterInputs() {
     var mbool = !document.getElementById('single_batter').checked;
@@ -458,7 +445,6 @@ function checkBayHeightsVsJacket() {
         target.style.position = 'relative';  // Make sure this container is relative to hold the absolute warning
         target.appendChild(warning);  // Append the warning to the container
     }
-
 }
 
 function checkBatter2Theta(batter2Input) {
@@ -583,18 +569,6 @@ function showFlashMessage(message, category) {
         </div>
     `;
 }
-
-
-//function handleArchitectResponse(data) {
-   // if (data && data.plot_json) {
-   //     console.log('Received plot_json:', data.plot_json);  // Debug log
-  //      sessionStorage.setItem('plot_json', JSON.stringify(data.plot_json));
-  //      sessionStorage.setItem('plot_id', data.plot_id);
- //   } else {
- //       console.error('No plot_json found in response:', data);  // Error logging
- //   }
-//}
-
 
 </script>
 
