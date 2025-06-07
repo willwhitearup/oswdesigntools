@@ -17,16 +17,23 @@ STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 def jacket_architect():
     if request.method == 'POST':
         try:
-
             show_tower = request.form.get('show_tower') == 'on'
+            # show_tower = 'show_tower' in request.form
             single_batter = request.form.get('single_batter') == 'on'
 
+            # Handle tower inputs with fallback to defaults
             if show_tower:
-                rna_cog = float(request.form['rna_cog'])
-                moment_interface_del = float(request.form['moment_interface_del'])
-                shear_interface_del = float(request.form['shear_interface_del'])
+                rna_cog = float(request.form.get('rna_cog', 0))
+                moment_interface_del = float(request.form.get('moment_interface_del', 0))
+                shear_interface_del = float(request.form.get('shear_interface_del', 0))
             else:
-                rna_cog, moment_interface_del, shear_interface_del = 0, 0, 0
+                # When tower is hidden, use zeros
+                # rna_cog, moment_interface_del, shear_interface_del = 90, 90, 90
+                # If tower inputs are not shown, fall back to session values if they exist
+                session_data = json.loads(session.get('jkt_json', '{}'))
+                rna_cog = session_data.get('rna_cog', 99)
+                moment_interface_del = session_data.get('moment_interface_del', 999)
+                shear_interface_del = session_data.get('shear_interface_del', 99)
 
             if single_batter:
                 batter_1_theta, batter_1_elev = None, None
@@ -79,7 +86,6 @@ def jacket_architect():
             session['jkt_json'] = session_json
             # Plot jacket
             plot_json = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower, twr_obj)
-
             return jsonify({'plot_json': plot_json,
                             "batter_2_theta": jkt_obj.batter_2_theta,
                             "batter_1_theta": jkt_obj.batter_1_theta,
@@ -103,14 +109,16 @@ def jacket_architect():
 
 
     print("SESSION CONTENTS:", dict(session))
-    WillTrue = False  # set to True when done todo
     if 'jkt_json' in session:# and WillTrue:
         # jacket wireframe session definition # todo rename from defaults to better?
         defaults = json.loads(session.get('jkt_json', '{}'))
+        print("seesion exists!")
     else:
         # jacket wireframe defaults
+        print("getting defaults!")
         defaults = get_default_config()
 
+    print("session?", defaults["show_tower"])
     # Calculate batter_2_theta
     jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],

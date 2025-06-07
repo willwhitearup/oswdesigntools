@@ -17,7 +17,7 @@ class Joint2D:
                  d1, t1, d1_theta=None,
                  d2=None, t2=None, d2_theta=None,
                  d3=None, t3=None, d3_theta=None, jt_name=None,
-                 jt_type = None,  #
+                 jt_type=None,  #
                  joint_gap=100):
 
         # define the joint

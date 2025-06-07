@@ -355,7 +355,7 @@ class Jacket:
         # create copy of leg object and mirror it
         leg_obj_mirr = copy.deepcopy(leg_obj)
         leg_obj_mirr.mirror_leg()
-        leg_obj_mirr.leg_name = leg_name + "_mirr"
+        leg_obj_mirr.leg_name = leg_name + "_mirr"  # todo do not need to name it mirror as now have mirror bool in obj
 
         self.leg_objs.append(leg_obj)
         self.leg_objs.append(leg_obj_mirr)
@@ -531,8 +531,8 @@ class Jacket:
 
                     if location:
                         message = (f"{jt_name} {location.lower()} of Can is within {dist} mm of batter {idx+1} elevation ({batter_elev}). "
-                                   f"It will be extended to the batter elevation plus {extension_beyond_kink} mm to avoid "
-                                   f"a combined kink and thickness transition SCF")
+                                   f"{jt_name} has been extended beyond the batter elevation by {extension_beyond_kink} mm (to avoid "
+                                   f"a combined kink and thickness transition SCF)")
 
                         self.warnings[f"batter_{idx+1}_kjt_interaction"] = {"flag": "warning", "message": message}
 

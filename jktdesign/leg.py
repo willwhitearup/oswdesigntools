@@ -6,7 +6,7 @@ from jktdesign.geom_utils import find_longest_segment, create_points_on_line, cr
 
 class Leg:
 
-    def __init__(self, width1, width2, thk1, thk2, leg_name=None, bay_side=None):
+    def __init__(self, width1, width2, thk1, thk2, leg_name=None, bay_side=None, member_type=None):
 
 
         self.width1 = width1  # float, defines width1 in 2D (or diameter in 3D) of leg
@@ -28,6 +28,9 @@ class Leg:
         self.longest_seg = None
         self.cone_pt1, self.cone_pt2 = None, None
         self.cone_poly_coords = None
+
+        self.member_type = member_type
+        self.mirror = False
 
     def construct_leg(self, split_len1):
         ## CONE WORK ##
@@ -137,6 +140,9 @@ class Leg:
             plt.show()
 
     def mirror_leg(self):
+        """transform - mirror - the leg section
+        """
+        self.mirror = True
         # mirror leg
         for idx, (xs, ys) in enumerate(self.leg_a_poly_coords):
             self.leg_a_poly_coords[idx][0] = [-xi for xi in xs]

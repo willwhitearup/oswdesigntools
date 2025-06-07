@@ -126,7 +126,7 @@ def create_2D_leg_data(leg_geom_data, kjt_geom_data):
                 # get kjt data from kjoint above the leg section
                 width2 = kjt_geom_data[f"kjt_{kjt_no + 1}"]['can_d']
         # create the object and store
-        leg_obj = Leg(width1=width1, width2=width2, thk1=thk1, thk2=thk1, leg_name=k)
+        leg_obj = Leg(width1=width1, width2=width2, thk1=thk1, thk2=thk1, leg_name=k, member_type="LEG")
         leg_objs.append(leg_obj)
     return leg_objs
 
@@ -169,12 +169,12 @@ def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data):
                 break
 
         # create the object and store
-        brace_obj = Leg(width1=width1_aL, width2=width2_aL, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_aL", bay_side="L")
+        brace_obj = Leg(width1=width1_aL, width2=width2_aL, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_aL", bay_side="L", member_type="BRC")
         brace_objs.append(brace_obj)
 
         # for the right side brace a, rename and give it the same width (diameter) as the other side L
         width1_aR = width1_aL
-        brace_obj = Leg(width1=width1_aR, width2=width2_aR, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_aR", bay_side="R")
+        brace_obj = Leg(width1=width1_aR, width2=width2_aR, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_aR", bay_side="R", member_type="BRC")
         brace_objs.append(brace_obj)
 
     return brace_objs
@@ -202,9 +202,9 @@ def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data):
                 break
 
         # Create left-side brace
-        brace_objs.append(Leg(width1=width1_bL, width2=width2_bL, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_bL", bay_side="L"))
+        brace_objs.append(Leg(width1=width1_bL, width2=width2_bL, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_bL", bay_side="L", member_type="BRC"))
         # Create right-side brace
-        brace_objs.append(Leg(width1=width1_bR, width2=width2_bR, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_bR", bay_side="R"))
+        brace_objs.append(Leg(width1=width1_bR, width2=width2_bR, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_bR", bay_side="R", member_type="BRC"))
 
     return brace_objs
 
@@ -223,7 +223,7 @@ def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data):
                 stub_2_d = va['stub_2_d']
                 break
         # hz braces defined from left to right
-        brace_obj = Leg(width1=stub_2_d, width2=stub_2_d, thk1=hz_t, thk2=hz_t, leg_name=f"{bay_name}_hz")
+        brace_obj = Leg(width1=stub_2_d, width2=stub_2_d, thk1=hz_t, thk2=hz_t, leg_name=f"{bay_name}_hz", member_type="BRC")
         brace_hz_objs.append(brace_obj)
 
     return brace_hz_objs

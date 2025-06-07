@@ -36,10 +36,13 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     stickup = jkt_obj.stickup
     kjt_elevs = jkt_obj.kjt_elevs
     kjt_widths = jkt_obj.kjt_widths
-
     bay_horizontals = jkt_obj.bay_horizontals
-
     xjt_elevs = jkt_obj.xjt_elevs
+
+    if not jkt_obj.joint_objs:
+        jkt_line_clr = "red"  # strong red (e.g. to signal empty or invalid)
+    else:
+        jkt_line_clr = "rgba(255, 0, 0, 0.2)"  # faint red when joints exist
 
     # Create the plot
     fig = go.Figure()
@@ -66,10 +69,10 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     # JKT LEGS
     fig.add_trace(go.Scatter(x=[-tp_width / 2, -batter_1_width / 2, -jacket_footprint / 2, -jacket_footprint / 2],
                              y=[tp_btm, batter_1_elev, batter_2_elev, -water_depth + stickup],
-                             mode='lines', line=dict(color='red'), name='jacket'))
+                             mode='lines', line=dict(color=jkt_line_clr), name='jacket'))
     fig.add_trace(go.Scatter(x=[tp_width / 2, batter_1_width / 2, jacket_footprint / 2, jacket_footprint / 2],
                              y=[tp_btm, batter_1_elev, batter_2_elev, -water_depth + stickup],
-                             mode='lines', line=dict(color='red'), showlegend=False))
+                             mode='lines', line=dict(color=jkt_line_clr), showlegend=False))
 
     xof = 1500  # dotted lines to be slightly offset from the plot
     # JKT BRACES----------------------------------------------------------------------------------------------
@@ -92,7 +95,7 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         # plot a horizontal brace between this k joint elevation
         if bay_horizontals[idx]:
             fig.add_trace(go.Scatter(x=[-this_kjt_width / 2, this_kjt_width / 2], y=[this_kjt_elev, this_kjt_elev],
-                                     mode='lines', line=dict(color='red'), showlegend=False))
+                                     mode='lines', line=dict(color=jkt_line_clr), showlegend=False))
 
 
         # as we are plotting a diagonal brace from this k joints to next, at the last k joint we cant go any further!
@@ -103,9 +106,9 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         next_kjt_elev = kjt_elevs[f"kjt_{k_next}"]
         # do one brace at a time
         fig.add_trace(go.Scatter(x=[-this_kjt_width / 2, next_kjt_width / 2], y=[this_kjt_elev, next_kjt_elev],
-                                 mode='lines', line=dict(color='red'), showlegend=False))
+                                 mode='lines', line=dict(color=jkt_line_clr), showlegend=False))
         fig.add_trace(go.Scatter(x=[this_kjt_width / 2, -next_kjt_width / 2], y=[this_kjt_elev, next_kjt_elev],
-                                 mode='lines', line=dict(color='red'), showlegend=False))
+                                 mode='lines', line=dict(color=jkt_line_clr), showlegend=False))
 
     # X BRACE elevations
     for xidx, (xjt, xjt_elev) in enumerate(xjt_elevs.items()):
@@ -116,13 +119,6 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         fig.add_trace(go.Scatter(x=[-1.5 * water_levels_x_ext * jacket_footprint], y=[xjt_elev], mode='text',
                                  text=[f'x{xidx+1} EL {xjt_elev:.1f}'],
                                  textposition='top right', textfont=dict(color='grey'), showlegend=False))
-
-
-    # Pile stickups
-    fig.add_trace(go.Scatter(x=[-jacket_footprint / 2, -jacket_footprint / 2], y=[-water_depth, -water_depth + stickup],
-                             mode='lines', name='stickup', line=dict(color='black', width=5)))
-    fig.add_trace(go.Scatter(x=[jacket_footprint / 2, jacket_footprint / 2], y=[-water_depth, -water_depth + stickup],
-                             mode='lines', line=dict(color='black', width=5), showlegend=False))
 
     # jacket batter
     # add a dotted line from the batter elevations
@@ -164,15 +160,28 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         fig.add_trace(go.Scatter(x=[-tp_width/2, tp_width/2], y=[tp_btm, tp_btm], line=dict(color='purple'), name='TP btm width'))
 
     # plot jacket sections (2D plotting)
-    fig = jnt_object_plotting(fig, jkt_obj.joint_objs)  # plot k and x joints
     fig = leg_object_plotting(fig, jkt_obj.leg_objs)  # plot the Leg sections
     fig = leg_object_plotting(fig, jkt_obj.brace_a_objs)  # plot the Brace a sections
     fig = leg_object_plotting(fig, jkt_obj.brace_b_objs)  # plot the Brace b sections
     fig = leg_object_plotting(fig, jkt_obj.brace_hz_objs)  # plot the Brace horizontal sections
+    fig, Dc = jnt_object_plotting(fig, jkt_obj.joint_objs)  # plot k and x joints (last so that colours plot nicely ontop of legs)
+
+    # Pile stickups
+    pile_width = 200 if Dc is None else Dc + 500 # pile plot width
+    for x_center in [-jacket_footprint / 2, jacket_footprint / 2]:
+        x0, x1 = x_center - pile_width / 2, x_center + pile_width / 2
+        y0, y1 = -water_depth, -water_depth + stickup
+        fig.add_trace(go.Scatter(x=[x0, x1, x1, x0, x0], y=[y0, y0, y1, y1, y0], fill='toself', fillcolor='#444444',
+            line=dict(color='#444444'), mode='lines', name='stickup' if x_center < 0 else None, showlegend=(x_center < 0)
+        ))
+    fig.add_shape(type='line', x0=xof + x1, x1=2 * water_levels_x_ext * jacket_footprint,
+                  y0=y1, y1=y1, line=dict(color='grey', dash="dot"), showlegend=False)
+    # add some elevation data text
+    fig.add_trace(go.Scatter(x=[2 * water_levels_x_ext * jacket_footprint], y=[y1], mode='text',
+                             text=[f'pile top EL{y1}'], textposition='top left', textfont=dict(color='grey'), showlegend=False))
 
     # labels and title
     fig.update_layout(yaxis_title='elevation rel LAT [mm]', yaxis=dict(scaleanchor="x", scaleratio=1), legend=dict(x=1, y=1))
-
     # Show the plot
     # fig.show()
 
@@ -185,59 +194,97 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
 def jnt_object_plotting(fig, joint_objs):
     """plot k and x joint objects
     """
+    Dc = None
     for jidx, joint_obj in enumerate(joint_objs):
-        # make a random colour for each k joint
-        clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
+        if joint_obj.jt_type == "kjt":
+            clr, line_clr = "rgba(0, 0, 139, 0.3)", "rgb(0, 0, 139)"  # transparent dark blue
+            Dc = joint_obj.Dc  # get diameter of last K joint in the jacket and return it
+        elif joint_obj.jt_type == "xjt":
+            clr, line_clr = "rgba(104, 33, 122, 0.4)", "rgb(80, 20, 100)"  # transparent purple
+
         kinked_can = joint_obj.kinked_can
         for idx, (k, v) in enumerate(joint_obj.joint_poly_coords_transf.items()):
-
             # kinked Can section plotting logic...
             if k == "can" and kinked_can:
                 can_poly_coords = v
-                for x, y in can_poly_coords:
+                for pidx, (x, y) in enumerate(can_poly_coords):
+                    show_in_legend = not joint_obj.mirror and idx == 0 and pidx == 0
+                    name = joint_obj.jt_name if show_in_legend else None
                     fig.add_trace(
-                        go.Scatter(x=x, y=y, line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
-                                   mode="none", fill='toself', showlegend=(idx == 0)))
-                    fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr),
+                        go.Scatter(x=x, y=y, line=dict(color=clr), name=name,
+                                   mode="none", fill='toself', fillcolor=clr,
+                                   showlegend=show_in_legend
+                                   ))
+                    # line around polygon plot
+                    fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=line_clr),
                                              showlegend=False))
 
-            # all other polygons of the Joint (including normal non-kinked Can, are just rectangles)
+            # all other polygons e.g. stubs of the Joint (including normal non-kinked Can, are just rectangles)
             else:
                 x, y = v[0], v[1]
-                # plot the polygon (use toself as polygon not closed)
-                fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=joint_obj.jt_name if idx == 0 else None,
-                                         mode="none", fill='toself', showlegend=(idx == 0)))
-                # line outline of polygon (with line, repeated first point)
-                fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
 
-    return fig
+                show_in_legend = not joint_obj.mirror and idx == 0
+                name = joint_obj.jt_name if show_in_legend else None
+
+                # plot the polygon (use toself as polygon not closed)
+                fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=name,
+                                         mode="none", fill='toself', fillcolor=clr,
+                                         showlegend=show_in_legend
+                                         ))
+                # line outline of polygon (with line, repeated first point)
+                fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=line_clr), showlegend=False))
+
+    return fig, Dc
 
 
 def leg_object_plotting(fig, leg_objs):
-    # plot the Leg sections
-    for lidx, leg_obj in enumerate(leg_objs):
-        # make a random colour for each leg
-        clr = f"rgb({random.randint(0, 150)}, {random.randint(0, 150)}, {random.randint(0, 150)})"
-        leg_a_poly_coords = leg_obj.leg_a_poly_coords
-        for idx, (x, y) in enumerate(leg_a_poly_coords):
-            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=leg_obj.leg_name if idx == 0 else None,
-                                     mode="none", fill='toself', showlegend=(idx == 0)))
-            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+    """plot leg and brace sections
+    """
+    for leg_obj in leg_objs:
+        leg_name = leg_obj.leg_name
+        if leg_obj.member_type == "LEG":
+            clr, line_clr = "rgba(255, 40, 0, 0.6)", "rgb(180, 20, 0)"
+            show_in_legend = not leg_obj.mirror
+            name = leg_name if show_in_legend else None
+        elif leg_obj.member_type == "BRC":
+            clr, line_clr = "rgba(50, 205, 50, 0.4)", "rgb(50, 205, 50)"
+            show_in_legend = ("aR" not in leg_name) and ("bL" not in leg_name) and ("bR" not in leg_name)
+            name = leg_name.replace("_aL", "") if show_in_legend else None
+        else:
+            continue  # skip if unknown member_type
 
-        # plot the leg_b (the bit that has been split at the kink) of the leg section
-        leg_b_poly_coords = leg_obj.leg_b_poly_coords  # may be None
+        # Plot leg_a polygons
+        for aidx, (x, y) in enumerate(leg_obj.leg_a_poly_coords):
+            show_legend = show_in_legend and aidx == 0
+            leg_name_to_use = name if show_legend else None
+            fig.add_trace(go.Scatter(
+                x=x, y=y, line=dict(color=clr), name=leg_name_to_use,
+                mode="none", fill='toself', fillcolor=clr, showlegend=show_legend
+            ))
+            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines",line=dict(color=line_clr), showlegend=False
+            ))
+
+        # Plot leg_b polygons if present
+        leg_b_poly_coords = leg_obj.leg_b_poly_coords
         if leg_b_poly_coords is not None:
-            for idx, (x, y) in enumerate(leg_b_poly_coords):
-                fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=leg_obj.leg_name if idx == 0 else None,
-                                         mode="none", fill='toself', showlegend=(idx == 0)))
-                fig.add_trace(
-                    go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+            for (x, y) in leg_b_poly_coords:
+                fig.add_trace(go.Scatter(
+                    x=x, y=y, line=dict(color=clr), name=None,
+                    mode="none", fill='toself', fillcolor=clr, showlegend=False
+                ))
+                fig.add_trace(go.Scatter(
+                    x=x + [x[0]], y=y + [y[0]], mode="lines",
+                    line=dict(color=line_clr), showlegend=False
+                ))
 
+        # Plot cone polygon if present
         cone_poly_coords = leg_obj.cone_poly_coords
         if cone_poly_coords is not None:
             x, y = cone_poly_coords[0], cone_poly_coords[1]
-            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr),
-                                     mode="none", fill='toself', showlegend=False))
-            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=clr), showlegend=False))
+            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=(name + " cone" if name else None),
+                                     mode="none", fill='toself', fillcolor=clr,
+                                     showlegend=show_in_legend))
+            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=line_clr), showlegend=False
+            ))
 
     return fig

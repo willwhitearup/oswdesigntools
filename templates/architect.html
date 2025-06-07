@@ -119,15 +119,12 @@
     </div>
 </div>
 
-
 <div class="architect-export-button-container">
     <button type="button" onclick="exportFormData()">Export</button>
 </div>
 
-
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-
 
 // ====== Debounce Helper ======
 const debounce = (func, delay = 300) => {
@@ -190,7 +187,6 @@ function runAllUpdates(extra = {}) {
     }
 }
 
-
 // ====== Sync Slider and Input Text Fields ======
 function syncTextAndSlider(inputElem) {
     const isSlider = inputElem.type === 'range';
@@ -211,8 +207,9 @@ function toggleTowerInputs() {
     document.getElementById('rna_cog').disabled = !showTower;
     document.getElementById('moment_interface_del').disabled = !showTower;
     document.getElementById('shear_interface_del').disabled = !showTower;
-    updatePlot();
+    runAllUpdates();
 }
+
 
 function updatePlot() {
     const formData = new FormData(document.querySelector('.architect-input-form'));
