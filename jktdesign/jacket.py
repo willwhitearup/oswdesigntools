@@ -323,22 +323,29 @@ class Jacket:
         leg_no = int(leg_name.split("_")[1])
         pt2_found = False
         for jnt_obj in self.joint_objs:
+            if jnt_obj.jt_type != "kjt":  # only require kjts to create a leg
+                continue
+
             jt_name = jnt_obj.jt_name
-            jt_type = jt_name.split("_")[0]
             jt_no = int(jt_name.split("_")[1])
-            if jt_type == "kjt":
-                if jt_no == leg_no:
-                    pt1 = jnt_obj.can_pt_btm
-                elif jt_no == leg_no + 1:
-                    pt2 = jnt_obj.can_pt_top
-                    pt2_found = True  # found pt2, so leg is definitely between 2 k joints :)
-                elif not pt2_found:
-                    # for the leg bottom section (between bottom k and top of pile), the pt2 resides at top of pile
-                    pt2 = [-self.jacket_footprint / 2, self.pile_top_elev]
+
+            if jt_no == leg_no:
+                pt1 = jnt_obj.can_pt_btm
+            elif jt_no == leg_no + 1:
+                pt2 = jnt_obj.can_pt_top
+                pt2_found = True  # found pt2, so leg is definitely between 2 k joints :)
+
+        # for the leg bottom section (between bottom k and top of pile), the pt2 resides at top of pile
+        if pt2_found is False:
+            pt2 = [-self.jacket_footprint / 2, self.pile_top_elev]
 
         # legs pt1 and pt2 are ALWAYS constructed from top to bottom i.e. k1 -> k2, then k2 -> k3 (descending elevation)
         y1, y2 = pt1[1], pt2[1]  # y1 must be ABOVE y2
-        assert y1 > y2, f"{y1} and {y2}: K joint elevations must be in descending elevation order when defining a leg section. Exiting..."
+        if  y1 <= y2 and pt2_found is False:
+            message = f"{jt_name} bottom of Can ({y1}) is below the top of pile ({y2})! Move the kjt upwards to avoid top of pile clash"
+            self.warnings[f"top_of_pile_kjt_interaction"] = {"flag": "error", "message": message}
+
+        # define leg end points
         leg_obj.define_leg_pts(pt1, pt2)
 
         # add intermediate points
@@ -488,7 +495,9 @@ class Jacket:
                     if "can" in k:
                         xnew, ynew, can_pt_top = extend_middle_points_to_target_y(v[0], v[1], self.tp_btm)
                         jnt_obj.joint_poly_coords_transf[k] = xnew, ynew
-                        jnt_obj.can_pt_top = can_pt_top  # update the co-ordinate of the top of the Can
+                        # update the co-ordinate of the top of the Can and can length
+                        jnt_obj.can_pt_top = can_pt_top
+                        jnt_obj.can_length = np.linalg.norm(np.array(jnt_obj.can_pt_top) - np.array(jnt_obj.can_pt_btm))
 
     def _check_batter_elevs_not_in_kjts(self):
         batter_1_elev, batter_2_elev = self.batter_1_elev, self.batter_2_elev
@@ -532,7 +541,7 @@ class Jacket:
                     if location:
                         message = (f"{jt_name} {location.lower()} of Can is within {dist} mm of batter {idx+1} elevation ({batter_elev}). "
                                    f"{jt_name} has been extended beyond the batter elevation by {extension_beyond_kink} mm (to avoid "
-                                   f"a combined kink and thickness transition SCF)")
+                                   f"'kink * thickness transition' SCF)")
 
                         self.warnings[f"batter_{idx+1}_kjt_interaction"] = {"flag": "warning", "message": message}
 
@@ -575,7 +584,7 @@ class Jacket:
             elif kink_loc == "below_kjt" and batter == "batter_2":
                 pt_in_distance = pile_top_pt
 
-            pt1_arr = np.array(pt1)
+            pt1_arr = np.array(pt1)  # pt1 is the point of the kink itself
             pt_dist_arr = np.array(pt_in_distance)
             # Compute the direction vector from pt1 to pt_dist_arr
             direction = pt_dist_arr - pt1

@@ -17,15 +17,15 @@ class Joint2D:
                  d1, t1, d1_theta=None,
                  d2=None, t2=None, d2_theta=None,
                  d3=None, t3=None, d3_theta=None, jt_name=None,
-                 jt_type=None,  #
+                 jt_type=None,  # either xjt or kjt
                  joint_gap=100):
 
         # define the joint
-        self.Dc, self.tc = Dc, tc
-        # define brace stubs
-        self.d1, self.t1, self.d1_theta = d1, t1, d1_theta
-        self.d2, self.t2, self.d2_theta = d2, t2, d2_theta
-        self.d3, self.t3, self.d3_theta = d3, t3, d3_theta
+        self.Dc = Dc  # Can diameter, defines the OD
+        self.tc = tc  # Can thickness
+        self.d1, self.t1, self.d1_theta = d1, t1, d1_theta  # define brace 1 stub
+        self.d2, self.t2, self.d2_theta = d2, t2, d2_theta  # define brace 2 stub
+        self.d3, self.t3, self.d3_theta = d3, t3, d3_theta  # define brace 3 stub
         self.jt_name = jt_name  # k jt name e.g. 'kjt_1', 'kjt_2' ...
         self.jt_type = jt_type  # joint type, either "kjt", "xjt"
         self.joint_gap = joint_gap
@@ -58,17 +58,20 @@ class Joint2D:
         self.translate_by = None
         self.mirror = None
         # stub and can end points
+        self.stub_start_pts = {}  # dict of the stub start points (i.e. point of connection to the Chord surface)
         self.stub_end_pts = {}  # dict of the stub ends only
         self.can_pt_top, self.can_pt_btm = None, None  # list, of the top and bottom of the Can [xtop, ytop], [xbtm, ybtm]
         self.kinked_can = False  # set to True if the Can extends over a batter kink point
+        self.pt_kink = None
 
     def create_joint(self):
-        self.calc_brace_wire_end_coords()
-        self.calc_brace_poly_coords()
+        """public method to create the joint, K or X joint allowed
+        """
+        self.calc_stub_wire_end_coords()
+        self.calc_stub_poly_coords()
         self.calc_can_length()
         self.calc_can_poly_coords()
-        # store the coords in dict
-        self.get_joint_poly_coords()
+        self.get_joint_poly_coords()  # store all the joint coords in dict
 
     def brace_attachment_thetas(self, d1_theta=None, d2_theta=None, d3_theta=None):
         """method allows brace theta angles to be defined after object initiated
@@ -89,7 +92,7 @@ class Joint2D:
 
     @staticmethod
     def get_stub_length(d, d_theta):
-        """when brace attaches to chord at an angle some of it overlaps into the chord surface (either at top or bottom)
+        """when stub attaches to chord at an angle some of it overlaps into the chord surface (either at top or bottom)
         d, d_theta: floats, brace diameter and brace angle in degrees
         """
         stub_length = abs(0.5 * d / np.tan(np.radians(d_theta))) + max(d, 600)
@@ -109,8 +112,8 @@ class Joint2D:
         wire_end_coords = [[m1x, m2x], [m1y, m2y]]
         return wire_end_coords
 
-    def calc_brace_wire_end_coords(self):
-        # wire end coords of the brace Joints centred about 0, 0 and orientated vertically
+    def calc_stub_wire_end_coords(self):
+        # wire end coords of the stub Joints centred about 0, 0 and orientated vertically
         # wire end coords start at the chord surf and end at the end of the brace stub
         self.b1_wire_end_coords = self.get_brace_wire_end_coords(self.d1, self.d1_theta)
         self.b2_wire_end_coords = self.get_brace_wire_end_coords(self.d2, self.d2_theta) if self.d2 is not None else None
@@ -136,7 +139,7 @@ class Joint2D:
         # 4 points only to define the polygon (do not close the polygon)
         return [[x1, x2, x3, x4], [y1, y2, y3, y4]]
 
-    def calc_brace_poly_coords(self):
+    def calc_stub_poly_coords(self):
         self.b1_poly_coords = Joint2D.get_brace_coords(self.b1_wire_end_coords, self.d1, self.d1_theta)
         self.b2_poly_coords = Joint2D.get_brace_coords(self.b2_wire_end_coords, self.d2, self.d2_theta) if self.d2 is not None else None
         self.b3_poly_coords = Joint2D.get_brace_coords(self.b3_wire_end_coords, self.d3, self.d3_theta) if self.d3 is not None else None
@@ -164,7 +167,8 @@ class Joint2D:
             self.can_length = c_ends + b1_att_len + b2_att_len + b3_att_len  # no joint gap exists as 1 brace attachment only
 
     def calc_can_poly_coords(self):
-
+        """creates Can rectangle (polygon). Can ALWAYS has square ends (i.e. joint Cans never bevelled / kinked)
+        """
         # translate the joint chord Can to be central about the braces
         if self.d2 is None:
             mtrans_ch_top = self.b1_wire_end_coords[1][0]
@@ -197,8 +201,10 @@ class Joint2D:
                          [np.sin(theta), np.cos(theta)]])
 
     def transform_joint(self, batter_angle: float = None, translate_by: list = None, mirror: bool = False):
-        """transform the 2D joint (centred about 0,0) to the WP of the actual joint and at correct batter angle.
-        Can also mirror if needed about the x=0 (y-axis) line.
+        """transform the 2D joint 'joint_poly_coords' var (centred about 0,0) to the WP of the actual joint and at
+        correct batter angle. creates new var 'joint_poly_coords_transf'.
+
+        Can also mirror joint about the x=0 (y-axis) line.
 
         Transformations in order:
             1. Rotate Joint
@@ -269,6 +275,8 @@ class Joint2D:
 
     def extend_kjt_Can_and_kink(self, pt1, pt2, kink_loc):
         """pt1 = [x1, y1], pt2 = [x2, y2]
+        pt1, [x, y], list, is the point of the kink itself
+        pt2, [x, y], list, is the point at which either top (or the bottom) of the Can extends to
         """
         if kink_loc not in ["above_kjt", "below_kjt"]:
             raise Exception("Define kink location correctly")
@@ -276,6 +284,7 @@ class Joint2D:
         x1, y1 = pt1[0], pt1[1]
         x2, y2 = pt2[0], pt2[1]
         self.kinked_can = True
+        self.pt_kink = pt1
         if kink_loc == "below_kjt":
             assert y2 < y1, "Error with editing Can of kjt to include kink below btm of Can. Exiting..."
             trapeziums = construct_true_constant_width_path(self.Dc, self.can_pt_top, pt1, pt2)
@@ -297,6 +306,11 @@ class Joint2D:
                 if k == "can":
                     continue
                 else:
+                    # brace stub start points on chord surface
+                    x0 = (v[0][0] + v[0][1]) / 2
+                    y0 = (v[1][0] + v[1][1]) / 2
+                    self.stub_start_pts[k] = [x0, y0]
+                    # brace stub end points
                     x = (v[0][2] + v[0][3]) / 2
                     y = (v[1][2] + v[1][3]) / 2
                     self.stub_end_pts[k] = [x, y]

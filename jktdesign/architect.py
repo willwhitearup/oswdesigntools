@@ -18,22 +18,17 @@ def jacket_architect():
     if request.method == 'POST':
         try:
             show_tower = request.form.get('show_tower') == 'on'
-            # show_tower = 'show_tower' in request.form
             single_batter = request.form.get('single_batter') == 'on'
-
             # Handle tower inputs with fallback to defaults
             if show_tower:
                 rna_cog = float(request.form.get('rna_cog', 0))
                 moment_interface_del = float(request.form.get('moment_interface_del', 0))
                 shear_interface_del = float(request.form.get('shear_interface_del', 0))
             else:
-                # When tower is hidden, use zeros
-                # rna_cog, moment_interface_del, shear_interface_del = 90, 90, 90
-                # If tower inputs are not shown, fall back to session values if they exist
                 session_data = json.loads(session.get('jkt_json', '{}'))
-                rna_cog = session_data.get('rna_cog', 99)
+                rna_cog = session_data.get('rna_cog', 999)
                 moment_interface_del = session_data.get('moment_interface_del', 999)
-                shear_interface_del = session_data.get('shear_interface_del', 99)
+                shear_interface_del = session_data.get('shear_interface_del', 999)
 
             if single_batter:
                 batter_1_theta, batter_1_elev = None, None
@@ -43,12 +38,10 @@ def jacket_architect():
 
             water_depth = float(request.form['water_depth'])
             msl = float(request.form['msl'])
-            splash_lower = float(request.form['splash_lower'])
-            splash_upper = float(request.form['splash_upper'])
+            splash_lower, splash_upper = float(request.form['splash_lower']), float(request.form['splash_upper'])
 
             interface_elev = float(request.form['interface_elev'])
-            tp_btm = float(request.form['tp_btm'])
-            tp_width = float(request.form['tp_width'])
+            tp_btm, tp_width = float(request.form['tp_btm']), float(request.form['tp_width'])
 
             jacket_footprint = float(request.form['jacket_footprint'])
             stickup = float(request.form['stickup'])
@@ -68,22 +61,20 @@ def jacket_architect():
             twr_obj = Tower(rna_cog, interface_elev, moment_interface_del, shear_interface_del)
             lat = 0.
 
-            # convert to json to pass around
+            # get jkt and twr dicts
             jkt_dict = {k: v for k, v in jkt_obj.__dict__.items() if v is not None}
-            jkt_dict['msl'] = msl
-            jkt_dict['lat'] = lat
-            jkt_dict['splash_lower'] = splash_lower
-            jkt_dict['splash_upper'] = splash_upper
-
-            # get twr dict
             twr_dict = {"show_tower": show_tower, "rna_cog": rna_cog, "moment_interface_del": moment_interface_del,
                         "shear_interface_del": shear_interface_del}
 
             # create a session dict
             session_data = {**jkt_dict, **twr_dict}
-            # session_data = jkt_dict
+            session_data['msl'] = msl  # add water levels info into the session
+            session_data['lat'] = lat
+            session_data['splash_lower'] = splash_lower
+            session_data['splash_upper'] = splash_upper
             session_json = json.dumps(session_data)
             session['jkt_json'] = session_json
+
             # Plot jacket
             plot_json = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower, twr_obj)
             return jsonify({'plot_json': plot_json,
@@ -107,18 +98,13 @@ def jacket_architect():
             flash(f"An error occurred: {e}")
             return jsonify({'error': f"An error occurred: {e}"}), 400
 
-
-    print("SESSION CONTENTS:", dict(session))
-    if 'jkt_json' in session:# and WillTrue:
-        # jacket wireframe session definition # todo rename from defaults to better?
+    # on initial load get the defaults, otherwise use the session dict
+    if 'jkt_json' in session:
         defaults = json.loads(session.get('jkt_json', '{}'))
-        print("seesion exists!")
     else:
         # jacket wireframe defaults
-        print("getting defaults!")
         defaults = get_default_config()
 
-    print("session?", defaults["show_tower"])
     # Calculate batter_2_theta
     jkt_obj = Jacket(defaults['interface_elev'], defaults['tp_width'], defaults['tp_btm'], defaults['tp_btm_k1_voffset'],
                      defaults['batter_1_theta'], defaults['batter_1_elev'], defaults['jacket_footprint'], defaults['stickup'],
@@ -141,7 +127,6 @@ def jacket_architect():
                            stickup_max=STICKUP_MAX,
                            stickup_step=STICKUP_STEP
                            )
-
 
 
 def get_default_config():

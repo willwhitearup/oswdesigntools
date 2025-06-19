@@ -1,6 +1,8 @@
 from flask import Flask, render_template, session, request, jsonify
 import json
+import pandas as pd
 from jktdesign.jacket import Jacket
+from jktdesign.mass import calculate_jkt_mto
 from jktdesign.plotter import jacket_plotter
 from jktdesign.create2Dsections import (get_kjt_geom_form_data, create_2D_kjoint_data, get_xjt_geom_form_data,
                                         get_leg_geom_form_data, create_2D_xjoint_data, create_2D_leg_data,
@@ -21,15 +23,18 @@ def jacket_sections_plot():
     form_data = data.get('form_data', {})
     # print("form_data", form_data)
 
+    # todo, only ID diameter refs done so far
+    if form_data["joint_type_geometry"] != 'ID_constant':
+        raise Exception("Joint2D sections have only been created using constant ID currently. Exiting...")
+
     kjt_geom_data = get_kjt_geom_form_data(form_data)
     xjt_geom_data = get_xjt_geom_form_data(form_data)
     leg_geom_data = get_leg_geom_form_data(form_data)
     brace_geom_data, brace_hz_geom_data = get_brace_geom_form_data(form_data)
 
-    # get the original jacket data (from architect page
+    # get the original jacket data (from architect page)
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
-
     jkt_obj = create_jacket_from_session()
 
     # create the K-Joint 2DJoint objects
@@ -37,7 +42,7 @@ def jacket_sections_plot():
     for kjt_2D_obj in kjt_2D_objs:
         jkt_obj.add_joint_obj(kjt_2D_obj, jt_type="kjt")
 
-    extend_k1 = True
+    extend_k1 = True  # set this option to True for time being
     jkt_obj.extend_k1_to_TP(extend_k1)
     # check if kjts are designed ok
     jkt_obj.kjt_warnings_check()
@@ -62,8 +67,6 @@ def jacket_sections_plot():
     for brace_b_obj in brace_b_objs:
         jkt_obj.add_brace_b_obj(brace_b_obj)
 
-    # todo all the thicknesses applied for the brace and leg objs are incorrect! doesnt matter until MTO calculation
-
     # create bay horizontals 2D sections (spans kjts)
     brace_hz_objs = create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data)
     for brace_hz_obj in brace_hz_objs:
@@ -74,6 +77,11 @@ def jacket_sections_plot():
 
     # reconstruct the plot each time a new post is generated (so that the existing plot is not scattered with new data everytime a post request happens)
     updated_plot_json = jacket_plotter(jkt_obj, jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper'], show_tower=False, twr_obj=None)
+
+    # create mto dataframe
+    df_mto = calculate_jkt_mto(jkt_obj)
+
+    session['df_mto'] = df_mto.to_json()
 
     return jsonify({'message': 'Plot updated successfully',
                     'plot_json': updated_plot_json,
@@ -91,7 +99,7 @@ def jacket_sections():
     # create error message just so the page loads if user go theres initially
     if not jkt_dict:
         return render_template('jktsections.html',
-                               error_message="Warning! create your model first on the Architect page before assigning sections!",
+                               error_message="Warning! First create your model on the Architect page before assigning sections!",
                                jkt_dict={}, plot_json={}, kjt_n_braces={})
 
     # get out some data to create the plotly figure
@@ -103,12 +111,16 @@ def jacket_sections():
 
     plot_json_str = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower=False)
     plot_json = json.loads(plot_json_str)
-    return render_template('jktsections.html', jkt_dict=jkt_dict, plot_json=plot_json, kjt_n_braces=kjt_n_braces,
-                           bay_horizontals=bay_horizontals, bay_horizontals_json=json.dumps(bay_horizontals))
+
+    return render_template('jktsections.html', jkt_dict=jkt_dict,
+                           plot_json=plot_json,
+                           kjt_n_braces=kjt_n_braces,
+                           bay_horizontals=bay_horizontals,
+                           bay_horizontals_json=json.dumps(bay_horizontals))
 
 
 def create_jacket_from_session():
-    jkt_json_str = session.get('jkt_json', '{}')
+    jkt_json_str = session.get('jkt_json', '{}')  # todo check on initial load
     jkt_dict = json.loads(jkt_json_str)
 
     return Jacket(

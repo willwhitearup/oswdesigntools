@@ -4,41 +4,6 @@
         max-width: 100%;
     }
 
-    .sections-grid-table {
-        border-collapse: collapse;
-        width: max-content;
-        table-layout: fixed;
-    }
-
-    .sections-grid-table th,
-    .sections-grid-table td {
-        border: 1px solid #ccc;
-        margin: 0;
-        padding: 0;
-        height: 30px;
-    }
-
-    .sections-grid-table th {
-        white-space: normal;
-        text-align: center;
-        font-weight: bold;
-        padding: 4px; /* slight extra padding for readability */
-    }
-
-    .sections-grid-table td {
-        white-space: nowrap;
-        min-width: 100px;
-    }
-
-    .sections-grid-table input[type="text"] {
-        width: 100%;
-        height: 100%;
-        border: none;
-        padding: 0 4px;
-        box-sizing: border-box;
-        font-family: monospace;
-    }
-
     .sections-visually-disabled {
         background-image: repeating-linear-gradient(
             45deg,
@@ -52,7 +17,6 @@
         pointer-events: none; /* prevents click/focus */
     }
 
-
     .sections-submit-button {
         padding: 12px 12px;
         font-size: 0.85rem;
@@ -64,6 +28,53 @@
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.2s ease;
+    }
+
+    .sections-grid-table {
+        font-size: 0.85rem;
+        border-collapse: collapse;
+        border: 2px solid #666;
+        width: auto;
+        margin-bottom: 10px;
+    }
+
+    .sections-grid-table th,
+    .sections-grid-table td {
+        border: 1px solid #ccc;
+        padding: 2px 6px;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sections-grid-table th:first-child,
+    .sections-grid-table td:first-child {
+        width: 60px;
+        font-weight: bold;
+    }
+
+    .sections-grid-table input {
+        font-size: 0.85rem;
+        width: 70px;
+        padding: 2px 1px;           /* input padding for spacing from borders */
+        box-sizing: border-box;     /* ensures input doesn't overflow the cell */
+        border: 1px solid #bbb;
+        margin-left: 0;             /* remove extra left margin to keep it centered */
+    }
+
+    .sections-grid-table thead tr {
+        background-color: #FF2400; /* scarlet */
+        color: white;
+        height: 15px;      /* sets fixed height */
+        line-height: 15px; /* vertically centers the text */
+    }
+
+    .sections-table-row {  /* 2 by 2 block for tables */
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 4px;
     }
 
 

@@ -65,7 +65,7 @@ def get_brace_geom_form_data(form_data):
 
     return brace_geom_data, brace_hz_geom_data
 
-def create_2D_kjoint_data(kjt_geom_data):
+def create_2D_kjoint_data(kjt_geom_data, diameter_def="ID"):
     jnt_objs = []
     for k, v in kjt_geom_data.items():
         # extract data from form
@@ -77,23 +77,38 @@ def create_2D_kjoint_data(kjt_geom_data):
         t2 = v["stub_2_t"]
         d3 = v["stub_3_d"]
         t3 = v["stub_3_t"]
+
+        if diameter_def == "ID":
+            Dc_OD, d1_OD = Dc + tc, d1+t1,
+            d2_OD = d2 + t2 if d2 is not None else None
+            d3_OD = d3 + t3 if d3 is not None else None
+        else:
+            print("todo")
         # create the Joint object and store
-        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d2, t2=t2, d3=d3, t3=t3, jt_name=k, jt_type="kjt")
+        jnt_obj = Joint2D(Dc_OD, tc, # Joint and stubs are defined as D and d as their ODs
+                          d1_OD, t1,
+                          d2=d2_OD, t2=t2,
+                          d3=d3_OD, t3=t3,
+                          jt_name=k, jt_type="kjt")
         jnt_objs.append(jnt_obj)
     return jnt_objs
 
-def create_2D_xjoint_data(xjt_geom_data):
+def create_2D_xjoint_data(xjt_geom_data, diameter_def="ID"):
     jnt_objs = []
     for k, v in xjt_geom_data.items():
         Dc = v['can_d']
         tc = v["can_t"]
         d1 = v["stub_d"]
         t1 = v["stub_t"]
-        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d1, t2=t1, jt_name=k, jt_type="xjt")
+        if diameter_def == "ID":
+            Dc_OD, d1_OD = Dc + tc, d1+t1
+        else:
+            print("todo")
+        jnt_obj = Joint2D(Dc_OD, tc, d1_OD, t1, d2=d1_OD, t2=t1, jt_name=k, jt_type="xjt")
         jnt_objs.append(jnt_obj)
     return jnt_objs
 
-def create_2D_leg_data(leg_geom_data, kjt_geom_data):
+def create_2D_leg_data(leg_geom_data, kjt_geom_data, diameter_def="ID"):
     """create Leg object from the leg_geom_data and kjt_geom_data (i.e. from app form)
     Args:
         leg_geom_data: dict, see above
@@ -103,37 +118,42 @@ def create_2D_leg_data(leg_geom_data, kjt_geom_data):
         leg_objs: list, of Leg objects (initialised only)
     """
     leg_objs = []
+    last_leg_section = False
     for idx, (k, v) in enumerate(leg_geom_data.items()):
-        # if idx == len(leg_geom_data) - 1:
-        #     break  # testing for leg just above pile top
+        if idx == len(leg_geom_data) - 1:
+            last_leg_section = True  # on last leg section, there is only a Kjt below it (and then pile top)
         leg_no = int(k.split("_")[1])
-        # print(k, leg_no)
-        # get k_jt diameter and thickness above leg section
+        thk1 = v["t"]  # leg thickness
+        # get leg diameter from the k_jt diameter ABOVE leg section
         for kk, vv in kjt_geom_data.items():
             kjt_no = int(kk.split("_")[1])
             # get kjt data from kjoint above the leg section
             kflag = False
             if kjt_no == leg_no:
                 width1 = vv['can_d']
-                thk1 = vv["can_t"]
                 kflag = True
                 break
-        # get k_jt diameter and thickness below leg section
+        # get leg diameter from the k_jt diameter BELO leg section
         if kflag:
-            if idx == len(leg_geom_data) - 1:  # for the leg section below the bottom k joint (just above top of pile)
+            if last_leg_section:  # for the leg section below the bottom k joint (just above top of pile)
                 width2 = width1
             else:
                 # get kjt data from kjoint above the leg section
                 width2 = kjt_geom_data[f"kjt_{kjt_no + 1}"]['can_d']
         # create the object and store
-        leg_obj = Leg(width1=width1, width2=width2, thk1=thk1, thk2=thk1, leg_name=k, member_type="LEG")
+        if diameter_def == "ID":
+            leg1_OD, leg2_OD = width1 + thk1, width2 + thk1
+        else:
+            print("todo")
+        leg_obj = Leg(width1=leg1_OD, width2=leg2_OD, thk=thk1, leg_name=k, member_type="LEG")
         leg_objs.append(leg_obj)
     return leg_objs
 
-def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data):
-    """create Leg object from the leg_geom_data and kjt_geom_data (i.e. from app form)
+def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diameter_def="ID"):
+    """create Leg object for an x brace from the leg_geom_data and kjt_geom_data (i.e. from app form)
 
-    brace_a bay braces start from a K joint and descend in elevation to the stub of the X joint
+
+    brace_a bay braces are in the top half of the x bay. start from a K joint and descend in elevation to the stub of the X joint
 
     brace a L is left side brace in bay top half
     brace a R is right side brace in bay top half
@@ -169,18 +189,24 @@ def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data):
                 break
 
         # create the object and store
-        brace_obj = Leg(width1=width1_aL, width2=width2_aL, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_aL", bay_side="L", member_type="BRC")
+        if diameter_def == "ID":
+            width1_aR = width1_aL
+            brc1L_OD, brc2L_OD = width1_aL + brace_thk, width2_aL + brace_thk
+            brc1R_OD, brc2R_OD = width1_aR + brace_thk, width2_aR + brace_thk
+        else:
+            print("todo")
+
+        brace_obj = Leg(width1=brc1L_OD, width2=brc2L_OD, thk=brace_thk, leg_name=bay_name + "_aL", bay_side="L", member_type="BRC")
         brace_objs.append(brace_obj)
 
         # for the right side brace a, rename and give it the same width (diameter) as the other side L
-        width1_aR = width1_aL
-        brace_obj = Leg(width1=width1_aR, width2=width2_aR, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_aR", bay_side="R", member_type="BRC")
+        brace_obj = Leg(width1=brc1R_OD, width2=brc2R_OD, thk=brace_thk, leg_name=bay_name + "_aR", bay_side="R", member_type="BRC")
         brace_objs.append(brace_obj)
 
     return brace_objs
 
 
-def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data):
+def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diameter_def="ID"):
     """Create Leg objects for bay braces that descend from X joints to K joint stubs.
     Each bay contains two braces: left (bL) and right (bR).
     """
@@ -195,21 +221,29 @@ def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data):
                 break
         # Get geometry from corresponding K-joint (one index below)
         for ka, va in kjt_geom_data.items():
-            if int(ka.split("_")[1]) == brace_no + 1:
-                k_stub_d = next(val for val in (va.get("stub_3_d"), va.get("stub_2_d"), va.get("stub_1_d")) if val is not None)
-                # Use same thickness for both ends of brace
-                width2_bL = width2_bR = k_stub_d
+            kjt_no = int(ka.split("_")[1])
+            if kjt_no == brace_no + 1:
+                # top stub of the corresponding kjt
+                k_stub_d = next(val for val in (va.get("stub_1_d"), va.get("stub_2_d"), va.get("stub_2_d")) if val is not None)
+                width2_bL = width2_bR = k_stub_d  # Use same thickness for both ends of brace
                 break
 
+        # create the object and store
+        if diameter_def == "ID":
+            brc1L_OD, brc2L_OD = width1_bL + brace_thk, width2_bL + brace_thk
+            brc1R_OD, brc2R_OD = width1_bR + brace_thk, width2_bR + brace_thk
+        else:
+            print("todo")
+
         # Create left-side brace
-        brace_objs.append(Leg(width1=width1_bL, width2=width2_bL, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_bL", bay_side="L", member_type="BRC"))
+        brace_objs.append(Leg(width1=brc1L_OD, width2=brc2L_OD, thk=brace_thk, leg_name=bay_name + "_bL", bay_side="L", member_type="BRC"))
         # Create right-side brace
-        brace_objs.append(Leg(width1=width1_bR, width2=width2_bR, thk1=brace_thk, thk2=brace_thk, leg_name=bay_name + "_bR", bay_side="R", member_type="BRC"))
+        brace_objs.append(Leg(width1=brc1R_OD, width2=brc2R_OD, thk=brace_thk, leg_name=bay_name + "_bR", bay_side="R", member_type="BRC"))
 
     return brace_objs
 
 
-def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data):
+def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data, diameter_def="ID"):
     """create horizontal brace, which spans between k joints at same level e.g. k1 to k1
     """
     brace_hz_objs = []
@@ -223,7 +257,12 @@ def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data):
                 stub_2_d = va['stub_2_d']
                 break
         # hz braces defined from left to right
-        brace_obj = Leg(width1=stub_2_d, width2=stub_2_d, thk1=hz_t, thk2=hz_t, leg_name=f"{bay_name}_hz", member_type="BRC")
+        if diameter_def == "ID":
+            OD = stub_2_d + hz_t
+        else:
+            print("todo")
+
+        brace_obj = Leg(width1=OD, width2=OD, thk=hz_t, leg_name=f"{bay_name}_hz", member_type="BRC")
         brace_hz_objs.append(brace_obj)
 
     return brace_hz_objs

@@ -3,5 +3,38 @@
 {% block title %}Home Page{% endblock %}
 
 {% block content %}
-    <h1>mto in progress...</h1>
+
+{% block styles %}
+  {% include 'mto_styles.html' %}
+{% endblock %}
+
+<form method="GET" action="">
+  <label for="num_legs">No. of legs:</label>
+  <select name="num_legs" id="num_legs" onchange="this.form.submit()" style="width: 60px;">
+    <option value="3" {% if num_legs == '3' %}selected{% endif %}>3</option>
+    <option value="4" {% if num_legs == '4' %}selected{% endif %}>4</option>
+  </select>
+</form>
+<br>
+
+<p><strong>Total jacket mass: {{ total_mass_sum }} t</strong></p>
+
+<table class="table table-striped mto-table">
+  <thead>
+    <tr>
+      {% for col in columns %}
+        <th>{{ col }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in data %}
+      <tr>
+        {% for col in columns %}
+          <td>{{ row[col] }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

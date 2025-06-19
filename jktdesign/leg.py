@@ -6,15 +6,15 @@ from jktdesign.geom_utils import find_longest_segment, create_points_on_line, cr
 
 class Leg:
 
-    def __init__(self, width1, width2, thk1, thk2, leg_name=None, bay_side=None, member_type=None):
-
+    def __init__(self, width1, width2, thk, leg_name=None, bay_side=None, member_type=None):
 
         self.width1 = width1  # float, defines width1 in 2D (or diameter in 3D) of leg
         self.width2 = width2  # float, defines width2 in 2D (or diameter in 3D) of leg
-        self.thk1, self.thk2 = thk1, thk2  # float, defines thicknesses of leg
+        self.thk = thk  # float, defines thicknesses of leg
         self.leg_name = leg_name  # str, defines name of the leg section e.g. leg_1, leg_2, leg_3
         self.bay_side = bay_side  # str, either "L" or "R" left or right side of the bay (if Leg object is a brace)
 
+        # attributes to populate
         self.pt1 = None  # [x1, y1]
         self.pt2 = None  # [x2, y2]
         self.pts = None  # assume initially that only 2 points (start and end) are defined
@@ -33,10 +33,10 @@ class Leg:
         self.mirror = False
 
     def construct_leg(self, split_len1):
+
         ## CONE WORK ##
         self.is_cone = True if not np.isclose(self.width1, self.width2) else False
         if self.is_cone:
-            # print("Cone identified!")
             self._calc_cone_length()  # cone length calc based on taper ratio of 1 in 4 (default)
             split_len2 = split_len1 + self.cone_length
             self._create_cone_segment(split_len1, split_len2)
@@ -67,7 +67,7 @@ class Leg:
         self.cone_length = (cone_taper * abs(self.width2 - self.width1)) / 2
 
     def _create_cone_segment(self, split_len1, split_len2, plot_cone=False):
-        # find longest segment
+        # find longest segment to put the cone into
         self.longest_seg = find_longest_segment(*self.pts)
         _, (seg_pt1, seg_pt2) = self.longest_seg  # e.g. seg_pt1: [0, 1] seg_pt2: [5, 15]
 
@@ -127,8 +127,8 @@ class Leg:
 
     def _create_leg_poly_coords(self, plot_polys=False):
         # create the polygons for the leg
+        # print(self.leg_name, *self.pts)
         self.leg_a_poly_coords = construct_true_constant_width_path(self.width1, *self.pts)
-
         # some plotting
         if plot_polys:
             fig, ax = plt.subplots()

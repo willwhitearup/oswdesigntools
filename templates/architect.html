@@ -310,7 +310,6 @@ function generateBayInputs() {
     const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup) - vleg_bottom / 2;
     const bayHeightValue = Math.floor(bay_h_tot / nBays);
 
-
     // Use bayHeights from server if valid, otherwise fallback to bayHeightValue
     const useHeights = (typeof bayHeights !== 'undefined' && bayHeights.length === nBays)
         ? bayHeights
@@ -339,7 +338,7 @@ function generateBayInputs() {
         slider.type = 'range';
         slider.id = `bay_height_${bayNum}_slider`;
         slider.min = 1000;
-        slider.max = bay_h_tot;  // Pick a high enough max to allow flexibility
+        slider.max = 2 * bayHeightValue // Slider max to allow flexibility
         slider.step = 100;
         slider.value = useHeights[i].toFixed(1);
 

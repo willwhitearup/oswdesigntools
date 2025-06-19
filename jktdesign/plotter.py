@@ -172,7 +172,7 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         x0, x1 = x_center - pile_width / 2, x_center + pile_width / 2
         y0, y1 = -water_depth, -water_depth + stickup
         fig.add_trace(go.Scatter(x=[x0, x1, x1, x0, x0], y=[y0, y0, y1, y1, y0], fill='toself', fillcolor='#444444',
-            line=dict(color='#444444'), mode='lines', name='stickup' if x_center < 0 else None, showlegend=(x_center < 0)
+            line=dict(color='#444444'), mode='lines', name='pile stickup<br>(indicative)' if x_center < 0 else None, showlegend=(x_center < 0)
         ))
     fig.add_shape(type='line', x0=xof + x1, x1=2 * water_levels_x_ext * jacket_footprint,
                   y0=y1, y1=y1, line=dict(color='grey', dash="dot"), showlegend=False)

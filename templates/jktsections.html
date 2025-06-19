@@ -12,134 +12,142 @@
     </div>
 {% endif %}
 
+
 <form id="myForm" class="sections-input-form">
     <div class="table-responsive-wrapper">
-        <!--defines tubular sections using IDs or centre line Ds. to be used in backend-->
         <label for="joint_type_geometry">Joint geometry</label>
         <select name="joint_type_geometry" id="joint_type_geometry">
             <option value="ID_constant">ID constant (IDs defined)</option>
             <option value="MD_constant">MidDia constant (MidDias defined)</option>
         </select>
         <br><br>
-        <table class="sections-grid-table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Can Dia</th>
-                    <th>Can thk</th>
-                    <th>Stub1 Dia</th>
-                    <th>Stub1 thk</th>
-                    <th>Stub2 Dia</th>
-                    <th>Stub2 thk</th>
-                    <th>Stub3 Dia</th>
-                    <th>Stub3 thk</th>
-                </tr>
-            </thead>
-                <tbody>
-                    {% for kjt_key, brace_count in kjt_n_braces.items() %}
-                    <tr>
-                        <td>{{ kjt_key }}</td>
-                        <td><input type="text" name="{{ kjt_key }}_can_d" id="{{ kjt_key }}_can_d"value="{{ 2000 + loop.index0 * 500 }}"></td>
-                        <td><input type="text" name="{{ kjt_key }}_can_t" id="{{ kjt_key }}_can_t" value="100"></td>
-                        <td><input type="text" name="{{ kjt_key }}_stub_1_d" id="{{ kjt_key }}_stub_1_d" value="1000"></td>
-                        <td><input type="text" name="{{ kjt_key }}_stub_1_t" id="{{ kjt_key }}_stub_1_t" value="40"></td>
-                        {% if brace_count > 1 %}
-                        <td><input type="text" name="{{ kjt_key }}_stub_2_d" id="{{ kjt_key }}_stub_2_d" value="1000"></td>
-                        <td><input type="text" name="{{ kjt_key }}_stub_2_t" id="{{ kjt_key }}_stub_2_t" value="60"></td>
-                        {% else %}
-                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_d"></td>
-                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_t"></td>
-                        {% endif %}
-                        {% if brace_count > 2 %}
-                        <td><input type="text" name="{{ kjt_key }}_stub_3_d" id="{{ kjt_key }}_stub_3_d" value="1000"></td>
-                        <td><input type="text" name="{{ kjt_key }}_stub_3_t" id="{{ kjt_key }}_stub_3_t" value="60"></td>
-                        {% else %}
-                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_d"></td>
-                        <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_t"></td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-        </table>
-        <br>
-        <!--create a table for the x joints-->
-        <table class="sections-grid-table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Can Dia</th>
-                    <th>Can thk</th>
-                    <th>Stub Dia</th>
-                    <th>Stub thk</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in range(kjt_n_braces|length - 1) %}
-                <tr>
-                    <td>xjt_{{ i + 1 }}</td>
-                    <td><input type="text" name="xjt_{{ i + 1 }}_can_d" id="xjt_{{ i + 1 }}_can_d" value="500"></td>
-                    <td><input type="text" name="xjt_{{ i + 1 }}_can_t" id="xjt_{{ i + 1 }}_can_t" value="40"></td>
-                    <td><input type="text" name="xjt_{{ i + 1 }}_stub_d" id="xjt_{{ i + 1 }}_stub_d" value="500"></td>
-                    <td><input type="text" name="xjt_{{ i + 1 }}_stub_t" id="xjt_{{ i + 1 }}_stub_t" value="40"></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
-        <!--create a table for the leg sections-->
-        <table class="sections-grid-table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Leg thk</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in range(kjt_n_braces|length) %}
-                <tr>
-                    <td>leg_{{ i + 1 }}</td>
-                    <td><input type="text" name="leg_{{ i + 1 }}_t" id="leg_{{ i + 1 }}_t" value="80"></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
 
-        <!--table for brace and horizontal brace-->
-        <table class="sections-grid-table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Brace thk</th>
-                    <th>Horizontal thk (btm of bay)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in range(kjt_n_braces|length - 1) %}
-                <tr>
-                    <td>bay_{{ i + 1 }}</td>
-                    <td><input type="text" name="bay_{{ i + 1 }}_t" id="bay_{{ i + 1 }}_t" value="40"></td>
-                    <td>
-                        <!-- skip 1st entry in bay_horizontals list                 -->
-                        {% if bay_horizontals[i + 1] == true %}
-                            <input type="text" name="bay_hz_{{ i + 1 }}_t" id="bay_hz_{{ i + 1 }}_t" value="20">
-                        {% else %}
-                            <input type="text" class="sections-visually-disabled" name="bay_hz_{{ i + 1 }}_t">
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
+        <!-- Row 1: KJT + Leg -->
+        <div class="sections-table-row">
+            <div class="sections-table-block">
+                <table class="sections-grid-table">
+                    <thead>
+                        <tr>
+                            <th>K JTS</th>
+                            <th>Can Dia</th>
+                            <th>Can thk</th>
+                            <th>Stub1 Dia</th>
+                            <th>Stub1 thk</th>
+                            <th>Stub2 Dia</th>
+                            <th>Stub2 thk</th>
+                            <th>Stub3 Dia</th>
+                            <th>Stub3 thk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for kjt_key, brace_count in kjt_n_braces.items() %}
+                        <tr>
+                            <td>{{ kjt_key }}</td>
+                            <td><input type="text" name="{{ kjt_key }}_can_d" value="{{ 2000 + loop.index0 * 500 }}"></td>
+                            <td><input type="text" name="{{ kjt_key }}_can_t" value="100"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_1_d" value="1000"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_1_t" value="40"></td>
+                            {% if brace_count > 1 %}
+                            <td><input type="text" name="{{ kjt_key }}_stub_2_d" value="1000"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_2_t" value="60"></td>
+                            {% else %}
+                            <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_d"></td>
+                            <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_t"></td>
+                            {% endif %}
+                            {% if brace_count > 2 %}
+                            <td><input type="text" name="{{ kjt_key }}_stub_3_d" value="1000"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_3_t" value="60"></td>
+                            {% else %}
+                            <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_d"></td>
+                            <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_t"></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
+            <div class="sections-table-block">
+                <table class="sections-grid-table">
+                    <thead>
+                        <tr>
+                            <th>LEGS </th>
+                            <th>Leg thk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(kjt_n_braces|length) %}
+                        <tr>
+                            <td>leg_{{ i + 1 }}</td>
+                            <td><input type="text" name="leg_{{ i + 1 }}_t" value="80"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Row 2: XJT + Brace -->
+        <div class="sections-table-row">
+            <div class="sections-table-block">
+                <table class="sections-grid-table">
+                    <thead>
+                        <tr>
+                            <th>X JTS</th>
+                            <th>Can Dia</th>
+                            <th>Can thk</th>
+                            <th>Stub Dia</th>
+                            <th>Stub thk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(kjt_n_braces|length - 1) %}
+                        <tr>
+                            <td>xjt_{{ i + 1 }}</td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_can_d" value="500"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_can_t" value="40"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_stub_d" value="500"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_stub_t" value="40"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="sections-table-block">
+                <table class="sections-grid-table">
+                    <thead>
+                        <tr>
+                            <th>X BRACES</th>
+                            <th>Brace thk</th>
+                            <th>Horz thk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(kjt_n_braces|length - 1) %}
+                        <tr>
+                            <td>bay_{{ i + 1 }}</td>
+                            <td><input type="text" name="bay_{{ i + 1 }}_t" value="40"></td>
+                            <td>
+                                {% if bay_horizontals[i + 1] == true %}
+                                    <input type="text" name="bay_hz_{{ i + 1 }}_t" value="20">
+                                {% else %}
+                                    <input type="text" class="sections-visually-disabled" name="bay_hz_{{ i + 1 }}_t">
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="submit" class="sections-submit-button">Submit</button>
     </div>
-    <button type="submit" class="sections-submit-button">Submit</button>
 </form>
 
 <!-- Warning goes here -->
-<div id="jkt-warning-container" style="margin-top: 12px;"></div>
-
+<div id="jkt-warning-container" style="margin-top: 6px;"></div>
 
 <div id="response" class="message"></div>
 <div id="plot"></div>
@@ -147,6 +155,7 @@
 <!-- Load Plotly -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
+
 document.addEventListener("DOMContentLoaded", function () {
     let plot_json = {{ plot_json | tojson | safe }};
 
