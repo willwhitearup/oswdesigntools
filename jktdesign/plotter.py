@@ -167,7 +167,7 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     fig, Dc = jnt_object_plotting(fig, jkt_obj.joint_objs)  # plot k and x joints (last so that colours plot nicely ontop of legs)
 
     # Pile stickups
-    pile_width = 200 if Dc is None else Dc + 500 # pile plot width
+    pile_width = 200 if Dc is None else Dc + 500  # pile plot width
     for x_center in [-jacket_footprint / 2, jacket_footprint / 2]:
         x0, x1 = x_center - pile_width / 2, x_center + pile_width / 2
         y0, y1 = -water_depth, -water_depth + stickup

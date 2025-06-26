@@ -95,7 +95,7 @@ def jacket_sections():
     """
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
-
+    print("we in get", jkt_dict)
     # create error message just so the page loads if user go theres initially
     if not jkt_dict:
         return render_template('jktsections.html',

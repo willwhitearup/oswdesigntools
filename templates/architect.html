@@ -299,25 +299,54 @@ function fetchSingleBatterData() {
 }
 
 
+
+
+
+
+
+
+
+
 function generateBayInputs() {
     const nBays = parseInt(document.getElementById('n_bays').value);
     const container = document.getElementById('bay_heights_container');
     container.innerHTML = '';
 
-    // grab all required form inputs to calculate a default bayHeightValue (if not set by the User)
     const ids = ['tp_btm', 'tp_btm_k1_voffset', 'water_depth', 'stickup', 'btm_vert_leg_length'];
-    const [tp_btm, tp_btm_k1_voffset, water_depth, stickup, vleg_bottom] = ids.map(id => parseFloat(document.getElementById(id).value));
-    const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup) - vleg_bottom / 2;
-    const bayHeightValue = Math.floor(bay_h_tot / nBays);
+    const [tp_btm, tp_btm_k1_voffset, water_depth, stickup, vleg_bottom] = ids.map(id =>
+        parseFloat(document.getElementById(id)?.value || '0')
+    );
 
-    // Use bayHeights from server if valid, otherwise fallback to bayHeightValue
+    const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup) - vleg_bottom / 2;
+    const defaultBayHeight = nBays > 0 ? Math.max(Math.floor(bay_h_tot / nBays), 1000) : 1000;
+
+    // Use existing bayHeights if valid, else default
     const useHeights = (typeof bayHeights !== 'undefined' && bayHeights.length === nBays)
-        ? bayHeights
-        : Array.from({ length: nBays }, () => bayHeightValue);
+        ? bayHeights.map(h => Math.max(h, 1000))
+        : Array.from({ length: nBays }, () => defaultBayHeight);
 
     const horizontals = (Array.isArray(bayHorizontals) && bayHorizontals.length === nBays + 1)
         ? bayHorizontals.slice(1)
         : Array(nBays).fill(false);
+
+    const inputs = [];
+    const sliders = [];
+
+    function updateSliderMaxes() {
+        const currentHeights = inputs.map(input => Math.max(parseFloat(input.value) || 0, 1000));
+        const totalUsed = currentHeights.reduce((a, b) => a + b, 0);
+
+        for (let i = 0; i < nBays; i++) {
+            const othersTotal = totalUsed - currentHeights[i];
+            const dynamicMax = bay_h_tot - othersTotal;
+            sliders[i].max = Math.max(dynamicMax, 1000);
+            // If current value exceeds max after update, clamp it:
+            if (parseFloat(sliders[i].value) > sliders[i].max) {
+                sliders[i].value = sliders[i].max;
+                inputs[i].value = sliders[i].max.toFixed(1);
+            }
+        }
+    }
 
     for (let i = 0; i < nBays; i++) {
         const bayNum = i + 1;
@@ -338,43 +367,63 @@ function generateBayInputs() {
         slider.type = 'range';
         slider.id = `bay_height_${bayNum}_slider`;
         slider.min = 1000;
-        slider.max = 2 * bayHeightValue // Slider max to allow flexibility
         slider.step = 100;
         slider.value = useHeights[i].toFixed(1);
+        slider.max = 999999; // temporary max; will update later
+
+        sliders.push(slider);
+        inputs.push(input);
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = `bay_horizontal_${bayNum}`;
         checkbox.name = `bay_horizontal_${bayNum}`;
         checkbox.value = 'on';
+        if (horizontals[i]) checkbox.checked = true;
 
-        if (horizontals[i]) {  // Use horizontals (already sliced)
-            checkbox.checked = true;
-        }
+        // Sync slider -> input
+        slider.addEventListener('change', () => {
+            const val = Math.max(parseFloat(slider.value), 1000);
+            input.value = val.toFixed(1);
+            updateSliderMaxes();
+            updatePlot();
+            checkBayHeightsVsJacket();
+        });
+
+        // Sync input -> slider
+        input.addEventListener('input', () => {
+            let val = parseFloat(input.value);
+            if (isNaN(val) || val < 1000) val = 1000;
+            input.value = val.toFixed(1);
+            slider.value = val;
+            updateSliderMaxes();
+            updatePlot();
+            checkBayHeightsVsJacket();
+        });
+
+        checkbox.addEventListener('change', () => {
+            updatePlot();
+        });
 
         div.appendChild(label);
         div.appendChild(input);
         div.appendChild(slider);
         div.appendChild(checkbox);
         container.appendChild(div);
-
-        slider.addEventListener('input', debounce(() => {
-            input.value = slider.value;
-            updatePlot();
-            checkBayHeightsVsJacket();
-        }));
-        input.addEventListener('input', debounce(() => {
-            slider.value = input.value;
-            updatePlot();
-            checkBayHeightsVsJacket();
-        }));
-
-        checkbox.addEventListener('change', () => {
-            updatePlot();
-        });
     }
+
+    // Now that all inputs and sliders exist, update slider maxes properly
+    updateSliderMaxes();
+
+    // Re-set slider values to ensure handles are positioned correctly
+    sliders.forEach((slider, i) => {
+        slider.value = Math.max(parseFloat(inputs[i].value), 1000).toFixed(1);
+    });
+
     checkBayHeightsVsJacket();
 }
+
+
 
 
 function toggleBatterInputs() {
