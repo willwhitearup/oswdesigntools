@@ -21,7 +21,9 @@ def jacket_sections_plot():
 
     # get the form data back (input boxes)
     form_data = data.get('form_data', {})
-    # print("form_data", form_data)
+    print("form_data", form_data)
+
+    session['jktsections_form_data'] = form_data
 
     # todo, only ID diameter refs done so far
     if form_data["joint_type_geometry"] != 'ID_constant':
@@ -80,7 +82,6 @@ def jacket_sections_plot():
 
     # create mto dataframe
     df_mto = calculate_jkt_mto(jkt_obj)
-
     session['df_mto'] = df_mto.to_json()
 
     return jsonify({'message': 'Plot updated successfully',
@@ -95,7 +96,7 @@ def jacket_sections():
     """
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
-    print("we in get", jkt_dict)
+
     # create error message just so the page loads if user go theres initially
     if not jkt_dict:
         return render_template('jktsections.html',
@@ -112,11 +113,19 @@ def jacket_sections():
     plot_json_str = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower=False)
     plot_json = json.loads(plot_json_str)
 
+    # on initial load get the defaults, otherwise use the session dict
+    if 'jktsections_form_data' in session:
+        defaults_sct = session.get('jktsections_form_data', '{}')
+    else:
+        # jacket wireframe defaults
+        defaults_sct = get_default_sct_config(jkt_obj)
+
     return render_template('jktsections.html', jkt_dict=jkt_dict,
                            plot_json=plot_json,
                            kjt_n_braces=kjt_n_braces,
                            bay_horizontals=bay_horizontals,
-                           bay_horizontals_json=json.dumps(bay_horizontals))
+                           bay_horizontals_json=json.dumps(bay_horizontals),
+                           defaults_sct=defaults_sct)
 
 
 def create_jacket_from_session():
@@ -138,3 +147,35 @@ def create_jacket_from_session():
         jkt_dict['single_batter'],
         jkt_dict['bay_horizontals']
     )
+
+def get_default_sct_config(jkt_obj):
+
+    kjt_n_braces = jkt_obj.kjt_n_braces
+    k_jt_d, k_jt_stub_d, t = 2000, 1000, 99
+    x_jt_d, x_jt_stub_d = 1000, 1000
+    defaults_sct = {}
+
+    for k_jt, n_braces in kjt_n_braces.items():
+        print(k_jt)
+        idx = k_jt.split("_")[1]
+        # k jt defaults
+        defaults_sct[f"{k_jt}_can_d"] = k_jt_d
+        defaults_sct[f"{k_jt}_can_t"] = t
+        defaults_sct[f"{k_jt}_stub_1_d"] = k_jt_stub_d
+        defaults_sct[f"{k_jt}_stub_2_d"] = k_jt_stub_d
+        defaults_sct[f"{k_jt}_stub_3_d"] = k_jt_stub_d
+        defaults_sct[f"{k_jt}_stub_1_t"] = t
+        defaults_sct[f"{k_jt}_stub_2_t"] = t
+        defaults_sct[f"{k_jt}_stub_3_t"] = t
+        # leg defaults
+        defaults_sct[f"leg_{idx}_t"] = t
+        # x jts
+        defaults_sct[f"xjt_{idx}_can_d"] = x_jt_d
+        defaults_sct[f"xjt_{idx}_can_t"] = t
+        defaults_sct[f"xjt_{idx}_stub_d"] = x_jt_d
+        defaults_sct[f"xjt_{idx}_stub_t"] = t
+        # bay braces
+        defaults_sct[f"bay_{idx}_t"] = t
+        defaults_sct[f"bay_hz_{idx}_t"] = t
+
+    return defaults_sct

@@ -43,20 +43,21 @@
                         {% for kjt_key, brace_count in kjt_n_braces.items() %}
                         <tr>
                             <td>{{ kjt_key }}</td>
-                            <td><input type="text" name="{{ kjt_key }}_can_d" value="{{ 2000 + loop.index0 * 500 }}"></td>
-                            <td><input type="text" name="{{ kjt_key }}_can_t" value="100"></td>
-                            <td><input type="text" name="{{ kjt_key }}_stub_1_d" value="1000"></td>
-                            <td><input type="text" name="{{ kjt_key }}_stub_1_t" value="40"></td>
+<!--                            <td><input type="text" name="{{ kjt_key }}_can_d" value="{{ 2000 + loop.index0 * 500 }}"></td>-->
+                            <td><input type="text" name="{{ kjt_key }}_can_d" value="{{ defaults_sct[kjt_key ~ '_can_d'] }}"></td>
+                            <td><input type="text" name="{{ kjt_key }}_can_t" value="{{ defaults_sct[kjt_key ~ '_can_t'] }}"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_1_d" value="{{ defaults_sct[kjt_key ~ '_stub_1_d'] }}"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_1_t" value="{{ defaults_sct[kjt_key ~ '_stub_1_t'] }}"></td>
                             {% if brace_count > 1 %}
-                            <td><input type="text" name="{{ kjt_key }}_stub_2_d" value="1000"></td>
-                            <td><input type="text" name="{{ kjt_key }}_stub_2_t" value="60"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_2_d" value="{{ defaults_sct[kjt_key ~ '_stub_2_d'] }}"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_2_t" value="{{ defaults_sct[kjt_key ~ '_stub_2_t'] }}"></td>
                             {% else %}
                             <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_d"></td>
                             <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_2_t"></td>
                             {% endif %}
                             {% if brace_count > 2 %}
-                            <td><input type="text" name="{{ kjt_key }}_stub_3_d" value="1000"></td>
-                            <td><input type="text" name="{{ kjt_key }}_stub_3_t" value="60"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_3_d" value="{{ defaults_sct[kjt_key ~ '_stub_3_d'] }}"></td>
+                            <td><input type="text" name="{{ kjt_key }}_stub_3_t" value="{{ defaults_sct[kjt_key ~ '_stub_3_t'] }}"></td>
                             {% else %}
                             <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_d"></td>
                             <td><input type="text" class="sections-visually-disabled" name="{{ kjt_key }}_stub_3_t"></td>
@@ -79,7 +80,7 @@
                         {% for i in range(kjt_n_braces|length) %}
                         <tr>
                             <td>leg_{{ i + 1 }}</td>
-                            <td><input type="text" name="leg_{{ i + 1 }}_t" value="80"></td>
+                            <td><input type="text" name="leg_{{ i + 1 }}_t" value="{{ defaults_sct['leg_' ~ (i + 1) ~ '_t'] }}"></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -104,10 +105,10 @@
                         {% for i in range(kjt_n_braces|length - 1) %}
                         <tr>
                             <td>xjt_{{ i + 1 }}</td>
-                            <td><input type="text" name="xjt_{{ i + 1 }}_can_d" value="500"></td>
-                            <td><input type="text" name="xjt_{{ i + 1 }}_can_t" value="40"></td>
-                            <td><input type="text" name="xjt_{{ i + 1 }}_stub_d" value="500"></td>
-                            <td><input type="text" name="xjt_{{ i + 1 }}_stub_t" value="40"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_can_d" value="{{ defaults_sct['xjt_' ~ (i + 1) ~ '_can_d'] }}"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_can_t" value="{{ defaults_sct['xjt_' ~ (i + 1) ~ '_can_t'] }}"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_stub_d" value="{{ defaults_sct['xjt_' ~ (i + 1) ~ '_stub_d'] }}"></td>
+                            <td><input type="text" name="xjt_{{ i + 1 }}_stub_t" value="{{ defaults_sct['xjt_' ~ (i + 1) ~ '_stub_t'] }}"></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -130,7 +131,7 @@
                             <td><input type="text" name="bay_{{ i + 1 }}_t" value="40"></td>
                             <td>
                                 {% if bay_horizontals[i + 1] == true %}
-                                    <input type="text" name="bay_hz_{{ i + 1 }}_t" value="20">
+                                    <input type="text" name="bay_hz_{{ i + 1 }}_t" value="{{ defaults_sct['bay_hz_' ~ (i + 1) ~ '_t'] }}">
                                 {% else %}
                                     <input type="text" class="sections-visually-disabled" name="bay_hz_{{ i + 1 }}_t">
                                 {% endif %}
@@ -144,6 +145,8 @@
 
         <button type="submit" class="sections-submit-button">Submit</button>
     </div>
+
+
 </form>
 
 <!-- Warning goes here -->

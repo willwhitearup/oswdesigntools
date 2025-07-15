@@ -16,7 +16,7 @@ STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 @app.route('/architect', methods=['GET', 'POST'])
 def jacket_architect():
     if request.method == 'POST':
-        session.clear()
+        # session.clear()
         try:
             show_tower = request.form.get('show_tower') == 'on'
             single_batter = request.form.get('single_batter') == 'on'
@@ -54,6 +54,14 @@ def jacket_architect():
             # collect bay horizontals dynamically
             bay_horizontals = [f'bay_horizontal_{i}' in request.form for i in range(1, n_bays + 1)]
             bay_horizontals.insert(0, False)  # artificially insert a False to indicate the top k brace has no horizontal
+
+            # clear session data if the n bays is altered by the User----------------------
+            session_data = json.loads(session.get('jkt_json', '{}'))
+            old_n_bays = session_data.get('n_bays')
+            # Clear session if n_bays changed
+            if old_n_bays is not None and old_n_bays != n_bays:
+                session.clear()
+            # end of session clearing-----------------------------------
 
             # Create objects
             jkt_obj = Jacket(interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev,

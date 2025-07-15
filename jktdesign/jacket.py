@@ -67,7 +67,6 @@ class Jacket:
         # check validity of inputs for jackets
         self._jacket_validity()
 
-
         if self.single_batter:
             self._calculate_single_batter()
         else:
