@@ -21,7 +21,7 @@ def jacket_sections_plot():
 
     # get the form data back (input boxes)
     form_data = data.get('form_data', {})
-    print("form_data", form_data)
+    # print("form_data", form_data)
 
     session['jktsections_form_data'] = form_data
 
@@ -156,7 +156,6 @@ def get_default_sct_config(jkt_obj):
     defaults_sct = {}
 
     for k_jt, n_braces in kjt_n_braces.items():
-        print(k_jt)
         idx = k_jt.split("_")[1]
         # k jt defaults
         defaults_sct[f"{k_jt}_can_d"] = k_jt_d

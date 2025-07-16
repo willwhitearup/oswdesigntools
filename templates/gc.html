@@ -1,7 +1,95 @@
 {% extends "base.html" %}
 
-{% block title %}Placeholder Page{% endblock %}
+{% block title %}Pile and Jacket Inputs{% endblock %}
 
 {% block content %}
-Under development...
+<div class="input-form">
+    <form method="POST" action="/gc">
+
+        <!-- Jacket and Pile geom                -->
+        <p><strong>Pile and jacket</strong></p>
+        <label for="pile_od">Pile OD</label>
+        <input type="text" id="pile_od" name="pile_od" value="{{ pile_od }}"><br>
+
+        <label for="pile_thk">Pile thk</label>
+        <input type="text" id="pile_thk" name="pile_thk" value="{{ pile_thk }}"><br>
+
+        <label for="jkt_od">Jacket leg OD</label>
+        <input type="text" id="jkt_od" name="jkt_od" value="{{ jkt_od }}"><br>
+
+        <label for="jkt_thk">Jacket leg thk</label>
+        <input type="text" id="jkt_thk" name="jkt_thk" value="{{ jkt_thk }}"><br>
+
+        <!-- Connection                -->
+        <p><strong>GC connection</strong></p>
+
+        <label for="gc_length">GC length</label>
+        <input type="text" id="gc_length" name="gc_length" value="{{ gc_length }}"><br>
+
+        <!-- SHEAR KEYS                -->
+        <p><strong>Jacket shear keys</strong></p>
+        <label for="num_sks">No. of SKs</label>
+        <input type="text" id="num_sks" name="num_sks" value="{{ num_sks }}"><br>
+
+        <label for="sk_spacing">SK spacing</label>
+        <input type="text" id="sk_spacing" name="sk_spacing" value="{{ sk_spacing }}"><br>
+
+        <label for="sk_height">SK height</label>
+        <input type="text" id="sk_height" name="sk_height" value="{{ sk_height }}"><br>
+
+        <label for="sk_width">SK width</label>
+        <input type="text" id="sk_width" name="sk_width" value="{{ sk_width }}"><br>
+
+        <!-- MATERIAL -->
+        <p><strong>Material</strong></p>
+        <label for="grout_strength">Grout strength</label>
+        <input type="text" id="grout_strength" name="grout_strength" value="{{ grout_strength }}"><br>
+
+        <label for="grout_E">Grout E</label>
+        <input type="text" id="grout_E" name="grout_E" value="{{ grout_E }}"><br>
+
+        <label for="grout_mu">Grout poisson</label>
+        <input type="text" id="grout_mu" name="grout_mu" value="{{ grout_mu }}"><br>
+
+        <p><em style="font-size: 0.9em;">Steel youngs modulus (210 GPa)</em></p>
+
+        <!-- LOADS                -->
+        <p><strong>Loads @ top of pile<br> (right hand rule global loads)</strong></p>
+        <label for="Fx">Fx</label>
+        <input type="text" id="Fx" name="Fx" value="{{ Fx }}"><br>
+        <label for="Fy">Fy</label>
+        <input type="text" id="Fy" name="Fy" value="{{ Fy }}"><br>
+        <label for="Fz">Fz</label>
+        <input type="text" id="Fz" name="Fz" value="{{ Fz }}"><br>
+        <label for="Mx">Mx</label>
+        <input type="text" id="Mx" name="Mx" value="{{ Mx }}"><br>
+        <label for="My">My</label>
+        <input type="text" id="My" name="My" value="{{ My }}"><br>
+        <label for="Mz">Mz</label>
+        <input type="text" id="Mz" name="Mz" value="{{ Mz }}"><br>
+
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', async (e) => {
+    e.preventDefault(); // prevent normal form submission
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const json = Object.fromEntries(formData.entries());
+
+    const response = await fetch('/gc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form_data: json })  // send form data as JSON
+    });
+
+    const result = await response.json();
+    console.log(result); // optional: log the server response in browser console
+});
+</script>
+
+
 {% endblock %}

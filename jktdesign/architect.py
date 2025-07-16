@@ -86,6 +86,7 @@ def jacket_architect():
 
             # Plot jacket
             plot_json = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower, twr_obj)
+            # return for the POST request-------------------------------------
             return jsonify({'plot_json': plot_json,
                             "batter_2_theta": jkt_obj.batter_2_theta,
                             "batter_1_theta": jkt_obj.batter_1_theta,
@@ -107,6 +108,7 @@ def jacket_architect():
             flash(f"An error occurred: {e}")
             return jsonify({'error': f"An error occurred: {e}"}), 400
 
+    # GET requests------------------------------------------------------------------------------------
     # on initial load get the defaults, otherwise use the session dict
     if 'jkt_json' in session:
         defaults = json.loads(session.get('jkt_json', '{}'))
@@ -120,6 +122,7 @@ def jacket_architect():
                      defaults['bay_heights'], defaults['btm_vert_leg_length'], defaults['water_depth'],
                      defaults['single_batter'], defaults['bay_horizontals'])
 
+    # return for the GET---------------
     return render_template('architect.html',
                            defaults=defaults,
                            batter_1_elev_min=jkt_obj.batter_1_elevation_min,
