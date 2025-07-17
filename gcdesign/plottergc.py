@@ -4,7 +4,7 @@ import plotly.graph_objs as go
 import plotly.io as pio
 
 
-def jacket_plotter(leg_od: float, leg_t: float,
+def gc_plotter(leg_od: float, leg_t: float,
                    pile_od: float, pile_t: float, gc_length: float,
                    n_sks: float, sk_width: float, sk_height: float, sk_spacing: float):
 
@@ -136,12 +136,9 @@ def jacket_plotter(leg_od: float, leg_t: float,
     for i in range(n_pile_sks):
         # Coordinates for one SK
         sk_xs = [pile_IR, pile_IR, pile_IR - sk_height, pile_IR - sk_height]
-        sk_ys = [
-            top_pile_sk_elev + sk_width / 2,
-            top_pile_sk_elev - sk_width / 2,
-            top_pile_sk_elev - sk_width / 2 + sk_taper,
-            top_pile_sk_elev + sk_width / 2 - sk_taper
-        ]
+        sk_ys = [top_pile_sk_elev + sk_width / 2, top_pile_sk_elev - sk_width / 2,
+                 top_pile_sk_elev - sk_width / 2 + sk_taper, top_pile_sk_elev + sk_width / 2 - sk_taper
+                 ]
 
         # Add original SK (right side)
         fig.add_trace(go.Scatter(
@@ -170,16 +167,18 @@ def jacket_plotter(leg_od: float, leg_t: float,
         # Move down to next pile SK elevation
         top_pile_sk_elev -= sk_spacing
 
-
-
+    # set the layout and title
     fig.update_layout(
         yaxis_title='elevation rel LAT [mm]',
         yaxis=dict(scaleanchor="x", scaleratio=1),
-        legend=dict(x=1, y=1)
+        legend=dict(x=1, y=1),
+        title='GC design'
     )
 
-    fig.show()
-    return pio.to_json(fig)
+    #fig.show()
+
+    gc_plot_json = pio.to_json(fig)
+    return gc_plot_json
 
 
 if __name__ == "__main__":
@@ -187,7 +186,7 @@ if __name__ == "__main__":
     pile_od, pile_t = 3000, 150
     gc_length = 10000
     n_sks, sk_width, sk_height, sk_spacing = 10, 80, 40, 500
-    _ = jacket_plotter(leg_od, leg_t, pile_od, pile_t, gc_length, n_sks, sk_width, sk_height, sk_spacing)
+    _ = gc_plotter(leg_od, leg_t, pile_od, pile_t, gc_length, n_sks, sk_width, sk_height, sk_spacing)
 
 
 

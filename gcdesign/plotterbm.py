@@ -127,12 +127,10 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_
         title='GC bending moment diagram'
     )
 
-    fig.show()
-    return pio.to_json(fig)
+    # fig.show()
 
-
-
-
+    bm_plot_json = pio.to_json(fig)
+    return bm_plot_json
 
 
 if __name__ == "__main__":
