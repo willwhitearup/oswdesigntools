@@ -10,52 +10,61 @@
         <!-- Jacket and Pile geom                -->
         <p><strong>Pile and jacket</strong></p>
         <label for="pile_od">Pile OD</label>
-        <input type="text" id="pile_od" name="pile_od" value="{{ pile_od }}"><br>
+        <input type="text" id="pile_od" name="pile_od" value="{{ defaults.pile_od }}"><br>
+
         <label for="pile_thk">Pile thk</label>
-        <input type="text" id="pile_thk" name="pile_thk" value="{{ pile_thk }}"><br>
+        <input type="text" id="pile_thk" name="pile_thk" value="{{ defaults.pile_t }}"><br>
+
         <label for="jkt_od">Jacket leg OD</label>
-        <input type="text" id="jkt_od" name="jkt_od" value="{{ jkt_od }}"><br>
+        <input type="text" id="jkt_od" name="jkt_od" value="{{ defaults.leg_od }}"><br>
+
         <label for="jkt_thk">Jacket leg thk</label>
-        <input type="text" id="jkt_thk" name="jkt_thk" value="{{ jkt_thk }}"><br>
-        <!-- Connection                -->
+        <input type="text" id="jkt_thk" name="jkt_thk" value="{{ defaults.leg_t }}"><br>
+
         <p><strong>GC connection</strong></p>
         <label for="gc_length">GC length</label>
-        <input type="text" id="gc_length" name="gc_length" value="{{ gc_length }}"><br>
-        <!-- SHEAR KEYS                -->
+        <input type="text" id="gc_length" name="gc_length" value="{{ defaults.gc_length }}"><br>
+
         <p><strong>Jacket shear keys</strong></p>
         <label for="num_sks">No. of SKs</label>
-        <input type="text" id="num_sks" name="num_sks" value="{{ num_sks }}"><br>
+        <input type="text" id="num_sks" name="num_sks" value="{{ defaults.n_sks }}"><br>
+
         <label for="sk_spacing">SK spacing</label>
-        <input type="text" id="sk_spacing" name="sk_spacing" value="{{ sk_spacing }}"><br>
+        <input type="text" id="sk_spacing" name="sk_spacing" value="{{ defaults.sk_spacing }}"><br>
+
         <label for="sk_height">SK height</label>
-        <input type="text" id="sk_height" name="sk_height" value="{{ sk_height }}"><br>
+        <input type="text" id="sk_height" name="sk_height" value="{{ defaults.sk_height }}"><br>
+
         <label for="sk_width">SK width</label>
-        <input type="text" id="sk_width" name="sk_width" value="{{ sk_width }}"><br>
-        <!-- MATERIAL -->
-        <p><strong>Material</strong></p>
+        <input type="text" id="sk_width" name="sk_width" value="{{ defaults.sk_width }}"><br>
+
+        <p><strong>Materials</strong></p>
         <label for="grout_strength">Grout strength</label>
-        <input type="text" id="grout_strength" name="grout_strength" value="{{ grout_strength }}"><br>
+        <input type="text" id="grout_strength" name="grout_strength" value="{{ defaults.grout_strength }}"><br>
+
         <label for="grout_E">Grout E</label>
-        <input type="text" id="grout_E" name="grout_E" value="{{ grout_E }}"><br>
-        <label for="grout_mu">Grout poisson</label>
-        <input type="text" id="grout_mu" name="grout_mu" value="{{ grout_mu }}"><br>
+        <input type="text" id="grout_E" name="grout_E" value="{{ defaults.grout_E }}"><br>
+
         <p><em style="font-size: 0.9em;">Steel youngs modulus (210 GPa)</em></p>
-        <!-- LOADS                -->
+
         <p><strong>Loads @ top of pile<br> (right hand rule global loads)</strong></p>
         <label for="Fx">Fx</label>
-        <input type="text" id="Fx" name="Fx" value="{{ Fx }}"><br>
+        <input type="text" id="Fx" name="Fx" value="{{ defaults.fx }}"><br>
+
         <label for="Fy">Fy</label>
-        <input type="text" id="Fy" name="Fy" value="{{ Fy }}"><br>
+        <input type="text" id="Fy" name="Fy" value="{{ defaults.fy }}"><br>
+
         <label for="Fz">Fz</label>
-        <input type="text" id="Fz" name="Fz" value="{{ Fz }}"><br>
+        <input type="text" id="Fz" name="Fz" value="{{ defaults.fz }}"><br>
+
         <label for="Mx">Mx</label>
-        <input type="text" id="Mx" name="Mx" value="{{ Mx }}"><br>
+        <input type="text" id="Mx" name="Mx" value="{{ defaults.mx }}"><br>
+
         <label for="My">My</label>
-        <input type="text" id="My" name="My" value="{{ My }}"><br>
-        <label for="Mz">Mz</label>
-        <input type="text" id="Mz" name="Mz" value="{{ Mz }}"><br>
-<!--            <button type="submit">Submit</button>-->
-        <button type="submit" id="submit-btnx">Submit</button>
+        <input type="text" id="My" name="My" value="{{ defaults.my }}"><br>
+
+        <!--            <button type="submit">Submit</button>-->
+        <button type="submit" class="gc-submit-button">Submit</button>
         </form>
     </div>
 
@@ -65,43 +74,146 @@
         <div id="bm-plot" class="plot-box"></div>
     </div>
 </div>
+
+<div class="gc-results-container">
+  <div class="gc-result-box">
+    <h4>Results</h4>
+    <div id="res-output"></div>
+  </div>
+  <div class="gc-result-box">
+    <h4>Validity Checks</h4>
+    <div id="validity-output"></div>
+  </div>
 </div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('gc-form');
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const outputDiv = document.getElementById('res-output');
+  const validityDiv = document.getElementById('validity-output');
 
-document.getElementById('gc-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Form submit intercepted, default prevented");
+  function markClean() {
+    submitBtn.style.backgroundColor = '';
+    submitBtn.textContent = 'Submit';
+    form.dataset.dirty = 'false';
+  }
 
-    const form = e.target;
+  function markDirty() {
+    if (form.dataset.dirty !== 'true') {
+      submitBtn.style.backgroundColor = '#ff9900';
+      submitBtn.textContent = 'Update Plots';
+      form.dataset.dirty = 'true';
+    }
+  }
+
+  form.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', markDirty);
+  });
+
+  function loadInitialPlots() {
     const formData = new FormData(form);
     const json = Object.fromEntries(formData.entries());
 
-    const response = await fetch('/gc', {
+    fetch('/gc', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ form_data: json })
-    });
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.gc_plot_json) {
+        const plotData = JSON.parse(result.gc_plot_json);
+        Plotly.newPlot('gc-plot', plotData.data, plotData.layout);
+      }
+      if (result.bm_plot_json) {
+        const bmData = JSON.parse(result.bm_plot_json);
+        Plotly.newPlot('bm-plot', bmData.data, bmData.layout);
+      }
 
-    const result = await response.json();
-    console.log("Received response", result);
+      updateResOutput(result.res);
+      updateValidityOutput(result.validity_chks);
+      markClean();
+    })
+    .catch(err => console.error("Error loading initial plots:", err));
+  }
 
-    if (result.gc_plot_json) {
-      const plotData = JSON.parse(result.gc_plot_json);
-      Plotly.newPlot('gc-plot', plotData.data, plotData.layout);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const formData = new FormData(form);
+    const json = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/gc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ form_data: json })
+      });
+
+      const result = await response.json();
+
+      if (result.gc_plot_json) {
+        const plotData = JSON.parse(result.gc_plot_json);
+        Plotly.newPlot('gc-plot', plotData.data, plotData.layout);
+      }
+
+      if (result.bm_plot_json) {
+        const bmData = JSON.parse(result.bm_plot_json);
+        Plotly.newPlot('bm-plot', bmData.data, bmData.layout);
+      }
+
+      updateResOutput(result.res);
+      updateValidityOutput(result.validity_chks);
+      markClean();
+    } catch (err) {
+      console.error('Error updating plots:', err);
     }
+  });
 
-    if (result.bm_plot_json) {
-    const bmData = JSON.parse(result.bm_plot_json);
-    Plotly.newPlot('bm-plot', bmData.data, bmData.layout);
-        }
-
+  loadInitialPlots();
 });
 
 
+function updateResOutput(res) {
+  const resDiv = document.getElementById('res-output');
+  resDiv.innerHTML = '';
+
+  if (!res) return;
+
+  const formatVal = (v) => typeof v === 'number' ? v.toFixed(2) : v;
+
+  const resLines = Object.entries(res).map(
+    ([key, val]) => `${key}: ${formatVal(val)}`
+  );
+
+  resDiv.innerHTML = resLines.join('<br>');
+}
+
+function updateValidityOutput(validityChks) {
+  const validityDiv = document.getElementById('validity-output');
+  validityDiv.innerHTML = '';
+
+  if (!validityChks) return;
+
+  const formatVal = (v) => typeof v === 'number' ? v.toFixed(2) : v;
+
+  const chkLines = Object.entries(validityChks).map(
+    ([key, [val, status]]) => {
+      const color = status === 'PASS' ? 'green' : 'red';
+      return `${key}: ${formatVal(val)} → <strong style="color: ${color}">${status}</strong>`;
+    }
+  );
+
+  validityDiv.innerHTML = chkLines.join('<br>');
+}
+
+
 </script>
+
+
 
 
 

@@ -27,7 +27,7 @@ def gc_plotter(leg_od: float, leg_t: float,
             fillcolor="grey",
             line=dict(color="black"),
             name="leg",
-            showlegend=show_legend
+            showlegend=False
         ))
 
     fig.add_trace(go.Scatter(
@@ -38,7 +38,7 @@ def gc_plotter(leg_od: float, leg_t: float,
         fillcolor="grey",
         line=dict(color="black"),
         name="gc_plate_btm",
-        showlegend=True
+        showlegend=False
     ))
 
     # Pile dimensions
@@ -59,38 +59,15 @@ def gc_plotter(leg_od: float, leg_t: float,
             fillcolor="brown",
             line=dict(color="black"),
             name="pile",
-            showlegend=show_legend
+            showlegend=False
         ))
-
-    # Bottom of pile line and label
-    bottom_y = -gc_length
-    line_x_start = 1.05 * pile_OR + 10  # offset right of pile
-    line_x_end = 2 * pile_OR  # extend further right
-
-    fig.add_trace(go.Scatter(
-        x=[line_x_start, line_x_end],
-        y=[bottom_y, bottom_y],
-        mode="lines",
-        line=dict(color="grey", width=1, dash="dot"),
-        showlegend=False
-    ))
-
-    fig.add_annotation(
-        x=line_x_end + 2,
-        y=bottom_y,
-        text="bottom of connection",
-        showarrow=False,
-        font=dict(size=10, color="grey"),
-        xanchor="left",
-        yanchor="middle"
-    )
 
     #### Jacket SKs (original + mirrored)--------------------------------------------------------
     sk_block_height = n_sks * sk_spacing
     top_sk_elev = -gc_length / 2 + sk_block_height / 2
     sk_taper = sk_width / 4
 
-    for i in range(n_sks):
+    for i in range(int(n_sks)):
         # Coordinates for one SK
         sk_xs = [leg_OR, leg_OR + sk_height, leg_OR + sk_height, leg_OR]
         sk_ys = [
@@ -109,7 +86,7 @@ def gc_plotter(leg_od: float, leg_t: float,
             fillcolor="red",
             line=dict(color="black"),
             name=f"sk_{i + 1}",
-            showlegend=True
+            showlegend=False
         ))
 
         # Add mirrored SK (left side)
@@ -149,7 +126,7 @@ def gc_plotter(leg_od: float, leg_t: float,
             fillcolor="blue",
             line=dict(color="black"),
             name=f"pile_sk_{i + 1}",
-            showlegend=True
+            showlegend=False
         ))
 
         # Add mirrored SK (left side)
@@ -167,13 +144,22 @@ def gc_plotter(leg_od: float, leg_t: float,
         # Move down to next pile SK elevation
         top_pile_sk_elev -= sk_spacing
 
-    # set the layout and title
     fig.update_layout(
-        yaxis_title='elevation rel LAT [mm]',
-        yaxis=dict(scaleanchor="x", scaleratio=1),
+        width=400,  # narrower width
+        height=800,  # taller height, for skyscraper-like shape
+        title='GC design',
         legend=dict(x=1, y=1),
-        title='GC design'
+        xaxis=dict(
+            range=[-0.5 * pile_od, 0.5 * pile_od],
+            scaleanchor=None  # make sure no scaleanchor here
+        ),
+        yaxis=dict(
+            title='Elevation rel pile top (mm)',
+            range=[-1.1 * gc_length, 0],
+            scaleanchor=None
+        )
     )
+
 
     #fig.show()
 

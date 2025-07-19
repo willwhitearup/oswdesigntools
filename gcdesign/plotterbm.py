@@ -30,7 +30,9 @@ def label_bm_lines(fig, x, y, text_var, lengths):
     return fig
 
 
-def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_radius: float):
+def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pile_od: float):
+
+    print(fx, fy, mx, my, gc_length, pile_od)
 
     lengths = np.linspace(0, -gc_length, 5)  # Z-axis goes down
     mx_t = mx - fy * lengths  # Bending about x-axis due to lateral fy
@@ -43,13 +45,11 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_
     maxx, maxy = max(abs(mx_t)), max(abs(my_t))
 
     max_total = max(maxy, maxx)
-    axis_scale_x = maxx / max_total
-    axis_scale_y = maxy / max_total
 
     # Res Moment
     fig.add_trace(go.Scatter3d(x=mx_t.tolist(), y=my_t.tolist(), z=lengths.tolist(),
         mode='lines+markers',
-        name='Res',
+        name='Moment resultant (Nmm)',
         marker=dict(size=4),
         line=dict(width=4, color='red')
     ))
@@ -57,7 +57,7 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_
     fig = label_bm_lines(fig, mx_t, my_t, m_res, lengths)
 
     # Moment about X axis
-    fig.add_trace(go.Scatter3d(x=mx_t.tolist(), y=np.zeros_like(lengths), z=lengths.tolist(),
+    fig.add_trace(go.Scatter3d(x=mx_t.tolist(), y=np.zeros_like(lengths).tolist(), z=lengths.tolist(),
         mode='lines+markers',
         name='Moment about X',
         marker=dict(size=4),
@@ -67,7 +67,7 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_
     fig = label_bm_lines(fig, mx_t, np.zeros(len(mx_t)), mx_t, lengths)
 
     # Moment about Y axis
-    fig.add_trace(go.Scatter3d(x=np.zeros_like(lengths), y=my_t.tolist(), z=lengths.tolist(),
+    fig.add_trace(go.Scatter3d(x=np.zeros_like(lengths).tolist(), y=my_t.tolist(), z=lengths.tolist(),
         mode='lines+markers',
         name='Moment about Y',
         marker=dict(size=4),
@@ -94,41 +94,52 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_
         marker=dict(size=14, color='orange', symbol='diamond')
     ))
 
-
     # add a grouted connection tube !
-    x_cyl, y_cyl, z_cyl = create_cylinder(radius=gc_radius, length=gc_length)
+    pile_radius = pile_od / 2
+    x_cyl, y_cyl, z_cyl = create_cylinder(radius=pile_radius, length=gc_length)
     # Scale tube radius independently by scaling x_cyl and y_cyl:
     scaling_factor = 0.25
     tube_scale = (scaling_factor / max(x_cyl)) * max_total
     x_cyl_scaled = x_cyl * tube_scale
     y_cyl_scaled = y_cyl * tube_scale
-
-    fig.add_trace(go.Mesh3d(x=x_cyl_scaled, y=y_cyl_scaled, z=z_cyl,
+    print(type(x_cyl_scaled))
+    fig.add_trace(go.Mesh3d(x=x_cyl_scaled.tolist(), y=y_cyl_scaled.tolist(), z=z_cyl.tolist(),
         alphahull=0,
         opacity=0.2,
         color='green',
         name='GC (diameter) not to scale'
     ))
 
+    camera_scale = 1.5
+
+    axis_scale_x = maxx / max_total
+    axis_scale_y = maxy / max_total
+    max_scale = max(axis_scale_x, axis_scale_y)
     # change the axis and scaling
     fig.update_layout(
+        width=500,  # narrower width
+        height=800,  # taller height, for skyscraper-like shape
         scene=dict(
-            xaxis_title='x',
-            yaxis_title='y',
-            zaxis_title='z',
+            xaxis_title='x', yaxis_title='y', zaxis_title='z',
             aspectmode='manual',
-            xaxis=dict(range=[-maxx, maxx]),
-            yaxis=dict(range=[-maxy, maxy]),
-            zaxis=dict(range=[-1.2 * gc_length, 0.2 * gc_length]),
-            aspectratio=dict(x=axis_scale_x, y=axis_scale_y, z=2),  # Treat Z as equal length to X/Y
-            camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)
-            )
+            xaxis=dict(range=[-max_total, max_total]),
+            yaxis=dict(range=[-max_total, max_total]),
+            zaxis=dict(range=[-1.2 * gc_length, 0.1 * gc_length]),
+            aspectratio=dict(x=max_scale, y=max_scale, z=2),  # Treat Z as equal length to X/Y
+            camera=dict(eye=dict(x=camera_scale, y=camera_scale, z=camera_scale),)
+        ),
+        legend=dict(
+            orientation="h",  # horizontal legend
+            yanchor="top",
+            y=-0.2,  # position legend below the plot (negative y)
+            xanchor="center",
+            x=0.5,  # centered horizontally
+            bgcolor='rgba(255,255,255,0.8)',  # optional background
         ),
         title='GC bending moment diagram'
     )
 
     # fig.show()
-
     bm_plot_json = pio.to_json(fig)
     return bm_plot_json
 
@@ -136,5 +147,27 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, gc_
 if __name__ == "__main__":
     fx, fy = 1.1E+07, 2.6E+06
     mx, my = 2.9E+07, -1.2E+08
-    gc_length, gc_radius = 10000, 3000
-    bm_plotter(fx, fy, mx, my, gc_length, gc_radius)
+    gc_length, pile_od = 10000, 4200
+
+    # leg_od = 3580.
+    # leg_t = 80.
+    # pile_od = 4200.
+    # pile_t = 80.
+    # gc_length = 10050.
+    # n_sks = 14
+    # sk_width = 40.
+    # sk_height = 20.
+    # sk_spacing = 365.
+    #
+    # # Load conditions (N and Nmm)
+    fx =-193900
+    fy = -9539000
+    fz = -32520000
+
+    mx = -63769500 * 1e3  # Nmm
+    my = 1025350 * 1e3  # Nmm
+    #
+    # grout_strength = 80. # MPa (N/mm2)
+    # grout_E = 38863.61  # MPa  (N/mm2)
+    fx, fy, mx, my, gc_length, pile_od = -193900.0, -9539000.0, -63769500000.0, 1025350000.0, 10050.0, 4200.0
+    bm_plotter(fx, fy, mx, my, gc_length, pile_od)
