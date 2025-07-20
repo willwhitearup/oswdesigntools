@@ -22,7 +22,7 @@ def gc_route():
         pile_od = float(form_data['pile_od'])
         pile_t = float(form_data['pile_thk'])
         gc_length = float(form_data['gc_length'])
-        n_sks = int(form_data['num_sks'])  # n sks integer
+        n_sks = int(float(form_data['num_sks']))  # n sks integer
         sk_width = float(form_data['sk_width'])
         sk_height = float(form_data['sk_height'])
         sk_spacing = float(form_data['sk_spacing'])
@@ -73,24 +73,24 @@ def get_gc_defaults():
     # test ones
     leg_od = 3580.
     leg_t = 80.
-    pile_od = 4200.
-    pile_t = 80.
-    gc_length = 10050.
-    n_sks = 14
-    sk_width = 40.
-    sk_height = 20.
-    sk_spacing = 365.
+    pile_od = 4250.
+    pile_t = 85.
+    gc_length = 11000.
+    n_sks = 15
+    sk_width = 44.
+    sk_height = 22.
+    sk_spacing = 370.
 
     # Load conditions (N and Nmm)
-    fx =-193900
-    fy = -9539000
-    fz = -32520000
+    fx =-183900.
+    fy = -9639000.
+    fz = -31520000.
 
-    mx = -63769500 * 1e3  # Nmm
-    my = 1025350 * 1e3  # Nmm
+    mx = -64769500 * 1e3  # Nmm
+    my = 1125350 * 1e3  # Nmm
 
-    grout_strength = 80. # MPa (N/mm2)
-    grout_E = 38863.61  # MPa  (N/mm2)
+    grout_strength = 80.0 # MPa (N/mm2)
+    grout_E = 38000.0  # MPa  (N/mm2)
 
     return {
         "leg_od": leg_od,
