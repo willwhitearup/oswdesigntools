@@ -9,16 +9,20 @@ def gc_processor(leg_od, leg_t, pile_od, pile_t, gc_length, n_sks, sk_width, sk_
 
 
     sk_axial_ur = axial(leg_od, leg_t, pile_od, pile_t, n_sks, sk_spacing, sk_height, fz, grout_E, grout_strength)
-    pnom = pnom_calc(leg_od, leg_t, pile_od, pile_t, grout_E, fx, fy, mx, my)
+    pnom, le = pnom_calc(leg_od, leg_t, pile_od, pile_t, grout_E, fx, fy, mx, my)
 
-    res = {"pnom": pnom,
-           "SK_axial_UR": sk_axial_ur}
+    res = {"Pnom": pnom,
+           "SK axial UR": sk_axial_ur,
+           "SK UR (incl. bending)": "TODO",
+           "le": le  # elastic length
+           }
 
     # do validity checks
-    validity_chk_outcomes = validity(leg_od, leg_t, pile_od, pile_t, gc_length, n_sks, sk_width, sk_height, sk_spacing)
+    validity_chk_outcomes = validity(leg_od, leg_t, pile_od, pile_t, gc_length, n_sks, sk_width, sk_height, sk_spacing, le, pnom)
     validity_chks = {}
     for chk in validity_chk_outcomes:
         chkpass = "PASS" if chk.result == True else "FAIL"
-        validity_chks[chk.reference] = (float(chk.value), chkpass)
+        chk_name = chk.name
+        validity_chks[chk.reference] = (float(chk.value), chkpass, chk_name)
 
     return res, validity_chks

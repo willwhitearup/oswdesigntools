@@ -1,11 +1,34 @@
 <style>
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden; /* prevents body scrollbar */
+}
+
+.gc-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 2px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #333;
+}
+
+.gc-info-icon {
+    font-weight: bold;
+    color: #007BFF;
+}
+
 /* Container: flex layout */
 .gc-container {
   display: flex;
   gap: 2px;
   align-items: stretch;
   width: 100%;
-  height: 800px;  /* fixed height */
+  /*height: 800px;   fixed height */
+  height: auto;  /* fixed height */
   border: 2px solid red;  /* red border around main container */
 }
 
@@ -14,24 +37,26 @@
   flex: 1;
   max-width: 300px;
   height: 100%;
-  border: 2px solid blue;  /* blue border around form */
+  overflow: auto;
+  /* border: 2px solid blue;   blue border around form */
 }
 
 .gc-input-form label {
     display: inline-block;
-    width: 120px;      /* fixed width for labels */
+    width: 130px;      /* fixed width for label text */
     text-align: left;  /* left justify label text */
-    margin-right: 5px; /* gap between label and input */
+    margin-right: 2px; /* gap between label and input */
     vertical-align: middle;
 }
 
 .gc-input-form input[type="text"] {
-    width: 100px;      /* fixed width for inputs */
+    width: 120px;      /* fixed width for inputs */
     padding: 2px;
     box-sizing: border-box;
     vertical-align: middle;
     margin-bottom: 1px;
     display: inline-block;
+    text-align: right;
 }
 
 /* Right side: container for both plots */
@@ -87,13 +112,31 @@
 }
 
 .gc-result-box {
-  width: 200px;
+  width: 400px;
   flex: 0 0 auto;
   border: 1px solid #ccc;
   padding: 1rem;
   font-family: monospace;
   background: #f9f9f9;
-  border-radius: 8px;
+  border-radius: 3px;
+}
+
+.gc-warnings {
+  background: #fff4e5;
+  border-left: 6px solid #ffa726;
+  padding: 10px 15px;
+  margin-top: 20px;
+  color: #5c4400;
+  font-size: 0.95em;
+  border-radius: 4px;
+  max-width: 800px;
+}
+.gc-warnings ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.gc-warnings li {
+  margin-bottom: 4px;
 }
 
 </style>

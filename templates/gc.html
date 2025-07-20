@@ -2,6 +2,12 @@
 {% block content %}
 {% include "gc_styles.html" %}
 
+<div class="gc-info-banner">
+    <span class="gc-info-icon">ⓘ</span>
+    <span class="gc-info-text">Units in N and mm only</span>
+</div>
+
+
 <!-- Main layout container -->
 <div class="gc-container">
     <!-- Left: Form section -->
@@ -11,59 +17,42 @@
         <p><strong>Pile and jacket</strong></p>
         <label for="pile_od">Pile OD</label>
         <input type="text" id="pile_od" name="pile_od" value="{{ defaults.pile_od }}"><br>
-
         <label for="pile_thk">Pile thk</label>
         <input type="text" id="pile_thk" name="pile_thk" value="{{ defaults.pile_t }}"><br>
-
         <label for="jkt_od">Jacket leg OD</label>
         <input type="text" id="jkt_od" name="jkt_od" value="{{ defaults.leg_od }}"><br>
-
         <label for="jkt_thk">Jacket leg thk</label>
         <input type="text" id="jkt_thk" name="jkt_thk" value="{{ defaults.leg_t }}"><br>
-
         <p><strong>GC connection</strong></p>
         <label for="gc_length">GC length</label>
         <input type="text" id="gc_length" name="gc_length" value="{{ defaults.gc_length }}"><br>
-
         <p><strong>Jacket shear keys</strong></p>
-        <label for="num_sks">No. of SKs</label>
+        <label for="num_sks">n SKs (jkt-side)</label>
         <input type="text" id="num_sks" name="num_sks" value="{{ defaults.n_sks }}"><br>
-
         <label for="sk_spacing">SK spacing</label>
         <input type="text" id="sk_spacing" name="sk_spacing" value="{{ defaults.sk_spacing }}"><br>
-
         <label for="sk_height">SK height</label>
         <input type="text" id="sk_height" name="sk_height" value="{{ defaults.sk_height }}"><br>
-
         <label for="sk_width">SK width</label>
         <input type="text" id="sk_width" name="sk_width" value="{{ defaults.sk_width }}"><br>
-
         <p><strong>Materials</strong></p>
         <label for="grout_strength">Grout strength</label>
         <input type="text" id="grout_strength" name="grout_strength" value="{{ defaults.grout_strength }}"><br>
-
         <label for="grout_E">Grout E</label>
         <input type="text" id="grout_E" name="grout_E" value="{{ defaults.grout_E }}"><br>
-
         <p><em style="font-size: 0.9em;">Steel youngs modulus (210 GPa)</em></p>
-
         <p><strong>Loads @ top of pile<br> (right hand rule global loads)</strong></p>
         <label for="Fx">Fx</label>
         <input type="text" id="Fx" name="Fx" value="{{ defaults.fx }}"><br>
-
         <label for="Fy">Fy</label>
         <input type="text" id="Fy" name="Fy" value="{{ defaults.fy }}"><br>
-
         <label for="Fz">Fz</label>
         <input type="text" id="Fz" name="Fz" value="{{ defaults.fz }}"><br>
-
         <label for="Mx">Mx</label>
         <input type="text" id="Mx" name="Mx" value="{{ defaults.mx }}"><br>
-
         <label for="My">My</label>
         <input type="text" id="My" name="My" value="{{ defaults.my }}"><br>
-
-        <!--            <button type="submit">Submit</button>-->
+        <!--button-->
         <button type="submit" class="gc-submit-button">Submit</button>
         </form>
     </div>
@@ -74,6 +63,9 @@
         <div id="bm-plot" class="plot-box"></div>
     </div>
 </div>
+
+<!-- Geometric warnings (shown after .gc-container) -->
+<div id="geom-warnings-container" class="gc-warnings" style="display: none;"></div>
 
 <div class="gc-results-container">
   <div class="gc-result-box">
@@ -86,8 +78,11 @@
   </div>
 </div>
 
+<div id="shr-cap-plot" class="plot-shr-cap-box"></div>
+
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('gc-form');
   const submitBtn = form.querySelector('button[type="submit"]');
@@ -132,6 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
         Plotly.newPlot('bm-plot', bmData.data, bmData.layout);
       }
 
+      if (result.gc_shrcap_plot_json) {
+        const shrCapData = JSON.parse(result.gc_shrcap_plot_json);
+        Plotly.newPlot('shr-cap-plot', shrCapData.data, shrCapData.layout);
+      }
+
+      updateGeomWarnings(result.geom_warnings)
       updateResOutput(result.res);
       updateValidityOutput(result.validity_chks);
       markClean();
@@ -165,6 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
         Plotly.newPlot('bm-plot', bmData.data, bmData.layout);
       }
 
+      if (result.gc_shrcap_plot_json) {
+        const shrCapData = JSON.parse(result.gc_shrcap_plot_json);
+        Plotly.newPlot('shr-cap-plot', shrCapData.data, shrCapData.layout);
+      }
+
+      updateGeomWarnings(result.geom_warnings)
       updateResOutput(result.res);
       updateValidityOutput(result.validity_chks);
       markClean();
@@ -192,6 +199,7 @@ function updateResOutput(res) {
   resDiv.innerHTML = resLines.join('<br>');
 }
 
+// validity checks write out
 function updateValidityOutput(validityChks) {
   const validityDiv = document.getElementById('validity-output');
   validityDiv.innerHTML = '';
@@ -201,14 +209,36 @@ function updateValidityOutput(validityChks) {
   const formatVal = (v) => typeof v === 'number' ? v.toFixed(2) : v;
 
   const chkLines = Object.entries(validityChks).map(
-    ([key, [val, status]]) => {
+    ([key, [val, status, desc]]) => {
       const color = status === 'PASS' ? 'green' : 'red';
-      return `${key}: ${formatVal(val)} → <strong style="color: ${color}">${status}</strong>`;
+      return `${key}: ${formatVal(val)} → <strong style="color: ${color}">${status}</strong> (${desc})`;
     }
   );
 
   validityDiv.innerHTML = chkLines.join('<br>');
 }
+
+function updateGeomWarnings(gc_warnings) {
+  const warningDiv = document.getElementById('geom-warnings-container');
+  warningDiv.innerHTML = ''; // Clear old warnings
+
+  if (!gc_warnings || gc_warnings.length === 0) {
+    warningDiv.style.display = 'none';
+    return;
+  }
+
+  const ul = document.createElement('ul');
+  gc_warnings.forEach(msg => {
+    const li = document.createElement('li');
+    li.textContent = msg;
+    ul.appendChild(li);
+  });
+
+  warningDiv.appendChild(ul);
+  warningDiv.style.display = 'block';
+}
+
+
 
 
 </script>

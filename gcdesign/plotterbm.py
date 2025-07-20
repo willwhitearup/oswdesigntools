@@ -88,7 +88,7 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pil
     ))
 
     # Moment about Y axis
-    fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[z_y],
+    fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[float(z_y)],
         mode='markers',
         name=f'Y Moment CONTRAFLEXURE @z={round(abs(z_y), 2)}mm {yloc} top of connection',
         marker=dict(size=14, color='orange', symbol='diamond')
@@ -102,7 +102,6 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pil
     tube_scale = (scaling_factor / max(x_cyl)) * max_total
     x_cyl_scaled = x_cyl * tube_scale
     y_cyl_scaled = y_cyl * tube_scale
-    print(type(x_cyl_scaled))
     fig.add_trace(go.Mesh3d(x=x_cyl_scaled.tolist(), y=y_cyl_scaled.tolist(), z=z_cyl.tolist(),
         alphahull=0,
         opacity=0.2,
@@ -114,7 +113,10 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pil
 
     axis_scale_x = maxx / max_total
     axis_scale_y = maxy / max_total
-    max_scale = max(axis_scale_x, axis_scale_y)
+    axis_scale = max(axis_scale_x, axis_scale_y)
+
+    max_z = max(0.1 * gc_length, z_y, z_x)
+    min_z = min(-1.1 * gc_length, z_y, z_x)
     # change the axis and scaling
     fig.update_layout(
         width=500,  # narrower width
@@ -122,10 +124,10 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pil
         scene=dict(
             xaxis_title='x', yaxis_title='y', zaxis_title='z',
             aspectmode='manual',
-            xaxis=dict(range=[-max_total, max_total]),
-            yaxis=dict(range=[-max_total, max_total]),
-            zaxis=dict(range=[-1.2 * gc_length, 0.1 * gc_length]),
-            aspectratio=dict(x=max_scale, y=max_scale, z=2),  # Treat Z as equal length to X/Y
+            xaxis=dict(range=[-max_total * 1.1, max_total* 1.1]),
+            yaxis=dict(range=[-max_total* 1.1, max_total* 1.1]),
+            zaxis=dict(range=[min_z, max_z]),
+            aspectratio=dict(x=axis_scale, y=axis_scale, z=2),  # Treat Z as equal length to X/Y
             camera=dict(eye=dict(x=camera_scale, y=camera_scale, z=camera_scale),)
         ),
         legend=dict(
