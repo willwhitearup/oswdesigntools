@@ -32,11 +32,9 @@ def label_bm_lines(fig, x, y, text_var, lengths):
 
 def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pile_od: float):
 
-    print(fx, fy, mx, my, gc_length, pile_od)
-
-    lengths = np.linspace(0, -gc_length, 5)  # Z-axis goes down
-    mx_t = mx - fy * lengths  # Bending about x-axis due to lateral fy
-    my_t = my + fx * lengths   # Bending about y-axis due to lateral fx
+    lengths = np.linspace(0, -gc_length, 2)  # Z-axis points up, z values start from 0 and go to -gc_length
+    mx_t = mx - fy * -1*lengths  # Bending about x-axis due to lateral fy
+    my_t = my + fx * -1*lengths   # Bending about y-axis due to lateral fx
     m_res = np.sqrt(mx_t ** 2 + my_t ** 2)  # Bending resultant
 
     fig = go.Figure()
@@ -77,22 +75,22 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pil
     fig = label_bm_lines(fig, np.zeros(len(my_t)), my_t, my_t, lengths)
 
     # contraflexure label
-    z_x, z_y = contraflexure_components(fx, fy, mx, my)
-    xloc = "ABOVE" if z_x >= 0 else "BELOW"
-    yloc = "ABOVE" if z_y >= 0 else "BELOW"
+    z_x, z_y = contraflexure_components(-fx, -fy, mx, my)
+    xloc = "ABOVE" if z_x is None or z_x >= 0 else "BELOW"
+    yloc = "ABOVE" if z_y is None or z_y >= 0 else "BELOW"
 
-    fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[z_x],
-        mode='markers',
-        name=f'X Moment CONTRAFLEXURE @z={round(abs(z_x), 2)}mm {xloc} top of connection',
-        marker=dict(size=14, color='green', symbol='diamond')
-    ))
+    if z_x is not None:
+        fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[z_x],
+            mode='markers',
+            name=f'X Moment CONTRAFLEXURE @z={round(abs(z_x), 1)}mm {xloc} top of connection',
+            marker=dict(size=14, color='green', symbol='diamond')))
 
-    # Moment about Y axis
-    fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[float(z_y)],
-        mode='markers',
-        name=f'Y Moment CONTRAFLEXURE @z={round(abs(z_y), 2)}mm {yloc} top of connection',
-        marker=dict(size=14, color='orange', symbol='diamond')
-    ))
+    if z_y is not None:
+        # Moment about Y axis
+        fig.add_trace(go.Scatter3d(x=[0], y=[0], z=[float(z_y)],
+            mode='markers',
+            name=f'Y Moment CONTRAFLEXURE @z={round(abs(z_y), 1)}mm {yloc} top of connection',
+            marker=dict(size=14, color='orange', symbol='diamond')))
 
     # add a grouted connection tube !
     pile_radius = pile_od / 2
@@ -115,20 +113,23 @@ def bm_plotter(fx: float, fy: float, mx: float, my: float, gc_length: float, pil
     axis_scale_y = maxy / max_total
     axis_scale = max(axis_scale_x, axis_scale_y)
 
-    max_z = max(0.1 * gc_length, z_y, z_x)
-    min_z = min(-1.1 * gc_length, z_y, z_x)
+    z_xe = z_x if z_x is not None else 0.
+    z_ye = z_y if z_y is not None else 0.
+    max_z = max(0.1 * gc_length, z_ye, z_xe)
+    min_z = min(-1.1 * gc_length, z_ye, z_xe)
+
     # change the axis and scaling
     fig.update_layout(
         width=500,  # narrower width
         height=800,  # taller height, for skyscraper-like shape
         scene=dict(
-            xaxis_title='x', yaxis_title='y', zaxis_title='z',
+            xaxis_title='Mx', yaxis_title='My', zaxis_title='z',
             aspectmode='manual',
             xaxis=dict(range=[-max_total * 1.1, max_total* 1.1]),
             yaxis=dict(range=[-max_total* 1.1, max_total* 1.1]),
             zaxis=dict(range=[min_z, max_z]),
             aspectratio=dict(x=axis_scale, y=axis_scale, z=2),  # Treat Z as equal length to X/Y
-            camera=dict(eye=dict(x=camera_scale, y=camera_scale, z=camera_scale),)
+            camera=dict(eye=dict(x=camera_scale, y=-camera_scale, z=camera_scale),)
         ),
         legend=dict(
             orientation="h",  # horizontal legend

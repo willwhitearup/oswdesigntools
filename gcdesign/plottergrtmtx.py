@@ -42,7 +42,7 @@ def shear_capacity_plotter(leg_od, leg_t, pile_od, pile_t, sk_height, sk_spacing
     ))
     # annotate the actual GC h/s value
     fig.add_annotation(x=h_over_s, y=f_bk_actual,
-        text=f"h/s = {h_over_s:.3f}",
+        text=f"h/s = {h_over_s:.3f}<br>(fbk={f_bk_actual:.2f})",
         showarrow=True, arrowhead=2,
         ax=30,  ay=-40,  # x and y offsets
         bgcolor="white", bordercolor="black",
@@ -52,7 +52,7 @@ def shear_capacity_plotter(leg_od, leg_t, pile_od, pile_t, sk_height, sk_spacing
     # Add vertical line at hs_limit
     fig.add_vline(x=hs_limit,
         line=dict(color="red", dash="dash"),
-        annotation_text=f"h/s limit (>{round(hs_limit, 4)}=grout matrix failure)",
+        annotation_text=f"h/s limit (>={round(hs_limit, 4)}-->grout matrix failure)",
         annotation_position="top right"
     )
 

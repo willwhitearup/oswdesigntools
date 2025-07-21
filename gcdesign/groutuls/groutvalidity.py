@@ -140,9 +140,9 @@ def validity(leg_od, leg_t, pile_od, pile_t, gc_length, n_sks, sk_width, sk_heig
     pile_sk_free_len_total = gc_length - pile_sk_region_length
     value = 0.5 * pile_sk_free_len_total
     if pile_sk_free_len_total <= le:
-        outcomes.append(DNVLimit(False, 'SK > (le/2) from end', 'SKs in 0.5 * le', 'C.1.4.13', value, 99))
+        outcomes.append(DNVLimit(False, 'SK in le/2 end region', 'SKs in 0.5 * le', 'C.1.4.13', value, 99))
     else:
-        outcomes.append(DNVLimit(True, 'SK > (le/2) from end', 'SKs in 0.5 * le', 'C.1.4.13', value, 99))
+        outcomes.append(DNVLimit(True, 'SK in le/2 end region', 'SKs in 0.5 * le', 'C.1.4.13', value, 99))
 
     # pnom checks
     value = pnom

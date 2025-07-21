@@ -68,17 +68,30 @@
 <div id="geom-warnings-container" class="gc-warnings" style="display: none;"></div>
 
 <div class="gc-results-container">
-  <div class="gc-result-box">
-    <h4>Results</h4>
-    <div id="res-output"></div>
-  </div>
-  <div class="gc-result-box">
-    <h4>Validity Checks</h4>
-    <div id="validity-output"></div>
-  </div>
+    <div class="gc-result-box">
+      <h4>
+        Results
+        <span class="gc-res-info-icon" id="gc-res-info-icon">i</span>
+      </h4>
+      <div id="gc-res-info-msg" class="gc-res-info-message">
+          'SK UR axial & bending' approximates the SK vertical force due to bending (max bending along GC used).
+          The <em>F</em><sub>V1Shk,d,mom</sub> is then added to <em>F</em><sub>V1Shk,d,ax</sub> (see DNV-ST-0126)<br>
+          <em>F</em><sub>V1Shk,d,mom</sub> =
+          (<em>M</em><sub>res</sub> &middot; <em>h</em><sub>Shk</sub>) /
+          (<em>W</em><sub>JL</sub> &middot; <em>n</em>)<br> where <em>W</em><sub>JL</sub> is the section modulus of the jacket leg.<br>
+          This should be checked in FEA if Pnom >= 1.5MPa.
+      </div>
+      <div id="res-output"></div>
+    </div>
+    <div class="gc-result-box">
+        <h4>Validity Checks</h4>
+        <div id="validity-output"></div>
+    </div>
 </div>
 
 <div id="shr-cap-plot" class="plot-shr-cap-box"></div>
+<div id="s-fbk-plot" class="plot-shr-cap-box"></div>
+
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -132,6 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Plotly.newPlot('shr-cap-plot', shrCapData.data, shrCapData.layout);
       }
 
+      if (result.gc_fbk_plot_json) {
+        const sfbkData = JSON.parse(result.gc_fbk_plot_json);
+        Plotly.newPlot('s-fbk-plot', sfbkData.data, sfbkData.layout);
+      }
+
       updateGeomWarnings(result.geom_warnings)
       updateResOutput(result.res);
       updateValidityOutput(result.validity_chks);
@@ -169,6 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.gc_shrcap_plot_json) {
         const shrCapData = JSON.parse(result.gc_shrcap_plot_json);
         Plotly.newPlot('shr-cap-plot', shrCapData.data, shrCapData.layout);
+      }
+
+      if (result.gc_fbk_plot_json) {
+        const sfbkData = JSON.parse(result.gc_fbk_plot_json);
+        Plotly.newPlot('s-fbk-plot', sfbkData.data, sfbkData.layout);
       }
 
       updateGeomWarnings(result.geom_warnings)
@@ -239,7 +262,10 @@ function updateGeomWarnings(gc_warnings) {
 }
 
 
-
+document.getElementById('gc-res-info-icon').addEventListener('click', () => {
+  const msg = document.getElementById('gc-res-info-msg');
+  msg.style.display = (msg.style.display === 'block') ? 'none' : 'block';
+});
 
 </script>
 
