@@ -306,10 +306,14 @@ class JacketMassCalculator:
 
         self.df = self.df.rename(columns={"mass": "unit mass [t]",
                                           "length": "length [mm]",
-                                          "outer_diameter": "outer_diameter [mm]",
+                                          "outer_diameter": "od_top [mm]",
                                           "thickness": "thickness [mm]",
                                           "od_bottom": "od_bottom [mm]"
                                           })
+
+        # round
+        self.df[["length [mm]", "unit mass [t]"]] = self.df[["length [mm]", "unit mass [t]"]].round(3)
+
         # Export to CSV without index
         # self.df.to_csv(r"C:\Users\Will.White\Python\website\test.csv", index=False, encoding="utf-8-sig")
 
