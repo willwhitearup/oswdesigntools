@@ -300,13 +300,6 @@ function fetchSingleBatterData() {
 
 
 
-
-
-
-
-
-
-
 function generateBayInputs() {
     const nBays = parseInt(document.getElementById('n_bays').value);
     const container = document.getElementById('bay_heights_container');
@@ -320,10 +313,14 @@ function generateBayInputs() {
     const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup) - vleg_bottom / 2;
     const defaultBayHeight = nBays > 0 ? Math.max(Math.floor(bay_h_tot / nBays), 1000) : 1000;
 
+    // commented out bay height and
     // Use existing bayHeights if valid, else default
-    const useHeights = (typeof bayHeights !== 'undefined' && bayHeights.length === nBays)
-        ? bayHeights.map(h => Math.max(h, 1000))
-        : Array.from({ length: nBays }, () => defaultBayHeight);
+    //const useHeights = (typeof bayHeights !== 'undefined' && bayHeights.length === nBays)
+      //  ? bayHeights.map(h => Math.max(h, 1000))
+      //  : Array.from({ length: nBays }, () => defaultBayHeight);
+
+    const uniformHeight = Math.max(Math.floor(bay_h_tot / nBays), 1000);
+    const useHeights = Array.from({ length: nBays }, () => uniformHeight);
 
     const horizontals = (Array.isArray(bayHorizontals) && bayHorizontals.length === nBays + 1)
         ? bayHorizontals.slice(1)
@@ -422,8 +419,6 @@ function generateBayInputs() {
 
     checkBayHeightsVsJacket();
 }
-
-
 
 
 function toggleBatterInputs() {
