@@ -172,6 +172,38 @@
             font-size: 0.85rem; /* smaller */
         }
 
+        .architect-info-banner {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 2px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .architect-info-icon {
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        .architect-dims-image {
+            display: none;
+            position: absolute;
+            top: 100%; /* directly below the icon */
+            left: 0;
+            max-width: 450px;
+            border: 1px solid #ccc;
+            background-color: white;
+            padding: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+        .architect-dims-container {
+            position: relative;
+            display: inline-block;
+        }
+
+
     </style>
 </head>
 <body>

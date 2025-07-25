@@ -5,6 +5,12 @@
 
 <div id="flash-messages"></div>
 
+<div class="architect-info-banner">
+    <span class="architect-info-icon">ⓘ</span>
+    <span class="architect-info-text">Units in N, mm & degrees only</span>
+</div>
+
+
 <div class="architect-container">
     <div class="architect-form-container">
         <form method="POST" action="/architect" class="architect-input-form">
@@ -13,9 +19,9 @@
                 <label for="show_tower">Show WTG</label>
                 <input type="checkbox" id="show_tower" name="show_tower" {% if defaults.show_tower %}checked{% endif %} onchange="toggleTowerInputs()">
 
-                <div class="architect-units-container">
-                    <div class="architect-info-circle" onclick="showMessage()">i</div>
-                    <span id="architect-units-message" class="architect-units-message">! Units: N, mm, degrees !</span>
+                <div class="architect-dims-container">
+                    <div class="architect-info-circle" onclick="toggleDimsImage()">i</div>
+                    <img id="architect-dims-image" class="architect-dims-image" src="/static/architect_dims.png" alt="Dims Info">
                 </div>
 
             </div>
@@ -387,8 +393,19 @@ function generateBayInputs() {
             checkBayHeightsVsJacket();
         });
 
-        // Sync input -> slider
+        // Just update slider live, no clamping
         input.addEventListener('input', () => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) {
+                slider.value = val;
+                updateSliderMaxes();
+                updatePlot();
+                checkBayHeightsVsJacket();
+            }
+        });
+
+        // Validate and clamp only after user finishes typing
+        input.addEventListener('blur', () => {
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 1000) val = 1000;
             input.value = val.toFixed(1);
@@ -556,10 +573,9 @@ function createWarningCircle(color, size = 20) {
 }
 
 
-function showMessage() {
-    const message = document.getElementById('architect-units-message');
-    const isHidden = window.getComputedStyle(message).display === 'none';
-    message.style.display = isHidden ? 'inline' : 'none';
+function toggleDimsImage() {
+    const img = document.getElementById('architect-dims-image');
+    img.style.display = (img.style.display === 'block') ? 'none' : 'block';
 }
 
 
