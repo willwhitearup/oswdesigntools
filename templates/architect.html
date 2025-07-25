@@ -316,7 +316,7 @@ function generateBayInputs() {
         parseFloat(document.getElementById(id)?.value || '0')
     );
 
-    const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup) - vleg_bottom / 2;
+    const bay_h_tot = (tp_btm - tp_btm_k1_voffset) - (-water_depth + stickup); // - vleg_bottom / 2;
     const defaultBayHeight = nBays > 0 ? Math.max(Math.floor(bay_h_tot / nBays), 1000) : 1000;
 
     // commented out bay height and
@@ -393,27 +393,40 @@ function generateBayInputs() {
             checkBayHeightsVsJacket();
         });
 
-        // Just update slider live, no clamping
+        // original slides work nicely but input box not working
+        //input.addEventListener('input', () => {
+       //     let val = parseFloat(input.value);
+       //     if (isNaN(val) || val < 1000) val = 1000;
+       //     input.value = val.toFixed(1);
+       //     slider.value = val;
+       //     updateSliderMaxes();
+       //     updatePlot();
+       //     checkBayHeightsVsJacket();
+      //  });
+
+
+        // Only update slider.value live, no max recalcs or plot updates while typing
         input.addEventListener('input', () => {
             const val = parseFloat(input.value);
             if (!isNaN(val)) {
                 slider.value = val;
-                updateSliderMaxes();
-                updatePlot();
-                checkBayHeightsVsJacket();
+                // DON'T update maxes or plot here to avoid jumpiness
             }
         });
 
-        // Validate and clamp only after user finishes typing
+        // Validate, clamp, update slider maxes and plot only after typing finished
         input.addEventListener('blur', () => {
             let val = parseFloat(input.value);
             if (isNaN(val) || val < 1000) val = 1000;
             input.value = val.toFixed(1);
             slider.value = val;
-            updateSliderMaxes();
+            updateSliderMaxes();   // <-- only now update maxes
             updatePlot();
             checkBayHeightsVsJacket();
         });
+
+
+
 
         checkbox.addEventListener('change', () => {
             updatePlot();
