@@ -12,12 +12,27 @@
 
 <form id="myForm" class="sections-input-form">
     <div class="table-responsive-wrapper">
-        <label for="joint_type_geometry">Joint geometry</label>
-        <select name="joint_type_geometry" id="joint_type_geometry">
-            <option value="ID_constant">ID constant (IDs defined)</option>
-            <option value="MD_constant">MidDia constant (MidDias defined)</option>
-        </select>
-        <br><br>
+
+        <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1.5rem;">
+            <!-- Tubular section definitions -->
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="section_definition">Section definition</label>
+                <select name="section_definition" id="section_definition">
+                    <option value="by_OD" {{ 'selected' if defaults_sct.get('section_definition') == 'by_OD' else '' }}>ODs defined</option>
+                    <option value="by_ID" {{ 'selected' if defaults_sct.get('section_definition') == 'by_ID' else '' }}>IDs defined</option>
+                </select>
+            </div>
+
+            <!-- Section alignment joins -->
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="section_alignment">Section alignment</label>
+                <select name="section_alignment" id="section_alignment">
+                    <option value="ID_constant" {{ 'selected' if defaults_sct.get('section_alignment') == 'ID_constant' else '' }}>Sections aligned to ID</option>
+                    <option value="MD_constant" {{ 'selected' if defaults_sct.get('section_alignment') == 'MD_constant' else '' }}>Sections aligned to mid thickness</option>
+                </select>
+            </div>
+        </div>
+
 
         <!-- Row 1: KJT + Leg -->
         <div class="sections-table-row">
@@ -140,6 +155,13 @@
             </div>
         </div>
 
+        <!--cone taper ratio input-->
+        <div class="sections-cone-box">
+            <label for="cone_taper">Cone taper (1 in)</label>
+            <input type="text" name="cone_taper" id="cone_taper"
+                   value="{{ defaults_sct['cone_taper'] if 'cone_taper' in defaults_sct else '' }}">
+        </div>
+
         <button type="submit" class="sections-submit-button">Submit</button>
     </div>
 
@@ -152,20 +174,39 @@
 <div id="response" class="message"></div>
 <div id="plot"></div>
 
+<div class="sections-export-button">
+    <button type="button" id="sections-export-btn">Export</button>
+</div>
+
+
+
 <!-- Load Plotly -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script>
 
+
+
+<script>
 document.addEventListener("DOMContentLoaded", function () {
     let plot_json = {{ plot_json | tojson | safe }};
+    let lastSubmittedData = null;
 
+    const form = document.getElementById('myForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Initial plot
     if (plot_json && plot_json.data && plot_json.layout) {
         Plotly.newPlot('plot', plot_json.data, plot_json.layout);
     } else {
         console.error('Initial plot_json is invalid:', plot_json);
     }
 
-    document.getElementById('myForm').addEventListener('submit', function(event) {
+    // Listen for form input changes
+    document.querySelectorAll('#myForm input, #myForm select, #myForm textarea').forEach(input => {
+        input.addEventListener('input', checkIfFormChanged);
+    });
+
+    // Handle form submission
+    form.addEventListener('submit', function(event) {
         event.preventDefault();
 
         const formData = new FormData(this);
@@ -201,7 +242,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     } else if (warn.flag === 'warning') {
                         showJktWarning(warn.message, 'orange');
                     }
-                    // No warning shown for 'none' or other flag values
                 });
             }
 
@@ -219,6 +259,10 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
                 console.error('Updated plot_json has invalid format:', updatedPlot);
             }
+
+            // After successful submission, mark as clean
+            lastSubmittedData = getCurrentFormData();
+            markClean();
         })
         .catch(error => {
             console.error('Error:', error);
@@ -227,12 +271,71 @@ document.addEventListener("DOMContentLoaded", function () {
             clearJktWarning();
         });
     });
+
+    // Helpers
+    function getCurrentFormData() {
+        const formData = new FormData(form);
+        const formObject = {};
+        formData.forEach((value, key) => {
+            formObject[key] = value;
+        });
+        return formObject;
+    }
+
+    function checkIfFormChanged() {
+        if (!lastSubmittedData) return;
+        const currentData = getCurrentFormData();
+        const isChanged = Object.keys(currentData).some(key => currentData[key] !== lastSubmittedData[key]);
+
+        if (isChanged) {
+            markDirty();
+        } else {
+            markClean();
+        }
+    }
+
+    function markDirty() {
+        submitBtn.style.backgroundColor = 'orange';
+        submitBtn.textContent = 'Update Plots';
+    }
+
+    function markClean() {
+        submitBtn.style.backgroundColor = '';
+        submitBtn.textContent = 'Plots Updated';
+    }
+
+    markDirty();  // Initial state = dirty
 });
 
-//
-// Functions at bottom of script
-//
 
+document.getElementById('sections-export-btn').addEventListener('click', function() {
+    const form = document.getElementById('myForm');
+    const formData = new FormData(form);
+    const formObject = {};
+    formData.forEach((value, key) => {
+        formObject[key] = value;
+    });
+
+    // Convert form data object to JSON string
+    const jsonStr = JSON.stringify(formObject, null, 2);
+
+    // Trigger download of JSON file
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'form-data-export.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+
+
+
+// Warning display functions
 function showJktWarning(message, color = 'red') {
     const container = document.getElementById('jkt-warning-container');
     const warningWrapper = document.createElement('div');
@@ -271,6 +374,7 @@ function createWarningCircle(color, size = 20) {
     return warning;
 }
 </script>
+
 
 
 

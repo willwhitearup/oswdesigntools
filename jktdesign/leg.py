@@ -8,11 +8,13 @@ class Leg:
 
     def __init__(self, width1, width2, thk, leg_name=None, bay_side=None, member_type=None):
 
-        self.width1 = width1  # float, defines width1 in 2D (or diameter in 3D) of leg
-        self.width2 = width2  # float, defines width2 in 2D (or diameter in 3D) of leg
+        self.width1 = width1  # float, defines width1 in 2D (or diameter in 3D) of leg (must be defined by a tubular OD)
+        self.width2 = width2  # float, defines width2 in 2D (or diameter in 3D) of leg (must be defined by a tubular OD)
         self.thk = thk  # float, defines thicknesses of leg
         self.leg_name = leg_name  # str, defines name of the leg section e.g. leg_1, leg_2, leg_3
         self.bay_side = bay_side  # str, either "L" or "R" left or right side of the bay (if Leg object is a brace)
+        self.member_type = member_type
+        self.section_alignment = None  # either 'ID_constant' or 'MD_constant'
 
         # attributes to populate
         self.pt1 = None  # [x1, y1]
@@ -29,15 +31,17 @@ class Leg:
         self.cone_pt1, self.cone_pt2 = None, None
         self.cone_poly_coords = None
 
-        self.member_type = member_type
+
         self.mirror = False
 
-    def construct_leg(self, split_len1):
+    def construct_leg(self, split_len1, cone_taper=None):
 
         ## CONE WORK ##
-        self.is_cone = True if not np.isclose(self.width1, self.width2) else False
+        # self.is_cone = True if not np.isclose(self.width1, self.width2) else False
+        self._check_is_cone()  # first check if a cone is required considering the section alignment
         if self.is_cone:
-            self._calc_cone_length()  # cone length calc based on taper ratio of 1 in 4 (default)
+            cone_taper = 4 if cone_taper is None else cone_taper
+            self._calc_cone_length(cone_taper)  # cone length calc based on taper ratio of 1 in 4 default
             split_len2 = split_len1 + self.cone_length
             self._create_cone_segment(split_len1, split_len2)
             self._create_split_conical_leg_paths()
@@ -60,6 +64,19 @@ class Leg:
             raise Exception("Only 4 points total are allowed along a line leg segment. Exiting...")
 
         self.pts = [self.pt1] + self.mid_pts + [self.pt2]
+
+    def set_tubular_section_alignment(self, section_alignment):
+        self.section_alignment = section_alignment
+
+    def _check_is_cone(self):
+        # check ID for alignment
+        if self.section_alignment == "ID_constant":
+            width1_align, width2_align = self.width1 - self.thk, self.width2 - self.thk
+        elif self.section_alignment == "MD_constant":
+            width1_align, width2_align = self.width1 - 0.5 * self.thk, self.width2 - 0.5 * self.thk
+
+        chk_alignment = np.isclose(width1_align, width2_align) # check to see if section widths are same or not
+        self.is_cone = True if not chk_alignment else False
 
     def _calc_cone_length(self, cone_taper=4):
         """cone length determined by a taper based on widths at top and bottom. 1:4 is default

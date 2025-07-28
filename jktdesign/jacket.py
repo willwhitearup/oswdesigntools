@@ -6,6 +6,9 @@ from jktdesign.leg import Leg
 
 
 class Jacket:
+    """
+    defines the Jacket object
+    """
 
     def __init__(self, interface_elev, tp_width, tp_btm, tp_btm_k1_voffset, batter_1_theta, batter_1_elev, jacket_footprint,
                  stickup, bay_heights, btm_vert_leg_length, water_depth, single_batter: bool, bay_horizontals: list):
@@ -60,7 +63,8 @@ class Jacket:
         self.brace_a_objs = []  # list to store Leg objects (for brace a sections)
         self.brace_b_objs = []  # list to store Leg objects (for brace b sections)
         self.brace_hz_objs = []  # list to store Leg objects (for braze horizontals)
-
+        self.cone_taper = None
+        self.section_alignment = None
         self.warnings = {}  # todo
 
         # run methods
@@ -314,6 +318,12 @@ class Jacket:
         self._check_batter_elevs_not_in_kjts()
         self._check_kjt_ends_not_within_dist()
 
+    def set_cone_taper_ratio(self, cone_taper):
+        self.cone_taper = cone_taper  # currently only allow a single taper ratio through out the jacket
+
+    def set_tubular_section_alignment(self, section_alignment):
+        self.section_alignment = section_alignment
+
     def add_leg_obj(self, leg_obj: Leg, leg_cone_split_len=2500):
         """Leg objects are constructed in descending elevation. Leg sections are created using kjt co-ordinates
         Leg sections (diameters and thicknesses) have been defined by User in web app
@@ -346,6 +356,7 @@ class Jacket:
 
         # define leg end points
         leg_obj.define_leg_pts(pt1, pt2)
+        leg_obj.set_tubular_section_alignment(self.section_alignment)
 
         # add intermediate points
         # now find if any of the kink points are between the bottom of k above and above the k below
@@ -356,7 +367,7 @@ class Jacket:
             leg_obj.define_intermediate_leg_point(self.batter_2_wp)
 
         # create the leg polygons, call all public methods
-        leg_obj.construct_leg(split_len1=leg_cone_split_len)
+        leg_obj.construct_leg(split_len1=leg_cone_split_len, cone_taper=self.cone_taper)
 
         # create copy of leg object and mirror it
         leg_obj_mirr = copy.deepcopy(leg_obj)
@@ -411,8 +422,9 @@ class Jacket:
         # define brace start and end pts - use descending order approach
         if bay_side == "L": brace_obj.define_leg_pts(k_stub_pt, x_stub_pt)
         else: brace_obj.define_leg_pts(k_stub_pt_mirr, x_can_pt_top)
+        brace_obj.set_tubular_section_alignment(self.section_alignment)
 
-        brace_obj.construct_leg(split_len1=brace_cone_split_len)  # construct obj using public method
+        brace_obj.construct_leg(split_len1=brace_cone_split_len, cone_taper=self.cone_taper)  # construct obj using public method
         # store the brace a objs
         self.brace_a_objs.append(brace_obj)
 
@@ -456,8 +468,8 @@ class Jacket:
 
         if bay_side == "L": brace_obj.define_leg_pts(x_can_pt, k_stub_pt)
         else: brace_obj.define_leg_pts(x_stub_pt, k_stub_pt_mirr)
-
-        brace_obj.construct_leg(split_len1=brace_cone_split_len)  # construct obj using public method
+        brace_obj.set_tubular_section_alignment(self.section_alignment)
+        brace_obj.construct_leg(split_len1=brace_cone_split_len, cone_taper=self.cone_taper)  # construct obj using public method
         self.brace_b_objs.append(brace_obj)
 
     def add_brace_hz_obj(self, brace_obj: Leg):
@@ -476,7 +488,8 @@ class Jacket:
                 k_stub_pt_R = jnt_obj.stub_end_pts["brc2"]
 
         brace_obj.define_leg_pts(k_stub_pt_L, k_stub_pt_R)
-        brace_obj.construct_leg(split_len1=None)  # construct obj using public method
+        brace_obj.set_tubular_section_alignment(self.section_alignment)
+        brace_obj.construct_leg(split_len1=None, cone_taper=self.cone_taper)  # construct obj using public method
         self.brace_hz_objs.append(brace_obj)
 
     def extend_k1_to_TP(self, extend_k1: bool=True):

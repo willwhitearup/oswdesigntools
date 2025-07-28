@@ -65,7 +65,7 @@ def get_brace_geom_form_data(form_data):
 
     return brace_geom_data, brace_hz_geom_data
 
-def create_2D_kjoint_data(kjt_geom_data, diameter_def="ID"):
+def create_2D_kjoint_data(kjt_geom_data, diameter_def="by_ID"):
     jnt_objs = []
     for k, v in kjt_geom_data.items():
         # extract data from form
@@ -78,37 +78,41 @@ def create_2D_kjoint_data(kjt_geom_data, diameter_def="ID"):
         d3 = v["stub_3_d"]
         t3 = v["stub_3_t"]
 
-        if diameter_def == "ID":
-            Dc_OD, d1_OD = Dc + tc, d1+t1,
-            d2_OD = d2 + t2 if d2 is not None else None
-            d3_OD = d3 + t3 if d3 is not None else None
-        else:
-            print("todo")
+        if diameter_def == "by_ID":
+            Dc = Dc + tc
+            d1 = d1 + t1
+            d2 = d2 + t2 if d2 is not None else None
+            d3 = d3 + t3 if d3 is not None else None
+
         # create the Joint object and store
-        jnt_obj = Joint2D(Dc_OD, tc, # Joint and stubs are defined as D and d as their ODs
-                          d1_OD, t1,
-                          d2=d2_OD, t2=t2,
-                          d3=d3_OD, t3=t3,
+        jnt_obj = Joint2D(Dc, tc, # Joint and stubs are defined as D and d as their ODs
+                          d1, t1,
+                          d2=d2, t2=t2,
+                          d3=d3, t3=t3,
                           jt_name=k, jt_type="kjt")
         jnt_objs.append(jnt_obj)
     return jnt_objs
 
-def create_2D_xjoint_data(xjt_geom_data, diameter_def="ID"):
+def create_2D_xjoint_data(xjt_geom_data, diameter_def="by_ID"):
     jnt_objs = []
     for k, v in xjt_geom_data.items():
         Dc = v['can_d']
         tc = v["can_t"]
         d1 = v["stub_d"]
         t1 = v["stub_t"]
-        if diameter_def == "ID":
-            Dc_OD, d1_OD = Dc + tc, d1+t1
-        else:
-            print("todo")
-        jnt_obj = Joint2D(Dc_OD, tc, d1_OD, t1, d2=d1_OD, t2=t1, jt_name=k, jt_type="xjt")
+        if diameter_def == "by_ID":
+            Dc = Dc + tc
+            d1 = d1 + t1
+        elif diameter_def == "by_OD":
+            Dc = Dc
+            d1 = d1
+
+        # must always define the joint object with ODs
+        jnt_obj = Joint2D(Dc, tc, d1, t1, d2=d1, t2=t1, jt_name=k, jt_type="xjt")
         jnt_objs.append(jnt_obj)
     return jnt_objs
 
-def create_2D_leg_data(leg_geom_data, kjt_geom_data, diameter_def="ID"):
+def create_2D_leg_data(leg_geom_data, kjt_geom_data, diameter_def="by_ID"):
     """create Leg object from the leg_geom_data and kjt_geom_data (i.e. from app form)
     Args:
         leg_geom_data: dict, see above
@@ -141,15 +145,16 @@ def create_2D_leg_data(leg_geom_data, kjt_geom_data, diameter_def="ID"):
                 # get kjt data from kjoint above the leg section
                 width2 = kjt_geom_data[f"kjt_{kjt_no + 1}"]['can_d']
         # create the object and store
-        if diameter_def == "ID":
+        if diameter_def == "by_ID":
             leg1_OD, leg2_OD = width1 + thk1, width2 + thk1
-        else:
-            print("todo")
+        elif diameter_def == "by_OD":
+            leg1_OD, leg2_OD = width1, width2
+
         leg_obj = Leg(width1=leg1_OD, width2=leg2_OD, thk=thk1, leg_name=k, member_type="LEG")
         leg_objs.append(leg_obj)
     return leg_objs
 
-def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diameter_def="ID"):
+def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diameter_def="by_ID"):
     """create Leg object for an x brace from the leg_geom_data and kjt_geom_data (i.e. from app form)
 
 
@@ -189,12 +194,14 @@ def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diamet
                 break
 
         # create the object and store
-        if diameter_def == "ID":
+        if diameter_def == "by_ID":
             width1_aR = width1_aL
             brc1L_OD, brc2L_OD = width1_aL + brace_thk, width2_aL + brace_thk
             brc1R_OD, brc2R_OD = width1_aR + brace_thk, width2_aR + brace_thk
-        else:
-            print("todo")
+        elif diameter_def == "by_OD":
+            width1_aR = width1_aL
+            brc1L_OD, brc2L_OD = width1_aL, width2_aL
+            brc1R_OD, brc2R_OD = width1_aR, width2_aR
 
         brace_obj = Leg(width1=brc1L_OD, width2=brc2L_OD, thk=brace_thk, leg_name=bay_name + "_aL", bay_side="L", member_type="BRC")
         brace_objs.append(brace_obj)
@@ -206,7 +213,7 @@ def create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diamet
     return brace_objs
 
 
-def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diameter_def="ID"):
+def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diameter_def="by_ID"):
     """Create Leg objects for bay braces that descend from X joints to K joint stubs.
     Each bay contains two braces: left (bL) and right (bR).
     """
@@ -229,11 +236,12 @@ def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diamet
                 break
 
         # create the object and store
-        if diameter_def == "ID":
+        if diameter_def == "by_ID":
             brc1L_OD, brc2L_OD = width1_bL + brace_thk, width2_bL + brace_thk
             brc1R_OD, brc2R_OD = width1_bR + brace_thk, width2_bR + brace_thk
-        else:
-            print("todo")
+        elif diameter_def == "by_OD":
+            brc1L_OD, brc2L_OD = width1_bL, width2_bL
+            brc1R_OD, brc2R_OD = width1_bR, width2_bR
 
         # Create left-side brace
         brace_objs.append(Leg(width1=brc1L_OD, width2=brc2L_OD, thk=brace_thk, leg_name=bay_name + "_bL", bay_side="L", member_type="BRC"))
@@ -243,7 +251,7 @@ def create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data, diamet
     return brace_objs
 
 
-def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data, diameter_def="ID"):
+def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data, diameter_def="by_ID"):
     """create horizontal brace, which spans between k joints at same level e.g. k1 to k1
     """
     brace_hz_objs = []
@@ -257,10 +265,10 @@ def create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data, diameter_def="ID"
                 stub_2_d = va['stub_2_d']
                 break
         # hz braces defined from left to right
-        if diameter_def == "ID":
+        if diameter_def == "by_ID":
             OD = stub_2_d + hz_t
-        else:
-            print("todo")
+        elif diameter_def == "by_OD":
+            OD = stub_2_d
 
         brace_obj = Leg(width1=OD, width2=OD, thk=hz_t, leg_name=f"{bay_name}_hz", member_type="BRC")
         brace_hz_objs.append(brace_obj)

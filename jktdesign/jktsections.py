@@ -25,57 +25,64 @@ def jacket_sections_plot():
 
     session['jktsections_form_data'] = form_data
 
-    # todo, only ID diameter refs done so far
-    if form_data["joint_type_geometry"] != 'ID_constant':
-        raise Exception("Joint2D sections have only been created using constant ID currently. Exiting...")
+    section_alignment = form_data.get("section_alignment", "ID_constant")
+    section_definition = form_data.get("section_definition", "by_OD")
 
     kjt_geom_data = get_kjt_geom_form_data(form_data)
     xjt_geom_data = get_xjt_geom_form_data(form_data)
     leg_geom_data = get_leg_geom_form_data(form_data)
     brace_geom_data, brace_hz_geom_data = get_brace_geom_form_data(form_data)
+    cone_taper = float(form_data.get("cone_taper", 4.))
 
     # get the original jacket data (from architect page)
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
-    jkt_obj = create_jacket_from_session()
+    jkt_obj = create_jacket_from_session()  # define the jkt object from the 1D session (only at this point)
+
+
+    jkt_obj.set_cone_taper_ratio(cone_taper)  # set the cone taper ratio (used if sections are different sizes)
+    jkt_obj.set_tubular_section_alignment(section_alignment)  # set tubular sections alignment (by ID or by mid Dia # not by OD for jackets)
 
     # create the K-Joint 2DJoint objects
-    kjt_2D_objs = create_2D_kjoint_data(kjt_geom_data)
+    kjt_2D_objs = create_2D_kjoint_data(kjt_geom_data, section_definition)
     for kjt_2D_obj in kjt_2D_objs:
         jkt_obj.add_joint_obj(kjt_2D_obj, jt_type="kjt")
 
-    extend_k1 = True  # set this option to True for time being
+    extend_k1 = True  # set this option to True for time being (extends k1 to underside of TP)
     jkt_obj.extend_k1_to_TP(extend_k1)
     # check if kjts are designed ok
     jkt_obj.kjt_warnings_check()
 
     # create the X-Joint 2DJoint objects
-    xjt_2D_objs = create_2D_xjoint_data(xjt_geom_data)
+    xjt_2D_objs = create_2D_xjoint_data(xjt_geom_data, section_definition)
     for xjt_2D_obj in xjt_2D_objs:
         jkt_obj.add_joint_obj(xjt_2D_obj, jt_type="xjt")
 
     # create the leg 2D sections (functionality for cones, kinks and straight legs)
-    leg_objs = create_2D_leg_data(leg_geom_data, kjt_geom_data)
+    leg_objs = create_2D_leg_data(leg_geom_data, kjt_geom_data, section_definition)
     for leg_obj in leg_objs:
         jkt_obj.add_leg_obj(leg_obj)
 
     # create the brace a 2D sections (spans kjts to xjts)
-    brace_a_objs = create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data)
+    brace_a_objs = create_2D_brace_a_data(brace_geom_data, kjt_geom_data, xjt_geom_data, section_definition)
     for brace_a_obj in brace_a_objs:
         jkt_obj.add_brace_a_obj(brace_a_obj)
 
     # create the brace b 2D sections (spans xjts to kjts)
-    brace_b_objs = create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data)
+    brace_b_objs = create_2D_brace_b_data(brace_geom_data, kjt_geom_data, xjt_geom_data, section_definition)
     for brace_b_obj in brace_b_objs:
         jkt_obj.add_brace_b_obj(brace_b_obj)
 
     # create bay horizontals 2D sections (spans kjts)
-    brace_hz_objs = create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data)
+    brace_hz_objs = create_2D_brace_hz_data(brace_hz_geom_data, kjt_geom_data, section_definition)
     for brace_hz_obj in brace_hz_objs:
         jkt_obj.add_brace_hz_obj(brace_hz_obj)
 
     # design warnings and errors and return to app
     warnings = jkt_obj.warnings
+    print(warnings, len(warnings))
+
+    msg = 'Plot updated (with warnings and/or errors)' if warnings else 'Plot updated successfully'
 
     # reconstruct the plot each time a new post is generated (so that the existing plot is not scattered with new data everytime a post request happens)
     updated_plot_json = jacket_plotter(jkt_obj, jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper'], show_tower=False, twr_obj=None)
@@ -84,7 +91,7 @@ def jacket_sections_plot():
     df_mto = calculate_jkt_mto(jkt_obj)
     session['df_mto'] = df_mto.to_json()
 
-    return jsonify({'message': 'Plot updated successfully',
+    return jsonify({'message': msg,
                     'plot_json': updated_plot_json,
                     "warnings": warnings
                     })
@@ -106,7 +113,7 @@ def jacket_sections():
     # get out some data to create the plotly figure
     lat, msl, splash_lower, splash_upper = jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper']
     # create the jacket object
-    jkt_obj = create_jacket_from_session()
+    jkt_obj = create_jacket_from_session()  # initially try to create the jacket obj from session object
     kjt_n_braces = jkt_obj.kjt_n_braces
     bay_horizontals = jkt_obj.bay_horizontals
 
@@ -153,6 +160,8 @@ def get_default_sct_config(jkt_obj):
     kjt_n_braces = jkt_obj.kjt_n_braces
     k_jt_d, k_jt_stub_d, t = 2000, 1000, 99
     x_jt_d, x_jt_stub_d = 1000, 1000
+    section_definition, section_alignment = "by_OD", "ID_constant"
+    cone_taper = 4
     defaults_sct = {}
 
     for k_jt, n_braces in kjt_n_braces.items():
@@ -176,5 +185,9 @@ def get_default_sct_config(jkt_obj):
         # bay braces
         defaults_sct[f"bay_{idx}_t"] = t
         defaults_sct[f"bay_hz_{idx}_t"] = t
+
+    defaults_sct["cone_taper"] = cone_taper
+    defaults_sct["section_definition"] = section_definition
+    defaults_sct["section_alignment"] = section_alignment
 
     return defaults_sct

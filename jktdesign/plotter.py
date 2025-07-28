@@ -244,10 +244,14 @@ def leg_object_plotting(fig, leg_objs):
         leg_name = leg_obj.leg_name
         if leg_obj.member_type == "LEG":
             clr, line_clr = "rgba(255, 40, 0, 0.6)", "rgb(180, 20, 0)"
+
+            cone_clr, cone_line_clr = "rgba(135, 206, 250, 0.6)", "rgb(0, 0, 128)"  # LightSkyBlue with 60% opacity
+
             show_in_legend = not leg_obj.mirror
             name = leg_name if show_in_legend else None
         elif leg_obj.member_type == "BRC":
             clr, line_clr = "rgba(50, 205, 50, 0.4)", "rgb(50, 205, 50)"
+            cone_clr, cone_line_clr = "rgba(135, 206, 250, 0.6)", "rgb(0, 0, 128)"  # LightSkyBlue with 60% opacity
             show_in_legend = ("aR" not in leg_name) and ("bL" not in leg_name) and ("bR" not in leg_name)
             name = leg_name.replace("_aL", "") if show_in_legend else None
         else:
@@ -280,11 +284,12 @@ def leg_object_plotting(fig, leg_objs):
         # Plot cone polygon if present
         cone_poly_coords = leg_obj.cone_poly_coords
         if cone_poly_coords is not None:
+
             x, y = cone_poly_coords[0], cone_poly_coords[1]
-            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=clr), name=(name + " cone" if name else None),
-                                     mode="none", fill='toself', fillcolor=clr,
+            fig.add_trace(go.Scatter(x=x, y=y, line=dict(color=cone_clr), name=(name + " cone" if name else None),
+                                     mode="none", fill='toself', fillcolor=cone_clr,
                                      showlegend=show_in_legend))
-            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=line_clr), showlegend=False
+            fig.add_trace(go.Scatter(x=x + [x[0]], y=y + [y[0]], mode="lines", line=dict(color=cone_line_clr), showlegend=False
             ))
 
     return fig
