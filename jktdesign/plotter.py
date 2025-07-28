@@ -39,10 +39,7 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
     bay_horizontals = jkt_obj.bay_horizontals
     xjt_elevs = jkt_obj.xjt_elevs
 
-    if not jkt_obj.joint_objs:
-        jkt_line_clr = "red"  # strong red (e.g. to signal empty or invalid)
-    else:
-        jkt_line_clr = "rgba(255, 0, 0, 0.2)"  # faint red when joints exist
+    jkt_line_clr = "red" if not jkt_obj.joint_objs else "rgba(0, 0, 0, 0)"
 
     # Create the plot
     fig = go.Figure()
@@ -197,11 +194,10 @@ def jnt_object_plotting(fig, joint_objs):
     Dc = None
     for jidx, joint_obj in enumerate(joint_objs):
         if joint_obj.jt_type == "kjt":
-            clr, line_clr = "rgba(0, 0, 139, 0.3)", "rgb(0, 0, 139)"  # transparent dark blue
+            clr, line_clr = "rgba(255, 0, 200, 0.4)", "rgb(180, 0, 140)"
             Dc = joint_obj.Dc  # get diameter of last K joint in the jacket and return it
         elif joint_obj.jt_type == "xjt":
-            clr, line_clr = "rgba(104, 33, 122, 0.4)", "rgb(80, 20, 100)"  # transparent purple
-
+            clr, line_clr = "rgba(180, 30, 200, 0.4)", "rgb(120, 20, 160)"
         kinked_can = joint_obj.kinked_can
         for idx, (k, v) in enumerate(joint_obj.joint_poly_coords_transf.items()):
             # kinked Can section plotting logic...
@@ -243,7 +239,9 @@ def leg_object_plotting(fig, leg_objs):
     for leg_obj in leg_objs:
         leg_name = leg_obj.leg_name
         if leg_obj.member_type == "LEG":
-            clr, line_clr = "rgba(255, 40, 0, 0.6)", "rgb(180, 20, 0)"
+
+            clr = "rgba(30, 140, 255, 0.4)"  # brighter, more azure-like fill
+            line_clr = "rgb(20, 100, 230)"
 
             cone_clr, cone_line_clr = "rgba(135, 206, 250, 0.6)", "rgb(0, 0, 128)"  # LightSkyBlue with 60% opacity
 

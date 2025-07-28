@@ -35,10 +35,10 @@ app.add_url_rule('/joint_detailing', 'joint_detailing', joint_detailing, methods
 app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
 
 # todo debug code
-@app.route("/clear_session")
-def clear_session():
-    session.clear()
-    return "Session cleared!"
+# @app.route("/clear_session")
+# def clear_session():
+#     session.clear()
+#     return "Session cleared!"
 
 # http://localhost:5000/clear_session
 

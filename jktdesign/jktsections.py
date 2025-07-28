@@ -123,10 +123,7 @@ def jacket_sections():
     else:  # on initial load use some defaults
         # jacket wireframe defaults
         defaults_sct = get_default_sct_config(jkt_obj)
-        print(defaults_sct["cone_taper"])
 
-        print("here")
-    print(defaults_sct)
     return render_template('jktsections.html', jkt_dict=jkt_dict,
                            plot_json=plot_json,
                            kjt_n_braces=kjt_n_braces,
