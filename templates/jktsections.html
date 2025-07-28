@@ -18,8 +18,8 @@
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <label for="section_definition">Section definition</label>
                 <select name="section_definition" id="section_definition">
-                    <option value="by_OD" {{ 'selected' if defaults_sct.get('section_definition') == 'by_OD' else '' }}>ODs defined</option>
-                    <option value="by_ID" {{ 'selected' if defaults_sct.get('section_definition') == 'by_ID' else '' }}>IDs defined</option>
+                  <option value="by_OD" {% if defaults_sct.get('section_definition', 'by_OD') == 'by_OD' %}selected{% endif %}>ODs defined</option>
+                  <option value="by_ID" {% if defaults_sct.get('section_definition', 'by_ID') == 'by_ID' %}selected{% endif %}>IDs defined</option>
                 </select>
             </div>
 
@@ -27,12 +27,11 @@
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <label for="section_alignment">Section alignment</label>
                 <select name="section_alignment" id="section_alignment">
-                    <option value="ID_constant" {{ 'selected' if defaults_sct.get('section_alignment') == 'ID_constant' else '' }}>Sections aligned to ID</option>
-                    <option value="MD_constant" {{ 'selected' if defaults_sct.get('section_alignment') == 'MD_constant' else '' }}>Sections aligned to mid thickness</option>
+                  <option value="ID_constant" {% if defaults_sct.get('section_alignment', 'ID_constant') == 'ID_constant' %}selected{% endif %}>Sections aligned to ID</option>
+                  <option value="MD_constant" {% if defaults_sct.get('section_alignment', 'MD_constant') == 'MD_constant' %}selected{% endif %}>Sections aligned to mid thickness</option>
                 </select>
             </div>
         </div>
-
 
         <!-- Row 1: KJT + Leg -->
         <div class="sections-table-row">
@@ -158,7 +157,7 @@
         <!--cone taper ratio input-->
         <div class="sections-cone-box">
             <label for="cone_taper">Cone taper (1 in)</label>
-            <input type="text" name="cone_taper" id="cone_taper" value="{{ defaults_sct['cone_taper'] }}">
+            <input type="text" name="cone_taper" id="cone_taper" value="{{ defaults_sct.get('cone_taper', '1.') }}">
         </div>
 
         <button type="submit" class="sections-submit-button">Submit</button>
@@ -186,6 +185,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
     let plot_json = {{ plot_json | tojson | safe }};
     let lastSubmittedData = null;
 
@@ -372,6 +372,10 @@ function createWarningCircle(color, size = 20) {
     warning.style.cursor = 'pointer';
     return warning;
 }
+
+
+
+
 </script>
 
 

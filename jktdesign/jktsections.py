@@ -101,12 +101,11 @@ def jacket_sections():
     """
     jkt_json_str = session.get('jkt_json', '{}')
     jkt_dict = json.loads(jkt_json_str)
-
     # create error message just so the page loads if user go theres initially
     if not jkt_dict:
         return render_template('jktsections.html',
                                error_message="Warning! First create your model on the Architect page before assigning sections!",
-                               jkt_dict={}, plot_json={}, kjt_n_braces={})
+                               jkt_dict={}, plot_json={}, kjt_n_braces={}, defaults_sct={})
 
     # get out some data to create the plotly figure
     lat, msl, splash_lower, splash_upper = jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper']
@@ -124,8 +123,10 @@ def jacket_sections():
     else:  # on initial load use some defaults
         # jacket wireframe defaults
         defaults_sct = get_default_sct_config(jkt_obj)
+        print(defaults_sct["cone_taper"])
 
-
+        print("here")
+    print(defaults_sct)
     return render_template('jktsections.html', jkt_dict=jkt_dict,
                            plot_json=plot_json,
                            kjt_n_braces=kjt_n_braces,
@@ -188,5 +189,4 @@ def get_default_sct_config(jkt_obj):
     defaults_sct["cone_taper"] = cone_taper
     defaults_sct["section_definition"] = section_definition
     defaults_sct["section_alignment"] = section_alignment
-
     return defaults_sct
