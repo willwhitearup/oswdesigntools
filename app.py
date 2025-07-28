@@ -44,4 +44,4 @@ app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
 
 if __name__ == '__main__':
     # app.run(debug=True)
-    app.run()
+    app.run()  # for deployment
