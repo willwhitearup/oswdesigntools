@@ -15,6 +15,7 @@ STICKUP_MIN, STICKUP_MAX, STICKUP_STEP = 0., 25000, 100
 
 @app.route('/architect', methods=['GET', 'POST'])
 def jacket_architect():
+    session.clear()
     if request.method == 'POST':
         try:
             show_tower = request.form.get('show_tower') == 'on'

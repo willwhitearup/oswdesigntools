@@ -80,9 +80,6 @@ def jacket_sections_plot():
 
     # design warnings and errors and return to app
     warnings = jkt_obj.warnings
-    print(warnings, len(warnings))
-
-    msg = 'Plot updated (with warnings and/or errors)' if warnings else 'Plot updated successfully'
 
     # reconstruct the plot each time a new post is generated (so that the existing plot is not scattered with new data everytime a post request happens)
     updated_plot_json = jacket_plotter(jkt_obj, jkt_dict['lat'], jkt_dict['msl'], jkt_dict['splash_lower'], jkt_dict['splash_upper'], show_tower=False, twr_obj=None)
@@ -91,6 +88,7 @@ def jacket_sections_plot():
     df_mto = calculate_jkt_mto(jkt_obj)
     session['df_mto'] = df_mto.to_json()
 
+    msg = 'Plot updated (with warnings and/or errors)' if warnings else 'Plot updated successfully'
     return jsonify({'message': msg,
                     'plot_json': updated_plot_json,
                     "warnings": warnings
@@ -120,12 +118,13 @@ def jacket_sections():
     plot_json_str = jacket_plotter(jkt_obj, lat, msl, splash_lower, splash_upper, show_tower=False)
     plot_json = json.loads(plot_json_str)
 
-    # on initial load get the defaults, otherwise use the session dict
+    # try first to use the session dict
     if 'jktsections_form_data' in session:
         defaults_sct = session.get('jktsections_form_data', '{}')
-    else:
+    else:  # on initial load use some defaults
         # jacket wireframe defaults
         defaults_sct = get_default_sct_config(jkt_obj)
+
 
     return render_template('jktsections.html', jkt_dict=jkt_dict,
                            plot_json=plot_json,
@@ -161,7 +160,7 @@ def get_default_sct_config(jkt_obj):
     k_jt_d, k_jt_stub_d, t = 2000, 1000, 99
     x_jt_d, x_jt_stub_d = 1000, 1000
     section_definition, section_alignment = "by_OD", "ID_constant"
-    cone_taper = 4
+    cone_taper = 4.
     defaults_sct = {}
 
     for k_jt, n_braces in kjt_n_braces.items():
