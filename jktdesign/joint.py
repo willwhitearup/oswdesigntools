@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 
-from jktdesign.geom_utils import construct_true_constant_width_path
+from jktdesign.geom_utils import construct_true_constant_width_path, check_is_horizontal_rectangle
 
 """
 Joint geometry calculated using Joint Detailing guidance.
@@ -64,15 +64,6 @@ class Joint2D:
         self.kinked_can = False  # set to True if the Can extends over a batter kink point
         self.pt_kink = None
 
-    def create_joint(self):
-        """public method to create the joint, K or X joint allowed
-        """
-        self.calc_stub_wire_end_coords()
-        self.calc_stub_poly_coords()
-        self.calc_can_length()
-        self.calc_can_poly_coords()
-        self.get_joint_poly_coords()  # store all the joint coords in dict
-
     def brace_attachment_thetas(self, d1_theta=None, d2_theta=None, d3_theta=None):
         """method allows brace theta angles to be defined after object initiated
         """
@@ -82,6 +73,15 @@ class Joint2D:
             self.d2_theta = d2_theta
         if d3_theta is not None:
             self.d3_theta = d3_theta
+
+    def create_joint(self):
+        """public method to create the joint, K or X joint allowed
+        """
+        self.calc_stub_wire_end_coords()
+        self.calc_stub_poly_coords()
+        self.calc_can_length()
+        self.calc_can_poly_coords()
+        self.get_joint_poly_coords()  # store all the joint coords in dict
 
     @staticmethod
     def chord_brace_attachment_length(d, d_theta):
@@ -108,7 +108,7 @@ class Joint2D:
             m1y = -(0.5 * self.Dc) / np.tan(np.radians(d_theta))
         m2x = m1x + stub_length * np.sin(np.radians(d_theta))
         m2y = m1y + stub_length * np.cos(np.radians(d_theta))
-        # put in list
+        # 1D co-ord wire ends (list format)
         wire_end_coords = [[m1x, m2x], [m1y, m2y]]
         return wire_end_coords
 
@@ -139,10 +139,66 @@ class Joint2D:
         # 4 points only to define the polygon (do not close the polygon)
         return [[x1, x2, x3, x4], [y1, y2, y3, y4]]
 
-    def calc_stub_poly_coords(self):
+    def calc_stub_poly_coords(self, apply_joint_gaps: bool=False):
         self.b1_poly_coords = Joint2D.get_brace_coords(self.b1_wire_end_coords, self.d1, self.d1_theta)
         self.b2_poly_coords = Joint2D.get_brace_coords(self.b2_wire_end_coords, self.d2, self.d2_theta) if self.d2 is not None else None
         self.b3_poly_coords = Joint2D.get_brace_coords(self.b3_wire_end_coords, self.d3, self.d3_theta) if self.d3 is not None else None
+
+        # todo not yet implemented - joint gaps change the architecture, brace angles and joint wps...
+        # apply joint gaps vertically
+        if self.jt_type == "kjt" and apply_joint_gaps:
+            print("***********")
+            print(self.jt_name)
+            # 2 braces
+            if self.b2_poly_coords is not None and self.b3_poly_coords is None:
+                b1_to_can_yvals = self.b1_poly_coords[1][:2]
+                b2_to_can_yvals = self.b2_poly_coords[1][:2]
+                y_gap = min(b1_to_can_yvals) - max(b2_to_can_yvals)
+                if y_gap < self.joint_gap:
+                    if y_gap < 0.:  # if negative gap i.e. overlap
+                        self.b1_poly_coords[1][0] = self.b1_poly_coords[1][0] + 0.5 * abs(y_gap) + 0.5 * self.joint_gap
+                        self.b1_poly_coords[1][1] = self.b1_poly_coords[1][1] + 0.5 * abs(y_gap) + 0.5 * self.joint_gap
+                        self.b2_poly_coords[1][0] = self.b2_poly_coords[1][0] - 0.5 * abs(y_gap) - 0.5 * self.joint_gap
+                        self.b2_poly_coords[1][1] = self.b2_poly_coords[1][1] - 0.5 * abs(y_gap) - 0.5 * self.joint_gap
+                    else:
+                        self.b1_poly_coords[1][0] = self.b1_poly_coords[1][0] - 0.5 * abs(y_gap) + 0.5 * self.joint_gap
+                        self.b1_poly_coords[1][1] = self.b1_poly_coords[1][1] - 0.5 * abs(y_gap) + 0.5 * self.joint_gap
+                        self.b2_poly_coords[1][0] = self.b2_poly_coords[1][0] + 0.5 * abs(y_gap) - 0.5 * self.joint_gap
+                        self.b2_poly_coords[1][1] = self.b2_poly_coords[1][1] + 0.5 * abs(y_gap) - 0.5 * self.joint_gap
+
+                    # determine updated WPs
+                    brc1_wp = (self.b1_poly_coords[1][0] + self.b1_poly_coords[1][1]) / 2
+                    brc2_wp = (self.b2_poly_coords[1][0] + self.b2_poly_coords[1][1]) / 2
+
+            # 3 braces, only the top and bottom braces move (centre horz stays still)
+            elif self.b2_poly_coords is not None and self.b3_poly_coords is not None:
+                b1_to_can_yvals = self.b1_poly_coords[1][:2]
+                b2_to_can_yvals = self.b2_poly_coords[1][:2]
+                b3_to_can_yvals = self.b3_poly_coords[1][:2]
+                y_gap_1_2 = min(b1_to_can_yvals) - max(b2_to_can_yvals)  # gap b1 to b2
+                y_gap_2_3 = min(b2_to_can_yvals) - max(b3_to_can_yvals)  # gap b2 to b3
+                # top brace to central horz brace
+                if y_gap_1_2 < self.joint_gap:
+                    if y_gap_1_2 < 0:  # if gap is negative (i.e. overlapping)
+                        self.b1_poly_coords[1][0] = self.b1_poly_coords[1][0] + abs(y_gap_1_2) + self.joint_gap
+                        self.b1_poly_coords[1][1] = self.b1_poly_coords[1][1] + abs(y_gap_1_2) + self.joint_gap
+                    else:
+                        self.b1_poly_coords[1][0] = self.b1_poly_coords[1][0] -abs(y_gap_1_2) + self.joint_gap
+                        self.b1_poly_coords[1][1] = self.b1_poly_coords[1][1] -abs(y_gap_1_2) + self.joint_gap
+
+                # btm brace to central horz brace
+                if y_gap_2_3 < self.joint_gap:  # if gap exists but less than allowable joint_gap
+                    if y_gap_2_3 < 0:
+                        self.b3_poly_coords[1][0] = self.b3_poly_coords[1][0] - abs(y_gap_2_3) - self.joint_gap
+                        self.b3_poly_coords[1][1] = self.b3_poly_coords[1][1] - abs(y_gap_2_3) - self.joint_gap
+                    else:
+                        self.b3_poly_coords[1][0] = self.b3_poly_coords[1][0] + abs(y_gap_2_3) - self.joint_gap
+                        self.b3_poly_coords[1][1] = self.b3_poly_coords[1][1] + abs(y_gap_2_3) - self.joint_gap
+
+                # determine updated WPs for top and btm braces
+                brc1_wp = (self.b1_poly_coords[1][0] + self.b1_poly_coords[1][1]) / 2
+                brc3_wp = (self.b3_poly_coords[1][0] + self.b3_poly_coords[1][1]) / 2
+
 
     def calc_can_length(self):
         """get joint can total length and brace stub lengths

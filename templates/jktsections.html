@@ -10,29 +10,50 @@
     </div>
 {% endif %}
 
+<div class="sections-dims-container">
+    <div class="sections-info-circle" onclick="toggleSectionsData()">i</div>
+    <div id="sections-dims-text" class="sections-dims-info" style="display: none;">
+        <p><strong>Section definition:</strong> define Can diameters ('Can Dia') using either their OD or ID</p>
+        <p><strong>Section alignment:</strong> Jacket tubular sections are either aligned with a flush ID, or to their mid-section thickness.
+        If a misalignment is determined, then a cone shall be placed within the leg section</p>
+        <p><strong>Joint gaps:</strong> Gaps are only used to adjust the required K-joint Can lengths & do not currently adjust the brace angles or gaps visually. This captures the additional Can masses.</p>
+    </div>
+</div>
+
+
 <form id="myForm" class="sections-input-form">
-    <div class="table-responsive-wrapper">
 
-        <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 1.5rem;">
-            <!-- Tubular section definitions -->
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <label for="section_definition">Section definition</label>
-                <select name="section_definition" id="section_definition">
-                  <option value="by_OD" {% if defaults_sct.get('section_definition', 'by_OD') == 'by_OD' %}selected{% endif %}>ODs defined</option>
-                  <option value="by_ID" {% if defaults_sct.get('section_definition', 'by_ID') == 'by_ID' %}selected{% endif %}>IDs defined</option>
-                </select>
-            </div>
-
-            <!-- Section alignment joins -->
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <label for="section_alignment">Section alignment</label>
-                <select name="section_alignment" id="section_alignment">
-                  <option value="ID_constant" {% if defaults_sct.get('section_alignment', 'ID_constant') == 'ID_constant' %}selected{% endif %}>Sections aligned to ID</option>
-                  <option value="MD_constant" {% if defaults_sct.get('section_alignment', 'MD_constant') == 'MD_constant' %}selected{% endif %}>Sections aligned to mid thickness</option>
-                </select>
-            </div>
+    <div class="sections-form-wrapper">
+        <!-- Tubular section definitions -->
+        <div class="sections-form-group">
+            <label for="section_definition">Section definition</label>
+            <select name="section_definition" id="section_definition">
+              <option value="by_OD" {% if defaults_sct.get('section_definition', 'by_OD') == 'by_OD' %}selected{% endif %}>ODs defined</option>
+              <option value="by_ID" {% if defaults_sct.get('section_definition', 'by_ID') == 'by_ID' %}selected{% endif %}>IDs defined</option>
+            </select>
         </div>
 
+        <!-- Section alignment joins -->
+        <div class="sections-form-group">
+            <label for="section_alignment">Section alignment</label>
+            <select name="section_alignment" id="section_alignment">
+              <option value="ID_constant" {% if defaults_sct.get('section_alignment', 'ID_constant') == 'ID_constant' %}selected{% endif %}>Sections aligned to ID</option>
+              <option value="MD_constant" {% if defaults_sct.get('section_alignment', 'MD_constant') == 'MD_constant' %}selected{% endif %}>Sections aligned to mid thickness</option>
+            </select>
+        </div>
+
+        <!--cone taper ratio input-->
+        <div class="sections-form-group">
+            <label for="cone_taper">Cone taper (1 in)</label>
+            <input type="text" name="cone_taper" id="cone_taper" value="{{ defaults_sct.get('cone_taper', '1.') }}">
+        </div>
+        <div class="sections-form-group">
+            <label for="joint_gap">Joint gaps</label>
+            <input type="text" name="joint_gap" id="joint_gap" value="{{ defaults_sct.get('joint_gap', '100.') }}">
+        </div>
+    </div>
+
+    <div class="table-responsive-wrapper">
         <!-- Row 1: KJT + Leg -->
         <div class="sections-table-row">
             <div class="sections-table-block">
@@ -152,12 +173,6 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <!--cone taper ratio input-->
-        <div class="sections-cone-box">
-            <label for="cone_taper">Cone taper (1 in)</label>
-            <input type="text" name="cone_taper" id="cone_taper" value="{{ defaults_sct.get('cone_taper', '1.') }}">
         </div>
 
         <button type="submit" class="sections-submit-button">Submit</button>
@@ -373,7 +388,11 @@ function createWarningCircle(color, size = 20) {
     return warning;
 }
 
-
+function toggleSectionsData() {
+    const infoBox = document.getElementById('sections-dims-text');
+    const isVisible = infoBox.style.display === 'block';
+    infoBox.style.display = isVisible ? 'none' : 'block';
+}
 
 
 </script>

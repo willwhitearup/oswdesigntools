@@ -43,5 +43,4 @@ app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
 # http://localhost:5000/clear_session
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    app.run()  # for deployment
+    app.run(debug=True)

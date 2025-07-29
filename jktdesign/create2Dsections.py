@@ -65,7 +65,7 @@ def get_brace_geom_form_data(form_data):
 
     return brace_geom_data, brace_hz_geom_data
 
-def create_2D_kjoint_data(kjt_geom_data, diameter_def="by_ID"):
+def create_2D_kjoint_data(kjt_geom_data, joint_gap, diameter_def="by_ID"):
     jnt_objs = []
     for k, v in kjt_geom_data.items():
         # extract data from form
@@ -89,7 +89,7 @@ def create_2D_kjoint_data(kjt_geom_data, diameter_def="by_ID"):
                           d1, t1,
                           d2=d2, t2=t2,
                           d3=d3, t3=t3,
-                          jt_name=k, jt_type="kjt")
+                          jt_name=k, jt_type="kjt", joint_gap=joint_gap)
         jnt_objs.append(jnt_obj)
     return jnt_objs
 

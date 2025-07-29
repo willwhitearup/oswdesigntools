@@ -23,6 +23,11 @@ def jacket_sections_plot():
     form_data = data.get('form_data', {})
     # print("form_data", form_data)
 
+    empty_form_data_flag = False
+    for k, v in form_data.items():
+        if v is "":
+            empty_form_data_flag = True
+
     session['jktsections_form_data'] = form_data
 
     section_alignment = form_data.get("section_alignment", "ID_constant")
@@ -33,6 +38,7 @@ def jacket_sections_plot():
     leg_geom_data = get_leg_geom_form_data(form_data)
     brace_geom_data, brace_hz_geom_data = get_brace_geom_form_data(form_data)
     cone_taper = float(form_data.get("cone_taper", 4.))
+    joint_gap = float(form_data.get("joint_gap", 100.))
 
     # get the original jacket data (from architect page)
     jkt_json_str = session.get('jkt_json', '{}')
@@ -44,7 +50,7 @@ def jacket_sections_plot():
     jkt_obj.set_tubular_section_alignment(section_alignment)  # set tubular sections alignment (by ID or by mid Dia # not by OD for jackets)
 
     # create the K-Joint 2DJoint objects
-    kjt_2D_objs = create_2D_kjoint_data(kjt_geom_data, section_definition)
+    kjt_2D_objs = create_2D_kjoint_data(kjt_geom_data, joint_gap, section_definition)
     for kjt_2D_obj in kjt_2D_objs:
         jkt_obj.add_joint_obj(kjt_2D_obj, jt_type="kjt")
 
@@ -88,7 +94,12 @@ def jacket_sections_plot():
     df_mto = calculate_jkt_mto(jkt_obj)
     session['df_mto'] = df_mto.to_json()
 
-    msg = 'Plot updated (with warnings and/or errors)' if warnings else 'Plot updated successfully'
+    # warnings / info message for User
+    if empty_form_data_flag:
+        msg = f'Warning: Check input form is complete. Data required for all inputs!'
+    else:
+        msg = 'Warning: Plot updated (with warnings and/or errors)' if warnings else 'Plot updated successfully!'
+
     return jsonify({'message': msg,
                     'plot_json': updated_plot_json,
                     "warnings": warnings
@@ -159,6 +170,7 @@ def get_default_sct_config(jkt_obj):
     x_jt_d, x_jt_stub_d = 1000, 1000
     section_definition, section_alignment = "by_OD", "ID_constant"
     cone_taper = 4.
+    joint_gap = 100  # joint gaps
     defaults_sct = {}
 
     for k_jt, n_braces in kjt_n_braces.items():
@@ -183,6 +195,7 @@ def get_default_sct_config(jkt_obj):
         defaults_sct[f"bay_{idx}_t"] = t
         defaults_sct[f"bay_hz_{idx}_t"] = t
 
+    defaults_sct["joint_gap"] = joint_gap
     defaults_sct["cone_taper"] = cone_taper
     defaults_sct["section_definition"] = section_definition
     defaults_sct["section_alignment"] = section_alignment

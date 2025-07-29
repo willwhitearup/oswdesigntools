@@ -102,9 +102,9 @@ class Jacket:
         if self.single_batter:
             o = self.tp_btm - (-self.water_depth + self.stickup + self.btm_vert_leg_length)
             a = (self.jacket_footprint - self.tp_width) / 2
-            self.batter_1_theta = np.degrees(np.atan(o / a))
+            # ensure divisible by 0. does not happen
+            self.batter_1_theta = 90. if np.isclose(a, 0.) else np.degrees(np.atan(o / a))
             self.batter_2_theta = self.batter_1_theta
-
             self.batter_1_elev = self.tp_btm - 0.5 * o  # just set the batter 1 elevation at half way (it doesnt matter)
             top_batter_dist = self.tp_btm - self.batter_1_elev  # vertical dist
             a = top_batter_dist / np.tan(np.radians(self.batter_1_theta))  # triangle width, with vertical as above

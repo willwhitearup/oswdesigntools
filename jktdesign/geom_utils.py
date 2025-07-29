@@ -223,6 +223,17 @@ def extend_middle_points_to_target_y(x, y, target_y):
     return new_x, new_y, can_pt_top
 
 
+def check_is_horizontal_rectangle(arr, tol=1e-6):
+    if arr is None:
+        return False
+    unique = []
+    for val in arr[1]:
+        if not any(np.isclose(val, u, atol=tol) for u in unique):
+            unique.append(val)
+        if len(unique) > 2:
+            return False
+    return len(unique) == 2
+
 
 if __name__ == "__main__":
 
