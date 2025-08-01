@@ -16,8 +16,9 @@ def gc_route():
             return jsonify({'error': 'No JSON received'}), 400
 
         form_data = data.get('form_data', {})
-        print(form_data)
+        # print(form_data)
 
+        # connection geometry
         leg_od = float(form_data['jkt_od'])
         leg_t = float(form_data['jkt_thk'])
         pile_od = float(form_data['pile_od'])

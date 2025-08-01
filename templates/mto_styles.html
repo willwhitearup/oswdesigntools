@@ -13,4 +13,44 @@
 .mto-table th {
   text-align: left;
 }
+
+.mto-table th {
+  cursor: pointer;
+  position: relative;
+}
+
+.mto-table th .sort-icon {
+  font-size: 0.75em;
+  color: #ccc;
+  margin-left: 5px;
+}
+
+.mto-table th.sorted-asc .sort-icon {
+  color: #000;
+  content: "▲";
+}
+
+.mto-table th.sorted-desc .sort-icon {
+  color: #000;
+  content: "▼";
+}
+
+.mto-button {
+    margin-top: 20px;
+    padding: 12px 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background-color: #FF2400;
+    width: 120px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.mto-button:hover {
+    background-color: #cc1d00;
+}
+
 </style>
