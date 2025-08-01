@@ -266,3 +266,66 @@ def axial_and_bending(leg_od, leg_t, pile_od, pile_t, n_sks, sk_spacing, sk_heig
     # utilisations
     util = fv1shk / fv1shcapd
     return np.absolute(util)
+
+
+def axial_fea_calibration_load(leg_od, leg_t, pile_od, pile_t, n_sks, sk_spacing, sk_height, grout_E, grout_strength):
+    """ implements design check under axial load only
+
+        Args:
+            fz, numpy array of floats, axial load, units: N
+            rj, float, outer radius jacket leg, units: m
+            tj, float, wall thickness of jacket leg, units: m
+            rp, float, outer radius of pile, units: m
+            tp, float, wall thickness of pile, units: m
+            n, int, number of effective shear keys
+            es, float, elastic modulus of steel, units: Pa
+            eg, float, elastic modulus of grout, units: Pa
+            h, float, shear key height, units: m
+            s, float, shear key spacing, units: m
+            fck, float, defining characteristic compressive strength of 75mm cubes, units: Pa
+            gamma, float, material factor, units: unitless
+
+        Returns numpy array of floats of utilisations
+
+        True
+    """
+    util = 1.0  # UR to be set to 1.0 when calculating the axial calibration load for FEA
+
+    mm_to_m = 1e-3
+    mpa_to_pa = 1e6
+
+    rj = (leg_od / 2) * mm_to_m
+    tj = leg_t * mm_to_m
+    rp = (pile_od / 2) * mm_to_m
+    tp = pile_t * mm_to_m
+    n = n_sks
+    es, eg = STEEL_E * mpa_to_pa, grout_E * mpa_to_pa
+    fck = grout_strength * mpa_to_pa
+    h, s = sk_height * mm_to_m, sk_spacing * mm_to_m
+    gamma = 2  # material factor
+
+    pile_ir = rp - tp
+    if pile_ir <= rj:
+        return 999.
+
+    # design load per unit length, C.1.4.2
+    # fv1shk = fz / (2 * np.pi * rj * n)
+    # nominal thickness of grout
+    tg = rp - tp - rj
+    # radial stiffness parameter, C.1.4.3
+    k = ((2 * rj / tj) + (2 * rp / tp)) ** -1 + (eg / es) * ((2 * rp - 2 * tp) / tg) ** -1
+    # interface shear capacity in the grouted connection with shear keys, C.1.4.3
+    fbk = (((800 / (2 * (rj * 1e3)) + 140 * (h / s) ** 0.8)) * (k ** 0.6) * ((fck / 1e6) ** 0.3)) * mpa_to_pa
+    # codified fbk_limit
+    fbk_limit = (0.75 - 1.4 * (h / s)) * ((fck / mpa_to_pa) ** 0.5) * mpa_to_pa
+    # design capacity per unit length, C.1.4.5
+    fv1shcapd = fbk * s / gamma
+
+    if fbk > fbk_limit and not np.allclose(fbk, fbk_limit):  # np.allclose to avoid float rounding issues
+        fv1shcapd = fbk_limit * s / gamma
+
+    # utilisations
+    # util = fv1shk / fv1shcapd
+    fz_calibration = util * fv1shcapd * (2 * np.pi * rj * n) * -1.
+    return fz_calibration
+
