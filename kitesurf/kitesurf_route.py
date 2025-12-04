@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request, render_template
 from kitesurf.forecaster import get_good_week_forecast
 from kitesurf.kitespots import get_lat_lon_for_location, get_loc_data_for_location
+from kitesurf.whatsapp_notifier import  send_whatsapp_message
 
 app = Flask(__name__)
+
 
 @app.route('/kitesurf', methods=['GET', "POST"])
 def kitesurf_route():
@@ -20,6 +22,16 @@ def kitesurf_route():
         loc_data = get_loc_data_for_location(loc)
 
         df = get_good_week_forecast(lat, lon, loc_data)
+
+        # --- WhatsApp Alert Logic ---
+        if len(df) >= 1:
+            dates = df['datetime'].dt.date
+            unique_dates = df['datetime'].dt.date.unique()
+            formatted_dates = [f"{date.strftime('%A')} {date.day} {date.strftime('%B')}" for date in unique_dates]
+            message_body = f"{loc} is psyching off in the next week!!! Go on the following days: {', '.join(formatted_dates)}"
+            print(message_body)
+            send_whatsapp_message(message_body)
+
 
         return jsonify({
             "columns": list(df.columns),
