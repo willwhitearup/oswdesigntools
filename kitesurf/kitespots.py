@@ -9,7 +9,7 @@ def get_lat_lon_for_location(loc):
 def get_loc_data_for_location(loc):
     if loc == "wsm":
         loc_data = {"tide_window": ("high", 3),  # 3 hours either side of high tide.
-                    "wind_direction": (180, 330),
+                    "wind_direction": (180, 359),
                     # wind direction is from and this is the allowable wind direction window
                     "wind_speed": (5, 50),
                     "wind_gust_limit": 15}

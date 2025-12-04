@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Good forecasts @ location</h2>
+<h2>Kitesurfing is on at the following times for your spot! (1 week look-ahead)</h2>
 
-<label for="location-select">Location:</label>
+<label for="location-select">Spot:</label>
 <select id="location-select">
     {% for loc in defaults.locations %}
         <option value="{{ loc }}" {% if loc == defaults.default_location %}selected{% endif %}>{{ loc }}</option>
@@ -11,6 +11,8 @@
 </select>
 
 <div id="forecast-table" style="margin-top:20px;"></div>
+
+<div id="loc-info"></div>
 
 <script>
 const locationSelect = document.getElementById("location-select");
@@ -23,7 +25,8 @@ function fetchForecast(location) {
     })
     .then(response => response.json())
     .then(data => {
-        // build table
+
+        // ------- Build table -------
         let html = "<table border='1'><tr>";
         data.columns.forEach(col => html += `<th>${col}</th>`);
         html += "</tr>";
@@ -33,14 +36,24 @@ function fetchForecast(location) {
             html += "</tr>";
         });
         html += "</table>";
-
         document.getElementById("forecast-table").innerHTML = html;
+
+        // ------- Update loc_data display -------
+        const locData = data.loc_data;
+        const locName = location;   // ← use dropdown-selected name
+        document.getElementById("loc-info").innerHTML = `
+            <p><strong>${locName} wind direction window (from, to):</strong> ${locData.wind_direction}</p>
+            <p><strong>${locName} wind speed range (from, to):</strong> ${locData.wind_speed}</p>
+            <p><strong>${locName} tide window:</strong> ${locData.tide_window[0]} ± ${locData.tide_window[1]} hr</p>
+            <p><strong>${locName} gust limit:</strong> ${locData.wind_gust_limit}</p>
+        `;
     });
 }
 
-// Fetch default location on page load
+// Initial load
 fetchForecast(locationSelect.value);
 
+// Change listener
 locationSelect.addEventListener("change", function() {
     fetchForecast(this.value);
 });

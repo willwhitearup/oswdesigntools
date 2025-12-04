@@ -14,7 +14,7 @@ def kitesurf_route():
 
         form_data = data.get('form_data', {})
         # Get location from query param, default to "wsm" if not provided
-        loc = form_data.get("location")
+        loc = form_data.get("location", "wsm")
 
         lat, lon = get_lat_lon_for_location(loc)
         loc_data = get_loc_data_for_location(loc)
@@ -23,13 +23,22 @@ def kitesurf_route():
 
         return jsonify({
             "columns": list(df.columns),
-            "rows": df.values.tolist()
+            "rows": df.values.tolist(),
+            "loc_data": loc_data
         })
 
-    # GET request – render with defaults
+    # --- GET request: render the page ---
     defaults = get_defaults()
 
-    return render_template('kitesurf.html', defaults=defaults)
+    # use default location to pull loc_data
+    default_loc = defaults["default_location"]
+    default_loc_data = get_loc_data_for_location(default_loc)
+
+    return render_template(
+        'kitesurf.html',
+        defaults=defaults,
+        loc_data=default_loc_data
+    )
 
 
 
