@@ -10,6 +10,8 @@ from routing.routes_tyjoint import ty_joint_route
 from routing.routes_ktjoint import kt_joint_route
 from routing.jointdetailing_route import joint_detailing
 from gcdesign.gc_route import gc_route
+from kitesurf.kitesurf_route import kitesurf_route
+
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -33,14 +35,9 @@ app.add_url_rule('/kt_joint', 'kt_joint', kt_joint_route, methods=['GET', 'POST'
 app.add_url_rule('/joint_detailing', 'joint_detailing', joint_detailing, methods=['GET', 'POST'])
 # gc routing
 app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
+# kitesurf
+app.add_url_rule('/kitesurf', 'kitesurf_route', kitesurf_route, methods=['GET', 'POST'])
 
-# todo debug code
-# @app.route("/clear_session")
-# def clear_session():
-#     session.clear()
-#     return "Session cleared!"
-
-# http://localhost:5000/clear_session
 
 if __name__ == '__main__':
     app.run(debug=True)

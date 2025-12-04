@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Good forecasts @ location</h2>
+
+<label for="location-select">Location:</label>
+<select id="location-select">
+    {% for loc in defaults.locations %}
+        <option value="{{ loc }}" {% if loc == defaults.default_location %}selected{% endif %}>{{ loc }}</option>
+    {% endfor %}
+</select>
+
+<div id="forecast-table" style="margin-top:20px;"></div>
+
+<script>
+const locationSelect = document.getElementById("location-select");
+
+function fetchForecast(location) {
+    fetch("/kitesurf", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({form_data: {location: location}})
+    })
+    .then(response => response.json())
+    .then(data => {
+        // build table
+        let html = "<table border='1'><tr>";
+        data.columns.forEach(col => html += `<th>${col}</th>`);
+        html += "</tr>";
+        data.rows.forEach(row => {
+            html += "<tr>";
+            row.forEach(cell => html += `<td>${cell}</td>`);
+            html += "</tr>";
+        });
+        html += "</table>";
+
+        document.getElementById("forecast-table").innerHTML = html;
+    });
+}
+
+// Fetch default location on page load
+fetchForecast(locationSelect.value);
+
+locationSelect.addEventListener("change", function() {
+    fetchForecast(this.value);
+});
+</script>
+
+{% endblock %}
