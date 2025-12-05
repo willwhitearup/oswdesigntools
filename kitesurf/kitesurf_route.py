@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, render_template, session
 from kitesurf.forecaster import get_good_week_forecast
 from kitesurf.kitespots import get_lat_lon_for_location, get_loc_data_for_location
-from kitesurf.whatsapp_notifier import  send_whatsapp_message
+# from kitesurf.whatsapp_notifier import  send_whatsapp_message
 
 app = Flask(__name__)
 
@@ -47,7 +47,7 @@ def kitesurf_route():
             unique_dates = df['datetime'].dt.date.unique()
             formatted_dates = [f"{date.strftime('%A')} {date.day} {date.strftime('%B')}" for date in unique_dates]
             message_body = f"{loc} is psyching off in the next week!!! Go on the following days: {', '.join(formatted_dates)}"
-            send_whatsapp_message(message_body)
+            # send_whatsapp_message(message_body)
 
         return jsonify({
             "columns": list(df.columns),
