@@ -4,7 +4,6 @@ from kitesurf.kitespots import get_lat_lon_for_location, get_loc_data_for_locati
 from kitesurf.whatsapp_notifier import  send_whatsapp_message
 
 app = Flask(__name__)
-app.secret_key = "a_secure_random_string_here"
 
 @app.route('/kitesurf', methods=['GET', "POST"])
 def kitesurf_route():

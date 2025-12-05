@@ -15,7 +15,6 @@ from kitesurf.kitesurf_route import kitesurf_route
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')
-#app.secret_key = os.environ.get('SECRET_KEY')  # Get the secret key from environment variables
 app.secret_key = 'your_secret_key_here'
 
 
