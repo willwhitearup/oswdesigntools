@@ -15,7 +15,7 @@ def get_loc_data_for_location(loc):
                     "wind_gust_limit": 15}
 
     if loc == "brighton":
-        loc_data = {"tide_window": ("high", 3),  # 3 hours either side of high tide.
+        loc_data = {"tide_window": ("low", 2),  # 3 hours either side of high tide.
                     "wind_direction": (90, 270),
                     # wind direction is from and this is the allowable wind direction window
                     "wind_speed": (5, 50),

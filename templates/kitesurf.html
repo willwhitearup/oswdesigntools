@@ -3,20 +3,59 @@
 
 <h2>Kitesurfing is on at the following times for your spot! (1 week look-ahead)</h2>
 
-<label for="location-select">Spot:</label>
-<select id="location-select">
-    {% for loc in defaults.locations %}
-        <option value="{{ loc }}" {% if loc == defaults.default_location %}selected{% endif %}>{{ loc }}</option>
-    {% endfor %}
-</select>
+<div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+    <label for="location-select">Spot:</label>
+    <select id="location-select">
+        {% for loc in defaults.locations %}
+            <option value="{{ loc }}" {% if loc == defaults.default_location %}selected{% endif %}>{{ loc }}</option>
+        {% endfor %}
+    </select>
+
+    <!-- Small button -->
+    <button id="reset-loc-data" style="width:50px; height:28px; padding:0; font-size:0.9em; border-radius:4px;">Go!</button>
+</div>
 
 <div id="forecast-table" style="margin-top:20px;"></div>
 
-<div id="loc-info"></div>
+
+<h3 style="margin-top:30px;">Edit forecast filters</h3>
+<div id="loc-edit" style="border:1px solid #ccc; padding:15px; border-radius:8px; width:380px;">
+    <label>Wind direction [from] (min, max):</label><br>
+    <input id="wd-from" type="number" step="1" style="width:80px;">
+    <input id="wd-to" type="number" step="1" style="width:80px;"><br><br>
+
+    <label>Wind speed (min, max):</label><br>
+    <input id="ws-from" type="number" step="0.1" style="width:80px;">
+    <input id="ws-to" type="number" step="0.1" style="width:80px;"><br><br>
+
+    <label>Tide type (high/low):</label><br>
+    <select id="tide-type" style="width:120px;">
+        <option value="high">High</option>
+        <option value="low">Low</option>
+    </select><br><br>
+
+    <label>Tide window ± (hours):</label><br>
+    <input id="tide-range" type="number" step="0.5" style="width:80px;"><br><br>
+
+    <label>Gust limit max (above wind speed)</label><br>
+    <input id="gust-limit" type="number" step="1" style="width:80px;"><br><br>
+
+    <button id="save-loc-data">Update forecast with settings</button>
+
+    <div id="save-status" style="margin-top:10px; color:green;"></div>
+</div>
 
 <script>
 const locationSelect = document.getElementById("location-select");
 
+// store original loc_data defaults per location
+let defaultLocData = {};
+
+
+
+/* ------------------------------------------------------------------
+   Fetch forecast + loc_data from Flask
+------------------------------------------------------------------ */
 function fetchForecast(location) {
     fetch("/kitesurf", {
         method: "POST",
@@ -26,7 +65,12 @@ function fetchForecast(location) {
     .then(response => response.json())
     .then(data => {
 
-        // ------- Build table -------
+        // Store a copy of loc_data as default for this location
+        if (!defaultLocData[location]) {
+            defaultLocData[location] = JSON.parse(JSON.stringify(data.loc_data));
+        }
+
+        // Build table
         let html = "<table border='1'><tr>";
         data.columns.forEach(col => html += `<th>${col}</th>`);
         html += "</tr>";
@@ -38,25 +82,114 @@ function fetchForecast(location) {
         html += "</table>";
         document.getElementById("forecast-table").innerHTML = html;
 
-        // ------- Update loc_data display -------
+        // Update loc_info
         const locData = data.loc_data;
-        const locName = location;   // ← use dropdown-selected name
+        const locName = location;
         document.getElementById("loc-info").innerHTML = `
             <p><strong>${locName} wind direction window (from, to):</strong> ${locData.wind_direction}</p>
             <p><strong>${locName} wind speed range (from, to):</strong> ${locData.wind_speed}</p>
             <p><strong>${locName} tide window:</strong> ${locData.tide_window[0]} ± ${locData.tide_window[1]} hr</p>
             <p><strong>${locName} gust limit:</strong> ${locData.wind_gust_limit}</p>
         `;
+
+        // Populate editable form fields
+        document.getElementById("wd-from").value = locData.wind_direction[0];
+        document.getElementById("wd-to").value = locData.wind_direction[1];
+        document.getElementById("ws-from").value = locData.wind_speed[0];
+        document.getElementById("ws-to").value = locData.wind_speed[1];
+        document.getElementById("tide-type").value = locData.tide_window[0];
+        document.getElementById("tide-range").value = locData.tide_window[1];
+        document.getElementById("gust-limit").value = locData.wind_gust_limit;
+
+        document.getElementById("save-status").textContent = "";
     });
 }
 
-// Initial load
-fetchForecast(locationSelect.value);
+/* ------------------------------------------------------------------
+   Save custom user-defined loc_data
+------------------------------------------------------------------ */
+document.getElementById("save-loc-data").addEventListener("click", function () {
+    const custom = {
+        wind_direction: [
+            Number(document.getElementById("wd-from").value),
+            Number(document.getElementById("wd-to").value)
+        ],
+        wind_speed: [
+            Number(document.getElementById("ws-from").value),
+            Number(document.getElementById("ws-to").value)
+        ],
+        tide_window: [
+            document.getElementById("tide-type").value,
+            Number(document.getElementById("tide-range").value)
+        ],
+        wind_gust_limit: Number(document.getElementById("gust-limit").value)
+    };
 
-// Change listener
-locationSelect.addEventListener("change", function() {
-    fetchForecast(this.value);
+    fetch("/kitesurf", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            form_data: {
+                location: locationSelect.value,
+                custom_loc_data: custom
+            }
+        })
+    })
+    .then(r => r.json())
+    .then(result => {
+        document.getElementById("save-status").textContent =
+            "Custom settings saved and forecast refreshed.";
+        fetchForecast(locationSelect.value);
+    });
 });
+document.getElementById("reset-loc-data").addEventListener("click", function () {
+    const locName = locationSelect.value;
+
+    fetch("/kitesurf", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            form_data: {
+                location: locName,
+                use_defaults: true   // <-- tell Flask to ignore session
+            }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const locData = data.loc_data;
+
+        // reset form fields
+        document.getElementById("wd-from").value = locData.wind_direction[0];
+        document.getElementById("wd-to").value = locData.wind_direction[1];
+        document.getElementById("ws-from").value = locData.wind_speed[0];
+        document.getElementById("ws-to").value = locData.wind_speed[1];
+        document.getElementById("tide-type").value = locData.tide_window[0];
+        document.getElementById("tide-range").value = locData.tide_window[1];
+        document.getElementById("gust-limit").value = locData.wind_gust_limit;
+
+        // update table and info
+        let html = "<table border='1'><tr>";
+        data.columns.forEach(col => html += `<th>${col}</th>`);
+        html += "</tr>";
+        data.rows.forEach(row => {
+            html += "<tr>";
+            row.forEach(cell => html += `<td>${cell}</td>`);
+            html += "</tr>";
+        });
+        html += "</table>";
+        document.getElementById("forecast-table").innerHTML = html;
+
+        document.getElementById("loc-info").innerHTML = `
+            <p><strong>${locName} wind direction window (from, to):</strong> ${locData.wind_direction}</p>
+            <p><strong>${locName} wind speed range (from, to):</strong> ${locData.wind_speed}</p>
+            <p><strong>${locName} tide window:</strong> ${locData.tide_window[0]} ± ${locData.tide_window[1]} hr</p>
+            <p><strong>${locName} gust limit:</strong> ${locData.wind_gust_limit}</p>
+        `;
+        document.getElementById("save-status").textContent = "Reverted to defaults from Flask.";
+    });
+});
+
 </script>
 
 {% endblock %}
