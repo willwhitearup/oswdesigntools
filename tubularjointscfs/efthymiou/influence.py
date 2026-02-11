@@ -9,9 +9,7 @@
 """
 # imports -----------------------------------------------------------------------------------------
 import numpy as np
-from collections import OrderedDict
-from efthymiou.scf import *
-from efthymiou.reduction import *
+
 
 # functions ---------------------------------------------------------------------------------------
 def ix1_a(d1, d2_a, d2_b, thk1, thk2_a, thk2_b, L, theta_a, theta_b, sigma_b, c):

@@ -1,5 +1,4 @@
-from flask import request, render_template, flash
-
+from flask import render_template
 
 
 def joint_detailing():

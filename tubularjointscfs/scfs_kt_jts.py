@@ -1,8 +1,8 @@
 import  numpy as np
-from efthymiou.scf import k1, k2, t8, t9, k4, k5, t5, t7, t6, t3, k7, k6, kt1, kt2, kt3, kt4, opb_brace  # chord scfs
+from tubularjointscfs.efthymiou.scf import k1, k2, t8, t9, k4, k5, t5, t7, t6, t3, k7, k6, kt1, kt2, kt3, kt4, opb_brace  # chord scfs
 import copy
 
-from routing.core import tubular_cross_section_area, tubular_second_moment_of_area
+from tubularjointscfs.core import tubular_cross_section_area, tubular_second_moment_of_area
 
 """
 Table B-3 Stress concentration factors for simple tubular K joints

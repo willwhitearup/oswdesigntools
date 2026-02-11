@@ -1,8 +1,8 @@
 import numpy as np
 import copy
 # local imports
-from efthymiou.scf import x1, x2, x3, x4, t8, t9, x5, x6, x7, t1, t2, t3, t4, t6, x8, t7, t10, t11
-from routing.core import tubular_cross_section_area, tubular_second_moment_of_area
+from tubularjointscfs.efthymiou.scf import x1, x2, x3, x4, t8, t9, x5, x6, x7, t1, t2, t3, t4, t6, x8, t7, t10, t11
+from tubularjointscfs.core import tubular_cross_section_area, tubular_second_moment_of_area
 
 
 class XTYJointSCFManager:

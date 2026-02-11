@@ -1,4 +1,4 @@
-from flask import request, render_template, flash
+from flask import render_template
 
 def home():
     return render_template('home.html')

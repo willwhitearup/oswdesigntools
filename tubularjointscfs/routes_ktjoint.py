@@ -1,7 +1,7 @@
 from flask import request, render_template, flash
-from routing.core import create_plot, create_joint_plots
+from tubularjointscfs.core import create_plot, create_joint_plots
 import numpy as np
-from routing.scfs_kt_jts import KTJointSCFManager, ChordPropertyManager
+from tubularjointscfs.scfs_kt_jts import KTJointSCFManager, ChordPropertyManager
 
 # Define default values
 DEFAULT_VALUES_KT = {'D_kt': 1000, 'T_kt': 20,

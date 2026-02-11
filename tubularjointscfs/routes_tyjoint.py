@@ -1,8 +1,8 @@
 from flask import request, render_template, flash
 import numpy as np
 
-from routing.core import create_plot, create_joint_plots
-from routing.scfs_xty_jts import XTYJointSCFManager
+from tubularjointscfs.core import create_plot, create_joint_plots
+from tubularjointscfs.scfs_xty_jts import XTYJointSCFManager
 
 # Define default values
 DEFAULT_VALUES_TY = {'D_ty': 1000, 'T_ty': 20, 'd_ty': 500, 't_ty': 15, 'theta_ty': 45, 'L_ty': 5000, 'C_ty': 0.7,
