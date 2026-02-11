@@ -141,7 +141,7 @@
     justify-content: flex-start;
     gap: 20px;
     width: 320px;
-    margin-left: 50px;
+    margin-left: 20px;
   }
 
   .bottom-joint-buttons {
@@ -185,6 +185,12 @@
     color: #333;
     margin-top: 6px;
   }
+
+  .joint-diamond a.conical-bottom {
+    grid-column: 2;  /* center it */
+    grid-row: 4;     /* new fourth row below KT */
+    margin-bottom: 20px;  /* adds space to bottom row */
+  }
 </style>
 
 <div class="flowchart" aria-label="Main flowchart container">
@@ -199,7 +205,7 @@
       <a href="/mto" class="step-box">MTO</a>
     </div>
 
-    <!-- Joint buttons diamond -->
+    <!-- Joint buttons diamond
     <div class="joint-diamond" aria-label="Joint buttons diamond">
       <a href="/ty_joint" class="top">TY joint<div class="joint-desc">Table B-1</div></a>
       <a href="/x_joint" class="middle-left">X joint<div class="joint-desc">Table B-2</div></a>
@@ -210,6 +216,31 @@
       <a href="/kt_joint" class="bottom">KT joint<div class="joint-desc">Table B-5</div></a>
     </div>
   </div>
+  -->
+
+  <div class="joint-diamond" aria-label="Joint buttons diamond">
+    <a href="/ty_joint" class="top">TY joint
+      <div class="joint-desc">Table B-1</div>
+    </a>
+    <a href="/x_joint" class="middle-left">X joint
+      <div class="joint-desc">Table B-2</div>
+    </a>
+
+    <div class="center-text">Efthymiou SCFs (see DNV-RP-C203)</div>
+
+    <a href="/k_joint" class="middle-right">K joint
+      <div class="joint-desc">Tables B-3 & B-4</div>
+    </a>
+    <a href="/kt_joint" class="bottom">KT joint
+      <div class="joint-desc">Table B-5</div>
+    </a>
+
+    <!-- New Conical SCFs button below KT joint -->
+    <a href="/conicalscfs" class="conical-bottom">Conical SCFs
+      <div class="joint-desc">SCFs for conical joints</div>
+    </a>
+  </div>
+
 
   <!-- Detailing and Grout buttons side by side -->
   <div class="joint-bottom-row">
