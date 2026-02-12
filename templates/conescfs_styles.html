@@ -1,0 +1,132 @@
+<style>
+
+html, body {
+  height: 100%;
+  margin: 0;
+  /*overflow: hidden;  prevents body scrollbar */
+}
+
+.cone-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 2px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #333;
+}
+
+.cone-info-icon {
+    font-weight: bold;
+    color: #007BFF;
+}
+
+.cone-input-form {
+  flex: 1;
+  max-width: 300px;
+<!--  height: 100%;-->
+<!--  overflow: auto;-->
+}
+
+.cone-form-row {
+  display: flex;
+  align-items: center;   /* vertically center label and input */
+  margin-bottom: 8px;   /* spacing between rows */
+}
+
+.cone-form-row label {
+  width: 130px;          /* fixed label width */
+  text-align: left;
+}
+
+.cone-form-row input,
+.cone-form-row select {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+
+.cone-submit-button {
+    padding: 12px 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background-color: #28a745;
+    width: 120px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    }
+
+.cone-results-container {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    justify-content: left;
+}
+
+.cone-result-box {
+    width: 400px;
+    flex: 0 0 auto;
+    border: 1px solid #ccc;
+    padding: 1rem;
+    font-family: monospace;
+    background: #f9f9f9;
+    border-radius: 3px;
+}
+
+.cone-result-box h4 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cone-res-info-message {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+
+
+.cone-res-table {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+    gap: 0.5rem 1rem; /* row gap, column gap */
+    margin-top: 0.5rem;
+}
+
+/* Each row acts as grid items */
+.cone-res-row {
+    display: contents; /* allows children to align to grid */
+}
+
+.cone-res-group {
+    grid-column: span 2; /* span 2 columns for group headings */
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #aaa;
+    padding-bottom: 2px;
+}
+
+.cone-res-subheader {
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #aaa;
+    padding-bottom: 2px;
+}
+
+.cone-res-cell {
+    text-align: center;
+    padding: 2px 0;
+}
+
+
+
+</style>

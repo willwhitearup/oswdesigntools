@@ -2,7 +2,8 @@ from typing import Literal
 import numpy as np
 import math
 
-def calculate_conical_scfs(radius_tubular: float, thickness_tubular: float, thickness_cone: float, alpha: float):
+def calc_cone_scfs_sect3(radius_tubular: float, thickness_tubular: float, thickness_cone: float, alpha: float,
+                        junction_type: Literal["small", "large"]):
     """Calculate SCF for tube and cone.
 
     Parameters:
@@ -14,16 +15,29 @@ def calculate_conical_scfs(radius_tubular: float, thickness_tubular: float, thic
     Returns:
         scf_tube (float), scf_cone (float)
     """
+    alpha = np.radians(abs(alpha))
     tube_OD = radius_tubular * 2
     numerator = 0.6 * thickness_tubular * math.sqrt(tube_OD * (thickness_tubular + thickness_cone)) * math.tan(alpha)
-    scf_tube = 1 + numerator / (thickness_tubular ** 2)
-    scf_cone = 1 + numerator / (thickness_cone ** 2)
-    return scf_tube, scf_cone
+    scf_tube_1 = 1 + numerator / (thickness_tubular ** 2)
+    scf_cone_1 = 1 + numerator / (thickness_cone ** 2)
 
+    scf_tube_2 = 1 - numerator / (thickness_tubular ** 2)
+    scf_cone_2 = 1 - numerator / (thickness_cone ** 2)
+
+    # calculate inside and outside SCFs at the small and large diameter cone junctions
+    if junction_type == "small":
+        scf_tube_in, scf_cone_in = scf_tube_2, scf_cone_2
+        scf_tube_out, scf_cone_out = scf_tube_1, scf_cone_1
+
+    elif junction_type == "large":
+        scf_tube_in, scf_cone_in = scf_tube_1, scf_cone_1
+        scf_tube_out, scf_cone_out = scf_tube_2, scf_cone_2
+
+    # scfs inside and outside (cone- and tube- side)
+    return scf_tube_in, scf_cone_in, scf_tube_out, scf_cone_out
 
 ### app F DNV eqns to do
-
-def scf_cone_dnv_calc(radius_tubular: float,  thickness_tubular: float, thickness_cone: float, alpha: float,
+def calc_cone_scfs_appf17(radius_tubular: float,  thickness_tubular: float, thickness_cone: float, alpha: float,
                       junction_type: Literal["small", "large"],
                       poisson_ratio: float = 0.3, elastic_modulus: float = 210000000000):
     """Conical SCFs see 2025 DNV-RP-C203 Section Appendix F.17 (see commentary from 3.3.9)
@@ -40,7 +54,7 @@ def scf_cone_dnv_calc(radius_tubular: float,  thickness_tubular: float, thicknes
     Returns: SCF cone (outer, inner) and SCF tubular (outer, inner)
     """
 
-    alpha = abs(alpha)
+    alpha = np.radians(abs(alpha))
 
     r = radius_tubular - thickness_tubular / 2  # centreline radius of tubular
 
@@ -66,16 +80,24 @@ def scf_cone_dnv_calc(radius_tubular: float,  thickness_tubular: float, thicknes
 
     eta = (phi * lambda_ * (2 * k + 2) - k * epsilon * np.tan(alpha)) / ((2 * k + 2) * (nu * phi - epsilon))
 
-    SCF_tubular_1 = 1 + ((6 * eta * l_et) / thickness_tubular)
-    SCF_tubular_2 = 1 - ((6 * eta * l_et) / thickness_tubular)
+    scf_tube_1 = 1 + ((6 * eta * l_et) / thickness_tubular)
+    scf_tube_2 = 1 - ((6 * eta * l_et) / thickness_tubular)
 
-    SCF_cone_1 = (((nu * eta - lambda_) / epsilon) * (l_et / l_ec) * np.tan(alpha)
-        + (1 / np.cos(alpha)) * (thickness_tubular / thickness_cone)
-        + ((6 * eta * l_et) / thickness_cone)
-        * (thickness_tubular / thickness_cone))
+    scf_cone_1 = (((nu * eta - lambda_) / epsilon) * (l_et / l_ec) * np.tan(alpha)
+                  + (1 / np.cos(alpha)) * (thickness_tubular / thickness_cone)
+                  + ((6 * eta * l_et) / thickness_cone) * (thickness_tubular / thickness_cone))
 
-    SCF_cone_2 = (((nu * eta - lambda_) / epsilon) * (l_et / l_ec) * np.tan(alpha) + (1 / np.cos(alpha)) * (thickness_tubular / thickness_cone)
-        - ((6 * eta * l_et) / thickness_cone)
-        * (thickness_tubular / thickness_cone))
+    scf_cone_2 = (((nu * eta - lambda_) / epsilon) * (l_et / l_ec) * np.tan(alpha)
+                  + (1 / np.cos(alpha)) * (thickness_tubular / thickness_cone)
+                  - ((6 * eta * l_et) / thickness_cone) * (thickness_tubular / thickness_cone))
 
-    return SCF_tubular_1, SCF_tubular_2, SCF_cone_1, SCF_cone_2
+    # calculate inside and outside SCFs at the small and large diameter cone junctions
+    if junction_type == "small":
+        scf_tube_in, scf_cone_in = scf_tube_2, scf_cone_2
+        scf_tube_out, scf_cone_out = scf_tube_1, scf_cone_1
+
+    elif junction_type == "large":
+        scf_tube_in, scf_cone_in = scf_tube_1, scf_cone_1
+        scf_tube_out, scf_cone_out = scf_tube_2, scf_cone_2
+
+    return scf_tube_in, scf_cone_in, scf_tube_out, scf_cone_out

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "conescfs_styles.html" %}
+
+<div class="cone-info-banner">
+    <span class="cone-info-icon">ⓘ</span>
+    <span class="cone-info-text">Units in N and mm only</span>
+</div>
+
+<div class="cone-input-form">
+    <form id="cone-input-form">
+        <div class="cone-form-row">
+            <label for="cone_junction">Junction</label>
+            <select id="cone_junction" name="cone_junction">
+                <option value="large" {% if cone_junction == 'large' %}selected{% endif %}>Large</option>
+                <option value="small" {% if cone_junction == 'small' %}selected{% endif %}>Small</option>
+            </select>
+        </div>
+
+        <div class="cone-form-row">
+            <label for="radius_tubular">Tubular radius</label>
+            <input type="number" step="any" id="radius_tubular" name="radius_tubular" value="{{ radius_tubular }}">
+        </div>
+        <div class="cone-form-row">
+            <label for="thickness_tubular">Tubular thk</label>
+            <input type="number" step="any" id="thickness_tubular" name="thickness_tubular" value="{{ thickness_tubular }}">
+        </div>
+        <div class="cone-form-row">
+            <label for="thickness_cone">Cone thk</label>
+            <input type="number" step="any" id="thickness_cone" name="thickness_cone" value="{{ thickness_cone }}">
+        </div>
+        <div class="cone-form-row">
+            <label for="alpha">Cone angle α (degrees)</label>
+            <input type="number" step="any" id="alpha" name="alpha" value="{{ alpha }}">
+        </div>
+
+        <div class="cone-form-row">
+            <label for="cone_x_axis_vary">X-axis vary</label>
+            <select id="cone_x_axis_vary" name="cone_x_axis_vary">
+                <option value="radius_tubular" {% if cone_x_axis_vary == 'radius_tubular' %}selected{% endif %}>Tubular radius</option>
+                <option value="thickness_tubular" {% if cone_x_axis_vary == 'thickness_tubular' %}selected{% endif %}>Tubular thk</option>
+                <option value="thickness_cone" {% if cone_x_axis_vary == 'thickness_cone' %}selected{% endif %}>Cone thk</option>
+                <option value="alpha" {% if cone_x_axis_vary == 'alpha' %}selected{% endif %}>Cone angle α</option>
+            </select>
+        </div>
+
+        <button type="submit" class="cone-submit-button">Submit</button>
+    </form>
+</div>
+
+<div class="cone-results-container">
+    <div class="cone-result-box">
+        <h4>Results at {{ cone_junction }} diameter junction</h4>
+
+        <div id="cone-res-output" class="cone-res-table">
+
+            <!-- Column headers -->
+            <div class="cone-res-row">
+                <div class="cone-res-group" colspan="2">Inside SCFs</div>
+                <div class="cone-res-group" colspan="2">Outside SCFs</div>
+            </div>
+
+            <!-- Sub-headers -->
+            <div class="cone-res-row">
+                <div class="cone-res-subheader">Sect 3</div>
+                <div class="cone-res-subheader">AppF17</div>
+                <div class="cone-res-subheader">Sect 3</div>
+                <div class="cone-res-subheader">AppF17</div>
+            </div>
+
+            <!-- Data rows -->
+            <div class="cone-res-row">
+                <div class="cone-res-cell">Tube: <span id="scf-tube-in">-</span></div>
+                <div class="cone-res-cell">Tube: <span id="scf-tube-in-appf">-</span></div>
+                <div class="cone-res-cell">Tube: <span id="scf-tube-out">-</span></div>
+                <div class="cone-res-cell">Tube: <span id="scf-tube-out-appf">-</span></div>
+            </div>
+            <div class="cone-res-row">
+                <div class="cone-res-cell">Cone: <span id="scf-cone-in">-</span></div>
+                <div class="cone-res-cell">Cone: <span id="scf-cone-in-appf">-</span></div>
+                <div class="cone-res-cell">Cone: <span id="scf-cone-out">-</span></div>
+                <div class="cone-res-cell">Cone: <span id="scf-cone-out-appf">-</span></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Plot container -->
+<div id="cone-scfs-plot" style="margin-top: 1rem; width: 100%; height: 400px;"></div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("cone-input-form");
+
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();  // stop normal form submission
+
+        const formData = new FormData(form);
+
+        // Convert FormData to plain object
+        const data = Object.fromEntries(formData.entries());
+
+        fetch("/conescfs", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if(result.status === "success"){
+                // Update heading directly
+                document.querySelector(".cone-result-box h4").textContent =
+                    `Results at <<<${result.cone_junction}>>> diameter junction`;
+
+                // Update SCFs
+                // Update Sect 3 SCFs
+                document.getElementById("scf-tube-in").textContent = result.scf_tube_in.toFixed(3);
+                document.getElementById("scf-cone-in").textContent = result.scf_cone_in.toFixed(3);
+                document.getElementById("scf-tube-out").textContent = result.scf_tube_out.toFixed(3);
+                document.getElementById("scf-cone-out").textContent = result.scf_cone_out.toFixed(3);
+
+                // Update AppF17 SCFs
+                document.getElementById("scf-tube-in-appf").textContent = result.scf_tube_in_appf.toFixed(3);
+                document.getElementById("scf-cone-in-appf").textContent = result.scf_cone_in_appf.toFixed(3);
+                document.getElementById("scf-tube-out-appf").textContent = result.scf_tube_out_appf.toFixed(3);
+                document.getElementById("scf-cone-out-appf").textContent = result.scf_cone_out_appf.toFixed(3);
+
+                // SCFs plotly plot
+                const fig = Plotly.react('cone-scfs-plot', JSON.parse(result.conescfs_plot_json).data, JSON.parse(result.conescfs_plot_json).layout);
+            }
+        })
+
+        .catch(error => console.error("Error:", error));
+    });
+});
+</script>
+
+{% endblock %}

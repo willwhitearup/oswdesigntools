@@ -11,7 +11,7 @@ from tubularjointscfs.routes_ktjoint import kt_joint_route
 from tubularjointscfs.jointdetailing_route import joint_detailing
 from gcdesign.gc_route import gc_route
 from kitesurf.kitesurf_route import kitesurf_route
-from conicalscfs.conical_route import conical_route
+from conescfs.cone_route import cone_route
 
 
 # initialise app variable for Flask obj
@@ -33,7 +33,7 @@ app.add_url_rule('/x_joint', 'x_joint', x_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/ty_joint', 'ty_joint', ty_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/kt_joint', 'kt_joint', kt_joint_route, methods=['GET', 'POST'])
 # conicals TODO
-app.add_url_rule('/conicalscfs', 'conical_route', conical_route, methods=['GET', 'POST'])
+app.add_url_rule('/conescfs', 'cone_route', cone_route, methods=['GET', 'POST'])
 
 app.add_url_rule('/joint_detailing', 'joint_detailing', joint_detailing, methods=['GET', 'POST'])
 # gc tubularjointscfs
