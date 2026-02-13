@@ -8,6 +8,10 @@
 </div>
 
 <div class="cone-input-form">
+
+     <!-- Cone geometry section -->
+    <h4 class="cone-section-title">Cone Geometry</h4>
+
     <form id="cone-input-form">
         <div class="cone-form-row">
             <label for="cone_junction">Junction</label>
@@ -44,13 +48,60 @@
             </select>
         </div>
 
+        <!-- Thickness Transition Section -->
+        <h4 class="cone-subsection-title">Thickness transition</h4>
+        <p class="cone-subsection-note">
+            <em>Thickness transition SCFs calculated separately & can be combined with cone SCFs.</em>
+        </p>
+
+        <div class="cone-form-row">
+            <label for="transition_side">Transition side</label>
+            <select id="transition_side" name="transition_side">
+                <option value="inside" {% if transition_side == 'inside' %}selected{% endif %}>Inside</option>
+                <option value="outside" {% if transition_side == 'outside' %}selected{% endif %}>Outside</option>
+            </select>
+        </div>
+
+        <div class="cone-form-row">
+            <label for="weld_length">Weld length, L</label>
+            <input type="number" step="any" id="weld_length" name="weld_length" value="{{ weld_length }}">
+        </div>
+
+        <div class="cone-form-row">
+            <label for="delta_m">&delta;<sub>m</sub></label>
+            <input type="number" step="any" id="delta_m" name="delta_m" value="{{ delta_m }}">
+        </div>
+
+        <div class="cone-form-row">
+            <label for="delta_0">&delta;<sub>0</sub></label>
+            <input type="number" step="any" id="delta_0" name="delta_0" value="{{ delta_0 }}">
+        </div>
+
+        <div class="cone-form-row">
+            <label for="scf_inclusion">Cone SCF inclusion</label>
+            <select id="scf_inclusion" name="scf_inclusion">
+                <option value="multiply" {% if scf_inclusion == 'multiply' %}selected{% endif %}>
+                    Yes - multiply
+                </option>
+                <option value="linear" {% if scf_inclusion == 'linear' %}selected{% endif %}>
+                    Yes - linear addition
+                </option>
+                <option value="none" {% if scf_inclusion == 'none' %}selected{% endif %}>
+                    No
+                </option>
+            </select>
+        </div>
+
+
+
+        <!--submit form-->
         <button type="submit" class="cone-submit-button">Submit</button>
     </form>
 </div>
 
 <div class="cone-results-container">
     <div class="cone-result-box">
-        <h4>Results at {{ cone_junction }} diameter junction</h4>
+        <h4>Cone only SCF results at {{ cone_junction }} diameter junction</h4>
 
         <div id="cone-res-output" class="cone-res-table">
 
@@ -87,7 +138,8 @@
 </div>
 
 <!-- Plot container -->
-<div id="cone-scfs-plot" style="margin-top: 1rem; width: 100%; height: 400px;"></div>
+<div id="cone-scfs-plot-in" style="margin-top: 1rem; width: 60%; height: 500px;"></div>
+<div id="cone-scfs-plot-out" style="margin-top: 1rem; width: 60%; height: 500px;"></div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
@@ -114,7 +166,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if(result.status === "success"){
                 // Update heading directly
                 document.querySelector(".cone-result-box h4").textContent =
-                    `Results at <<<${result.cone_junction}>>> diameter junction`;
+                    `Cone only SCF results at ${result.cone_junction} diameter junction`;
 
                 // Update SCFs
                 // Update Sect 3 SCFs
@@ -130,7 +182,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById("scf-cone-out-appf").textContent = result.scf_cone_out_appf.toFixed(3);
 
                 // SCFs plotly plot
-                const fig = Plotly.react('cone-scfs-plot', JSON.parse(result.conescfs_plot_json).data, JSON.parse(result.conescfs_plot_json).layout);
+                const fig1 = Plotly.react('cone-scfs-plot-in', JSON.parse(result.conescfs_plot_json_in).data, JSON.parse(result.conescfs_plot_json_in).layout);
+                const fig2 = Plotly.react('cone-scfs-plot-out', JSON.parse(result.conescfs_plot_json_out).data, JSON.parse(result.conescfs_plot_json_out).layout);
             }
         })
 

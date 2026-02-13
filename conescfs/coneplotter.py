@@ -21,10 +21,10 @@ def cone_scfs_plot(xvals: list, scf_tube_ins, scf_tube_in_appfs, scf_cone_ins, s
     y_upper = y_max * 1.2
 
     layout = go.Layout(
-        title=f'Cone {junction.upper()} diameter junction {loc.upper()} SCFs',
+        title=f' {loc.upper()} SCFs: {junction.upper()} diameter junction',
         xaxis=dict(title=f'{xaxis_label}', showgrid=True, gridcolor='lightgray'),
         yaxis=dict(title='SCF', showgrid=True, gridcolor='lightgray', range=[y_lower, y_upper]),
-        legend=dict(x=0.7, y=0.95),
+        #legend=dict(x=0.7, y=0.95),
         hovermode='closest',
         template='plotly_white'
     )
