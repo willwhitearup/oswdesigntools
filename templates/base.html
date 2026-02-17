@@ -31,12 +31,42 @@
             grid-template-columns: 1fr 1fr; /* 2 columns */
             gap: 5px; /* Adjust the gap between buttons */
         }
+
         button {
             width: 100%;
             padding: 15px;
             font-size: 16px;
             cursor: pointer;
+
+            /* N64-style grey */
+            background-color: #909090;       /* muted grey */
+            color: #fff;                      /* white text */
+            font-weight: bold;
+            font-family: Arial, sans-serif;  /* simple font like N64 UI */
+
+            /* Beveled edges for old-school 3D feel */
+            border-top: 2px solid #c0c0c0;   /* light top-left edge */
+            border-left: 2px solid #c0c0c0;
+            border-bottom: 2px solid #606060; /* dark bottom-right edge */
+            border-right: 2px solid #606060;
+            border-radius: 3px;               /* subtle rounding */
+
+            /* Lifted effect */
+            box-shadow: 0 3px #606060;
+            transition: all 0.1s ease-in-out;
         }
+
+        /* Press effect: button sinks */
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px #606060;
+        }
+
+        /* Hover effect: slightly brighter */
+        button:hover {
+            background-color: #a0a0a0;
+        }
+
         .content {
             flex-grow: 1;
             padding: 20px;
