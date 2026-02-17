@@ -49,6 +49,29 @@ html, body {
   font-size: 14px;
 }
 
+/* ===== 2 x 2 layout for form + images ===== */
+
+.cone-main-grid {
+    display: grid;
+    grid-template-columns: 350px 400px;    /* TWO columns */
+    grid-template-rows: auto auto;    /* TWO rows */
+    gap: 0px 10px;
+    border: 2px dashed blue;          /* outer border */
+    padding: 15px;
+}
+
+.cone-main-grid > div {
+    border: 2px solid red;   /* shows each cell */
+    padding: 0px;
+}
+
+.cone-image-box img {
+    margin-top: 60px;
+    max-height: 260px;
+    max-width: 100%;
+    height: auto;
+}
+
 
 .cone-submit-button {
     padding: 12px 12px;
@@ -127,6 +150,19 @@ html, body {
     padding: 2px 0;
 }
 
+.cone-result-box.two-col {
+    width: 100%;       /* half the width of its container */
+    max-width: 250px; /* optional, limit maximum width */
+    min-width: 150px; /* optional, prevent it from shrinking too much */
+}
+
+.cone-result-box.two-col .cone-res-table {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.cone-result-box.two-col .cone-res-group {
+    grid-column: span 1;
+}
 
 
 </style>

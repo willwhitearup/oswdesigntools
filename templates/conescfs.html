@@ -7,97 +7,142 @@
     <span class="cone-info-text">Units in N and mm only</span>
 </div>
 
-<div class="cone-input-form">
+<form id="cone-input-form">
 
-     <!-- Cone geometry section -->
-    <h4 class="cone-section-title">Cone Geometry</h4>
+    <div class="cone-main-grid">
 
-    <form id="cone-input-form">
-        <div class="cone-form-row">
-            <label for="cone_junction">Junction</label>
-            <select id="cone_junction" name="cone_junction">
-                <option value="large" {% if cone_junction == 'large' %}selected{% endif %}>Large</option>
-                <option value="small" {% if cone_junction == 'small' %}selected{% endif %}>Small</option>
-            </select>
+        <!-- TOP LEFT: Cone geometry inputs -->
+        <div class="cone-geometry-section">
+            <h4 class="cone-section-title">Cone geometry</h4>
+
+            <div class="cone-form-row">
+                <label for="cone_junction">Junction</label>
+                <select id="cone_junction" name="cone_junction">
+                    <option value="large" {% if cone_junction == 'large' %}selected{% endif %}>Large</option>
+                    <option value="small" {% if cone_junction == 'small' %}selected{% endif %}>Small</option>
+                </select>
+            </div>
+
+            <div class="cone-form-row">
+                <label for="radius_tubular">Tubular radius</label>
+                <input type="number" step="any" id="radius_tubular" name="radius_tubular" value="{{ radius_tubular }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="thickness_tubular">Tubular thk</label>
+                <input type="number" step="any" id="thickness_tubular" name="thickness_tubular" value="{{ thickness_tubular }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="thickness_cone">Cone thk</label>
+                <input type="number" step="any" id="thickness_cone" name="thickness_cone" value="{{ thickness_cone }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="alpha">Cone angle α (degrees)</label>
+                <input type="number" step="any" id="alpha" name="alpha" value="{{ alpha }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="cone_x_axis_vary">X-axis vary</label>
+                <select id="cone_x_axis_vary" name="cone_x_axis_vary">
+                    <option value="radius_tubular" {% if cone_x_axis_vary == 'radius_tubular' %}selected{% endif %}>Tubular radius</option>
+                    <option value="thickness_tubular" {% if cone_x_axis_vary == 'thickness_tubular' %}selected{% endif %}>Tubular thk</option>
+                    <option value="thickness_cone" {% if cone_x_axis_vary == 'thickness_cone' %}selected{% endif %}>Cone thk</option>
+                    <option value="alpha" {% if cone_x_axis_vary == 'alpha' %}selected{% endif %}>Cone angle α</option>
+                </select>
+            </div>
         </div>
 
-        <div class="cone-form-row">
-            <label for="radius_tubular">Tubular radius</label>
-            <input type="number" step="any" id="radius_tubular" name="radius_tubular" value="{{ radius_tubular }}">
-        </div>
-        <div class="cone-form-row">
-            <label for="thickness_tubular">Tubular thk</label>
-            <input type="number" step="any" id="thickness_tubular" name="thickness_tubular" value="{{ thickness_tubular }}">
-        </div>
-        <div class="cone-form-row">
-            <label for="thickness_cone">Cone thk</label>
-            <input type="number" step="any" id="thickness_cone" name="thickness_cone" value="{{ thickness_cone }}">
-        </div>
-        <div class="cone-form-row">
-            <label for="alpha">Cone angle α (degrees)</label>
-            <input type="number" step="any" id="alpha" name="alpha" value="{{ alpha }}">
+        <!-- TOP RIGHT: Cone geometry image -->
+        <div class="cone-image-box">
+            <img id="cone-scf-img" src="{{ cone_scf_img }}" alt="Cone geometry sketch">
         </div>
 
-        <div class="cone-form-row">
-            <label for="cone_x_axis_vary">X-axis vary</label>
-            <select id="cone_x_axis_vary" name="cone_x_axis_vary">
-                <option value="radius_tubular" {% if cone_x_axis_vary == 'radius_tubular' %}selected{% endif %}>Tubular radius</option>
-                <option value="thickness_tubular" {% if cone_x_axis_vary == 'thickness_tubular' %}selected{% endif %}>Tubular thk</option>
-                <option value="thickness_cone" {% if cone_x_axis_vary == 'thickness_cone' %}selected{% endif %}>Cone thk</option>
-                <option value="alpha" {% if cone_x_axis_vary == 'alpha' %}selected{% endif %}>Cone angle α</option>
-            </select>
+        <!-- BOTTOM LEFT: Thickness transition inputs -->
+        <div class="cone-transition-section">
+            <h4 class="cone-subsection-title">Thickness transition</h4>
+            <p class="cone-subsection-note">
+                <em>Thickness transition SCFs calculated separately & can be combined with cone SCFs.</em>
+            </p>
+
+            <div class="cone-form-row">
+                <label for="transition_side">Transition side</label>
+                <select id="transition_side" name="transition_side">
+                    <option value="inside" {% if transition_side == 'inside' %}selected{% endif %}>Inside</option>
+                    <option value="outside" {% if transition_side == 'outside' %}selected{% endif %}>Outside</option>
+                </select>
+            </div>
+
+            <div class="cone-form-row">
+                <label for="scf_weld_type">Weld type</label>
+                <select id="scf_weld_type" name="scf_weld_type">
+                    <option value="single_sided" {% if scf_weld_type == 'single_sided' %}selected{% endif %}>Single sided</option>
+                    <option value="double_sided" {% if scf_weld_type == 'double_sided' %}selected{% endif %}>Double sided</option>
+                </select>
+            </div>
+
+            <div class="cone-form-row">
+                <label for="weld_width">Weld width, L</label>
+                <input type="number" step="any" id="weld_width" name="weld_width" value="{{ weld_width }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="scf_taper_ratio">
+                    Taper ratio x<br>(1 in x)
+                </label>
+                <select id="scf_taper_ratio" name="scf_taper_ratio">
+                    <option value="" {% if not scf_taper_ratio %}selected{% endif %}>None</option>
+                    <option value="3" {% if scf_taper_ratio == 3 %}selected{% endif %}>3</option>
+                    <option value="4" {% if scf_taper_ratio == 4 %}selected{% endif %}>4</option>
+                    <option value="5" {% if scf_taper_ratio == 5 %}selected{% endif %}>5</option>
+                    <option value="6" {% if scf_taper_ratio == 6 %}selected{% endif %}>6</option>
+                </select>
+            </div>
+
+            <div class="cone-form-row">
+                <label for="delta_m">&delta;<sub>m</sub></label>
+                <input type="number" step="any" id="delta_m" name="delta_m" value="{{ delta_m }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="delta_0">&delta;<sub>0</sub></label>
+                <input type="number" step="any" id="delta_0" name="delta_0" value="{{ delta_0 }}">
+            </div>
+
+            <div class="cone-form-row">
+                <label for="scf_inclusion">Cone SCF inclusion</label>
+                <select id="scf_inclusion" name="scf_inclusion">
+                    <option value="multiply" {% if scf_inclusion == 'multiply' %}selected{% endif %}>
+                        Yes - multiply
+                    </option>
+                    <option value="linear" {% if scf_inclusion == 'linear' %}selected{% endif %}>
+                        Yes - linear addition
+                    </option>
+                    <option value="none" {% if scf_inclusion == 'none' %}selected{% endif %}>
+                        No
+                    </option>
+                </select>
+            </div>
         </div>
 
-        <!-- Thickness Transition Section -->
-        <h4 class="cone-subsection-title">Thickness transition</h4>
-        <p class="cone-subsection-note">
-            <em>Thickness transition SCFs calculated separately & can be combined with cone SCFs.</em>
-        </p>
-
-        <div class="cone-form-row">
-            <label for="transition_side">Transition side</label>
-            <select id="transition_side" name="transition_side">
-                <option value="inside" {% if transition_side == 'inside' %}selected{% endif %}>Inside</option>
-                <option value="outside" {% if transition_side == 'outside' %}selected{% endif %}>Outside</option>
-            </select>
+        <!-- BOTTOM RIGHT: Thickness transition image -->
+        <div class="cone-image-box">
+            <img id="tt-scf-img" src="{{ tt_scf_img }}" alt="Thickness transition sketch">
         </div>
 
-        <div class="cone-form-row">
-            <label for="weld_length">Weld length, L</label>
-            <input type="number" step="any" id="weld_length" name="weld_length" value="{{ weld_length }}">
-        </div>
+    </div>
 
-        <div class="cone-form-row">
-            <label for="delta_m">&delta;<sub>m</sub></label>
-            <input type="number" step="any" id="delta_m" name="delta_m" value="{{ delta_m }}">
-        </div>
+    <button type="submit" class="cone-submit-button">Submit</button>
 
-        <div class="cone-form-row">
-            <label for="delta_0">&delta;<sub>0</sub></label>
-            <input type="number" step="any" id="delta_0" name="delta_0" value="{{ delta_0 }}">
-        </div>
-
-        <div class="cone-form-row">
-            <label for="scf_inclusion">Cone SCF inclusion</label>
-            <select id="scf_inclusion" name="scf_inclusion">
-                <option value="multiply" {% if scf_inclusion == 'multiply' %}selected{% endif %}>
-                    Yes - multiply
-                </option>
-                <option value="linear" {% if scf_inclusion == 'linear' %}selected{% endif %}>
-                    Yes - linear addition
-                </option>
-                <option value="none" {% if scf_inclusion == 'none' %}selected{% endif %}>
-                    No
-                </option>
-            </select>
-        </div>
+</form>
 
 
 
-        <!--submit form-->
-        <button type="submit" class="cone-submit-button">Submit</button>
-    </form>
-</div>
+
+
+
+
 
 <div class="cone-results-container">
     <div class="cone-result-box">
@@ -135,7 +180,32 @@
 
         </div>
     </div>
+
+    <!--    thickness transition SCF results box-->
+    <div class="cone-result-box two-col">
+        <h4>Thickness transition only SCFs at large diameter junction</h4>
+        <div class="cone-res-table">
+            <!-- Header row - 2 columns-->
+            <div class="cone-res-row">
+                <div class="cone-res-group">Inside SCFs</div>
+                <div class="cone-res-group">Outside SCFs</div>
+            </div>
+            <!-- Row 1 -->
+            <div class="cone-res-row">
+                <div class="cone-res-cell">
+                    <span id="scf-inside-tt">-</span>
+                </div>
+                <div class="cone-res-cell">
+                    <span id="scf-outside-tt">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 </div>
+
+
 
 <!-- Plot container -->
 <div id="cone-scfs-plot-in" style="margin-top: 1rem; width: 60%; height: 500px;"></div>
@@ -168,18 +238,27 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.querySelector(".cone-result-box h4").textContent =
                     `Cone only SCF results at ${result.cone_junction} diameter junction`;
 
-                // Update SCFs
-                // Update Sect 3 SCFs
+                // Images for cone and TTs the 2x2 grid images
+                document.getElementById("cone-scf-img").src = result.cone_scf_img;
+                document.getElementById("tt-scf-img").src = result.tt_scf_img;
+
+                // Sect 3 SCFs
                 document.getElementById("scf-tube-in").textContent = result.scf_tube_in.toFixed(3);
                 document.getElementById("scf-cone-in").textContent = result.scf_cone_in.toFixed(3);
                 document.getElementById("scf-tube-out").textContent = result.scf_tube_out.toFixed(3);
                 document.getElementById("scf-cone-out").textContent = result.scf_cone_out.toFixed(3);
 
-                // Update AppF17 SCFs
+                // AppF17 SCFs
                 document.getElementById("scf-tube-in-appf").textContent = result.scf_tube_in_appf.toFixed(3);
                 document.getElementById("scf-cone-in-appf").textContent = result.scf_cone_in_appf.toFixed(3);
                 document.getElementById("scf-tube-out-appf").textContent = result.scf_tube_out_appf.toFixed(3);
                 document.getElementById("scf-cone-out-appf").textContent = result.scf_cone_out_appf.toFixed(3);
+
+                // thickness transition (tt) SCFs (inside and outside)
+                document.getElementById("scf-inside-tt").textContent = result.scf_inside_tt.toFixed(3);
+                document.getElementById("scf-outside-tt").textContent = result.scf_outside_tt.toFixed(3);
+
+
 
                 // SCFs plotly plot
                 const fig1 = Plotly.react('cone-scfs-plot-in', JSON.parse(result.conescfs_plot_json_in).data, JSON.parse(result.conescfs_plot_json_in).layout);
