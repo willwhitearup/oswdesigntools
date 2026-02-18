@@ -106,22 +106,16 @@
             </div>
 
             <div class="cone-form-row">
-                <label for="delta_0">&delta;<sub>0</sub></label>
+                <label for="delta_0">&delta;<sub>0</sub> <br>(oft. 0.05t)</label>
                 <input type="number" step="any" id="delta_0" name="delta_0" value="{{ delta_0 }}">
             </div>
 
             <div class="cone-form-row">
                 <label for="scf_inclusion">Cone SCF inclusion</label>
                 <select id="scf_inclusion" name="scf_inclusion">
-                    <option value="multiply" {% if scf_inclusion == 'multiply' %}selected{% endif %}>
-                        Yes - multiply
-                    </option>
-                    <option value="linear" {% if scf_inclusion == 'linear' %}selected{% endif %}>
-                        Yes - linear addition
-                    </option>
-                    <option value="none" {% if scf_inclusion == 'none' %}selected{% endif %}>
-                        No
-                    </option>
+                    <option value="yes_multiply" {% if scf_inclusion == 'yes_multiply' %}selected{% endif %}>Yes - multiply</option>
+                    <option value="yes_linear_add" {% if scf_inclusion == 'yes_linear_add' %}selected{% endif %}>Yes - linear addition</option>
+                    <option value="no" {% if scf_inclusion == 'no' %}selected{% endif %}>No</option>
                 </select>
             </div>
         </div>
@@ -133,20 +127,23 @@
 
     </div>
 
-    <button type="submit" class="cone-submit-button">Submit</button>
+<!--    <button type="submit" class="cone-submit-button">Submit</button>-->
 
 </form>
 
 
-
-
-
-
+<!-- Implementation Approach -->
+<div class="implementation-box">
+    <h4>Implementation approach</h4>
+    <div id="scf-msgs-table" class="cone-res-table">
+        <!-- Messages inserted dynamically -->
+    </div>
+</div>
 
 
 <div class="cone-results-container">
     <div class="cone-result-box">
-        <h4>Cone only SCF results at {{ cone_junction }} diameter junction</h4>
+        <h4 id="cone-heading">Cone only SCF results at large diameter junction</h4>
 
         <div id="cone-res-output" class="cone-res-table">
 
@@ -159,9 +156,9 @@
             <!-- Sub-headers -->
             <div class="cone-res-row">
                 <div class="cone-res-subheader">Sect 3</div>
-                <div class="cone-res-subheader">AppF17</div>
+                <div class="cone-res-subheader">AppB3</div>
                 <div class="cone-res-subheader">Sect 3</div>
-                <div class="cone-res-subheader">AppF17</div>
+                <div class="cone-res-subheader">AppB3</div>
             </div>
 
             <!-- Data rows -->
@@ -201,10 +198,42 @@
             </div>
         </div>
     </div>
-
-
 </div>
 
+<!--Final results table includes (or not) the SCFs-->
+<!-- Cone including thickness transition SCFs -->
+<div class="cone-results-container">
+    <div class="cone-result-box">
+        <h4 id="cone-tt-heading">Cone including thickness transition SCFs</h4>
+        <div class="cone-res-table">
+            <!-- Column headers -->
+            <div class="cone-res-row">
+                <div class="cone-res-group" colspan="2">Inside SCFs</div>
+                <div class="cone-res-group" colspan="2">Outside SCFs</div>
+            </div>
+            <!-- Sub-headers -->
+            <div class="cone-res-row">
+                <div class="cone-res-subheader">Sect 3</div>
+                <div class="cone-res-subheader">AppB3</div>
+                <div class="cone-res-subheader">Sect 3</div>
+                <div class="cone-res-subheader">AppB3</div>
+            </div>
+            <!-- Data rows -->
+            <div class="cone-res-row">
+                <div class="cone-res-cell">Tube: <span id="scf-tube-in-tt">-</span></div>
+                <div class="cone-res-cell">Tube: <span id="scf-tube-in-appf-tt">-</span></div>
+                <div class="cone-res-cell">Tube: <span id="scf-tube-out-tt">-</span></div>
+                <div class="cone-res-cell">Tube: <span id="scf-tube-out-appf-tt">-</span></div>
+            </div>
+            <div class="cone-res-row">
+                <div class="cone-res-cell">Cone: <span id="scf-cone-in-tt">-</span></div>
+                <div class="cone-res-cell">Cone: <span id="scf-cone-in-appf-tt">-</span></div>
+                <div class="cone-res-cell">Cone: <span id="scf-cone-out-tt">-</span></div>
+                <div class="cone-res-cell">Cone: <span id="scf-cone-out-appf-tt">-</span></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <!-- Plot container -->
@@ -212,63 +241,121 @@
 <div id="cone-scfs-plot-out" style="margin-top: 1rem; width: 60%; height: 500px;"></div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const form = document.getElementById("cone-input-form");
 
-    form.addEventListener("submit", function (e) {
-        e.preventDefault();  // stop normal form submission
+    // Debounce helper
+    function debounce(func, delay) {
+        let timer;
+        return function(...args) {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
 
+    // Function to fetch results from server
+    function fetchResults() {
         const formData = new FormData(form);
-
-        // Convert FormData to plain object
         const data = Object.fromEntries(formData.entries());
 
         fetch("/conescfs", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         })
         .then(response => response.json())
-        .then(result => {
-            if(result.status === "success"){
-                // Update heading directly
-                document.querySelector(".cone-result-box h4").textContent =
-                    `Cone only SCF results at ${result.cone_junction} diameter junction`;
-
-                // Images for cone and TTs the 2x2 grid images
-                document.getElementById("cone-scf-img").src = result.cone_scf_img;
-                document.getElementById("tt-scf-img").src = result.tt_scf_img;
-
-                // Sect 3 SCFs
-                document.getElementById("scf-tube-in").textContent = result.scf_tube_in.toFixed(3);
-                document.getElementById("scf-cone-in").textContent = result.scf_cone_in.toFixed(3);
-                document.getElementById("scf-tube-out").textContent = result.scf_tube_out.toFixed(3);
-                document.getElementById("scf-cone-out").textContent = result.scf_cone_out.toFixed(3);
-
-                // AppF17 SCFs
-                document.getElementById("scf-tube-in-appf").textContent = result.scf_tube_in_appf.toFixed(3);
-                document.getElementById("scf-cone-in-appf").textContent = result.scf_cone_in_appf.toFixed(3);
-                document.getElementById("scf-tube-out-appf").textContent = result.scf_tube_out_appf.toFixed(3);
-                document.getElementById("scf-cone-out-appf").textContent = result.scf_cone_out_appf.toFixed(3);
-
-                // thickness transition (tt) SCFs (inside and outside)
-                document.getElementById("scf-inside-tt").textContent = result.scf_inside_tt.toFixed(3);
-                document.getElementById("scf-outside-tt").textContent = result.scf_outside_tt.toFixed(3);
-
-
-
-                // SCFs plotly plot
-                const fig1 = Plotly.react('cone-scfs-plot-in', JSON.parse(result.conescfs_plot_json_in).data, JSON.parse(result.conescfs_plot_json_in).layout);
-                const fig2 = Plotly.react('cone-scfs-plot-out', JSON.parse(result.conescfs_plot_json_out).data, JSON.parse(result.conescfs_plot_json_out).layout);
-            }
-        })
-
+        .then(updateResults)
         .catch(error => console.error("Error:", error));
+    }
+
+    // Function to update DOM based on server result
+    function updateResults(result) {
+        if(result.status !== "success") return;
+
+        // Images
+        document.getElementById("cone-scf-img").src = result.cone_scf_img;
+        document.getElementById("tt-scf-img").src = result.tt_scf_img;
+
+        // Cone SCFs
+        document.getElementById("scf-tube-in").textContent = result.scf_tube_in.toFixed(3);
+        document.getElementById("scf-cone-in").textContent = result.scf_cone_in.toFixed(3);
+        document.getElementById("scf-tube-out").textContent = result.scf_tube_out.toFixed(3);
+        document.getElementById("scf-cone-out").textContent = result.scf_cone_out.toFixed(3);
+
+        document.getElementById("scf-tube-in-appf").textContent = result.scf_tube_in_appf.toFixed(3);
+        document.getElementById("scf-cone-in-appf").textContent = result.scf_cone_in_appf.toFixed(3);
+        document.getElementById("scf-tube-out-appf").textContent = result.scf_tube_out_appf.toFixed(3);
+        document.getElementById("scf-cone-out-appf").textContent = result.scf_cone_out_appf.toFixed(3);
+
+        // Thickness transition SCFs
+        document.getElementById("scf-inside-tt").textContent = result.scf_inside_tt.toFixed(3);
+        document.getElementById("scf-outside-tt").textContent = result.scf_outside_tt.toFixed(3);
+
+        // Cone + TT SCFs
+        document.getElementById("scf-tube-in-tt").textContent = result.scf_tube_in_tt.toFixed(3);
+        document.getElementById("scf-cone-in-tt").textContent = result.scf_cone_in_tt.toFixed(3);
+        document.getElementById("scf-tube-out-tt").textContent = result.scf_tube_out_tt.toFixed(3);
+        document.getElementById("scf-cone-out-tt").textContent = result.scf_cone_out_tt.toFixed(3);
+
+        document.getElementById("scf-tube-in-appf-tt").textContent = result.scf_tube_in_appf_tt.toFixed(3);
+        document.getElementById("scf-cone-in-appf-tt").textContent = result.scf_cone_in_appf_tt.toFixed(3);
+        document.getElementById("scf-tube-out-appf-tt").textContent = result.scf_tube_out_appf_tt.toFixed(3);
+        document.getElementById("scf-cone-out-appf-tt").textContent = result.scf_cone_out_appf_tt.toFixed(3);
+
+        // SCF messages
+        const msgsTable = document.getElementById("scf-msgs-table");
+        msgsTable.innerHTML = "";
+        Object.values(result.scf_msgs).forEach(msg => {
+            const row = document.createElement("div");
+            row.className = "cone-res-row";
+
+            const cell = document.createElement("div");
+            cell.className = "cone-res-cell";
+            cell.textContent = msg;
+
+            row.appendChild(cell);
+            msgsTable.appendChild(row);
+        });
+
+        // Plotly
+        Plotly.react('cone-scfs-plot-in', JSON.parse(result.conescfs_plot_json_in).data, JSON.parse(result.conescfs_plot_json_in).layout);
+        Plotly.react('cone-scfs-plot-out', JSON.parse(result.conescfs_plot_json_out).data, JSON.parse(result.conescfs_plot_json_out).layout);
+
+        // Update headings
+        const cone_heading = document.getElementById("cone-heading");
+        if(result.scf_inclusion === "yes_multiply" || result.scf_inclusion === "yes_linear_add") {
+            cone_heading.textContent = "Cone SCF results. Cone and tube thickness replaced with min(tube thickness, cone thickness).";
+        } else {
+            cone_heading.textContent = `Cone SCF results at ${result.cone_junction} diameter junction.`;
+        }
+
+        const cone_tt_heading = document.getElementById("cone-tt-heading");
+        if(result.scf_inclusion === "yes_multiply") {
+            cone_tt_heading.textContent = "Cone including thickness transition SCFs (multiplication)";
+        } else if(result.scf_inclusion === "yes_linear_add") {
+            cone_tt_heading.textContent = "Cone including thickness transition SCFs (linear addition)";
+        } else {
+            cone_tt_heading.textContent = "Cone ONLY SCFs (not incl. thickness transition SCFs)";
+        }
+    }
+
+    // Debounced version of fetchResults for input changes
+    const debouncedFetch = debounce(fetchResults, 300);
+
+    // Attach to all inputs & selects
+    form.querySelectorAll("input, select").forEach(input => {
+        input.addEventListener("input", debouncedFetch);
+        input.addEventListener("change", debouncedFetch);
     });
+
+    // --- INITIAL FETCH on page load ---
+    fetchResults();
 });
 </script>
+
+
+
 
 {% endblock %}

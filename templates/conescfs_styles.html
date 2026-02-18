@@ -3,7 +3,7 @@
 html, body {
   height: 100%;
   margin: 0;
-  /*overflow: hidden;  prevents body scrollbar */
+  overflow-x: hidden;
 }
 
 .cone-info-banner {
@@ -24,14 +24,12 @@ html, body {
 .cone-input-form {
   flex: 1;
   max-width: 300px;
-<!--  height: 100%;-->
-<!--  overflow: auto;-->
 }
 
 .cone-form-row {
   display: flex;
   align-items: center;   /* vertically center label and input */
-  margin-bottom: 8px;   /* spacing between rows */
+  margin-bottom: 5px;   /* spacing between rows */
 }
 
 .cone-form-row label {
@@ -49,29 +47,30 @@ html, body {
   font-size: 14px;
 }
 
+
+
 /* ===== 2 x 2 layout for form + images ===== */
 
 .cone-main-grid {
     display: grid;
-    grid-template-columns: 350px 400px;    /* TWO columns */
+    grid-template-columns: 300px 450px;    /* TWO columns (col1 has input cells, col2 has images) */
     grid-template-rows: auto auto;    /* TWO rows */
-    gap: 0px 10px;
-    border: 2px dashed blue;          /* outer border */
-    padding: 15px;
+    gap: 0px 0px;
+<!--    border: 2px dashed blue;          /* outer border */-->
+    padding: 1px;
 }
 
 .cone-main-grid > div {
-    border: 2px solid red;   /* shows each cell */
+    border: 2px dashed rgba(255, 0, 0, 0.3);   /* shows each cell */
     padding: 0px;
 }
 
 .cone-image-box img {
-    margin-top: 60px;
+    margin-top: 10px;
     max-height: 260px;
     max-width: 100%;
     height: auto;
 }
-
 
 .cone-submit-button {
     padding: 12px 12px;
@@ -86,11 +85,48 @@ html, body {
     transition: background-color 0.2s ease;
     }
 
+/* Implementation box */
+.implementation-box {
+    background-color: #f8d7da;  /* light red background */
+    border: 1px solid #f5c2c7;  /* darker red border */
+    border-radius: 4px;
+    padding: 2px 10px;
+    margin: 5px 0;
+
+    width: 750px;        /* total width of two tables + gap */
+    max-width: 100%;     /* responsive on smaller screens */
+    box-sizing: border-box;
+
+    /* LEFT-ALIGNED */
+    margin-left: 0;
+    margin-right: 0;
+
+    /* COPY font & style from SCF tables */
+    font-family: monospace;
+    font-size: 0.8rem;      /* same as .cone-result-box default (usually 16px) */
+    color: #842029;        /* matches SCF messages */
+    line-height: 1.2;      /* same as .cone-result-box */
+}
+
+
+
+/* Messages inside the box */
+#scf-msgs-table .cone-res-cell {
+    grid-column: span 4;
+    text-align: left;
+    color: #842029;       /* dark red text */
+    padding: 2px 0;
+}
+
+/* Fix flex container of tables */
 .cone-results-container {
     display: flex;
     gap: 2rem;
-    margin-top: 1.5rem;
-    justify-content: left;
+    flex-wrap: wrap;     /* allows wrapping on narrow screens */
+    justify-content: flex-start;
+    max-width: 820px;    /* prevent overflowing viewport */
+    overflow-x: hidden;  /* remove horizontal scrollbar */
+    margin-top: 0.5rem;
 }
 
 .cone-result-box {
@@ -115,8 +151,6 @@ html, body {
     color: #555;
     margin-bottom: 0.5rem;
 }
-
-
 
 .cone-res-table {
     display: grid;
@@ -163,6 +197,7 @@ html, body {
 .cone-result-box.two-col .cone-res-group {
     grid-column: span 1;
 }
+
 
 
 </style>
