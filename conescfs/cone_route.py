@@ -35,6 +35,7 @@ def cone_route():
         alpha = data.get("alpha")
         junction_type = data.get("cone_junction")  # "small" or "large"
         cone_x_axis_vary = data.get("cone_x_axis_vary")
+        cone_x_axis_lims = data.get("cone_x_axis_lims")  # "t25", "t50", "t100" etc. x axis limits +/- on base line value
         # thickness transition stuff
         transition_side = data.get("transition_side")
         scf_weld_type = data.get("scf_weld_type")
@@ -68,7 +69,8 @@ def cone_route():
             "thickness_cone": thickness_cone_override, "alpha": alpha}
 
         base_val = cone_scf_numeric_fields[cone_x_axis_vary]
-        x_arr = np.linspace(base_val * 0.5, base_val * 1.5, 21)  # +/- 50% of the nominal value
+        xlim = float(cone_x_axis_lims.split("t")[-1]) # "t25", "t50", "t100"
+        x_arr = np.linspace(base_val * (1 - xlim/100), base_val * (1 + xlim/100), 21)  # +/- 50% of the nominal value
 
         single_results = cone_scf_single(radius_tubular, thickness_tubular_override, thickness_cone_override, alpha, junction_type)
         sweep_results = cone_scf_sweep(junction_type, cone_x_axis_vary, x_arr, cone_scf_numeric_fields)

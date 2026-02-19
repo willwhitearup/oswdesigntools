@@ -52,6 +52,17 @@
                     <option value="alpha" {% if cone_x_axis_vary == 'alpha' %}selected{% endif %}>Cone angle α</option>
                 </select>
             </div>
+
+            <div class="cone-form-row">
+                <label for="cone_x_axis_lims">X-axis limits</label>
+                <select id="cone_x_axis_lims" name="cone_x_axis_lims">
+                    <option value="t25" {% if cone_x_axis_lims == 't25' %}selected{% endif %}>+/-25%</option>
+                    <option value="t50" {% if cone_x_axis_lims == 't50' %}selected{% endif %}>+/-50%</option>
+                    <option value="t100" {% if cone_x_axis_lims == 't100' %}selected{% endif %}>+/-100%</option>
+                </select>
+            </div>
+
+
         </div>
 
         <!-- TOP RIGHT: Cone geometry image -->
