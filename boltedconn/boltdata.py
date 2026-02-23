@@ -25,6 +25,7 @@ class Bolt:
         # computed vars
         self.F_tR = None
 
+
     @property
     def tensile_diameter(self):
         # ISO approximation
@@ -96,6 +97,8 @@ class BoltMaterial:
 
 
 class BoltMaterialLibrary:
+
+    gamma_m = 1.1
 
     _materials = {
         "4.6":  {"fyb": 240, "fub": 400},

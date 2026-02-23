@@ -24,7 +24,7 @@
             overflow-y: auto; /* Scrollable */
             display: flex;
             flex-direction: column;
-            gap: 5px; /* Equal spacing between all buttons */
+            gap: 6px; /* Equal spacing between all buttons */
         }
         .button-grid {
             display: grid;
@@ -34,9 +34,10 @@
 
         button {
             width: 100%;
-            padding: 15px;
-            font-size: 16px;
+            padding: 10px 10px;
+            font-size: 14px;
             cursor: pointer;
+            line-height: 1.2;
 
             /* N64-style grey */
             background-color: #909090;       /* muted grey */
@@ -265,9 +266,11 @@
         </div>
         <button onclick="window.location.href='/conescfs'" aria-label="Conical SCFs">Conical SCFs</button>
         <button onclick="window.location.href='/joint_detailing'" aria-label="Joint Detailing">Joint Detailing</button>
-        <strong class="center-text">Grouted connections</strong>
-        <button onclick="window.location.href='/gc'" aria-label="Grouted Connection">GC Design</button>
-        <button onclick="window.location.href='/kitesurf'" aria-label="Kite Surf Forecast">Kite Surf Forecast</button>
+        <strong class="center-text">Connections</strong>
+        <button onclick="window.location.href='/gc'" aria-label="Grouted Connection">Grouted Connection</button>
+        <button onclick="window.location.href='/boltedconn'" aria-label="Grouted Connection">Bolted L-Flange</button>
+        <strong class="center-text">Misc.</strong>
+        <button onclick="window.location.href='/kitesurf'" aria-label="Kitesurf Forecast">Kitesurf Forecast</button>
     </div>
     <div class="content main-content">
         {% block content %}{% endblock %}

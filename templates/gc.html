@@ -59,6 +59,11 @@
 
     <!-- Right: Plot section -->
     <div class="gc-plot-container">
+
+        <div id="loading-msg" style="display:none; font-weight:bold; margin-bottom:10px;">
+            Loading plots...
+        </div>
+
         <div id="gc-plot" class="plot-box"></div>
         <div id="bm-plot" class="plot-box"></div>
     </div>
@@ -89,12 +94,15 @@
     </div>
 </div>
 
+
+
 <div id="shr-cap-plot" class="plot-shr-cap-box"></div>
 <div id="s-fbk-plot" class="plot-shr-cap-box"></div>
 
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('gc-form');
@@ -121,6 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function loadInitialPlots() {
+
+    document.getElementById('loading-msg').style.display = 'block';
     const formData = new FormData(form);
     const json = Object.fromEntries(formData.entries());
 
@@ -154,8 +164,16 @@ document.addEventListener('DOMContentLoaded', () => {
       updateResOutput(result.res);
       updateValidityOutput(result.validity_chks);
       markClean();
+      document.getElementById('loading-msg').style.display = 'none';
     })
-    .catch(err => console.error("Error loading initial plots:", err));
+    // .catch(err => console.error("Error loading initial plots:", err));
+
+    .catch(err => {
+      console.error("Error loading initial plots:", err);
+      document.getElementById('loading-msg').style.display = 'none';
+    });
+
+
   }
 
   form.addEventListener('submit', async (e) => {

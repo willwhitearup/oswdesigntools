@@ -10,6 +10,9 @@ from tubularjointscfs.routes_tyjoint import ty_joint_route
 from tubularjointscfs.routes_ktjoint import kt_joint_route
 from tubularjointscfs.jointdetailing_route import joint_detailing
 from gcdesign.gc_route import gc_route
+
+from boltedconn.boltedconn_route import boltedconn_route
+
 from kitesurf.kitesurf_route import kitesurf_route
 from conescfs.cone_route import cone_route
 
@@ -38,6 +41,7 @@ app.add_url_rule('/conescfs', 'cone_route', cone_route, methods=['GET', 'POST'])
 app.add_url_rule('/joint_detailing', 'joint_detailing', joint_detailing, methods=['GET', 'POST'])
 # gc tubularjointscfs
 app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
+app.add_url_rule('/boltedconn', 'boltedconn_route', boltedconn_route, methods=['GET', 'POST'])
 # kitesurf
 app.add_url_rule('/kitesurf', 'kitesurf_route', kitesurf_route, methods=['GET', 'POST'])
 

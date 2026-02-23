@@ -2,15 +2,15 @@
 
 class SteelMaterial:
 
-    youngs_modulus = 210e9  # Pa
+    youngs_modulus = 210000  # MPa
     poissons_ratio = 0.3
 
     gamma_m = 1.1
 
     # Yield strengths (Pa) by grade and thickness ranges (max thickness inclusive)
     _yield_table = {
-        "355": [(16, 355e6), (40, 345e6), (float("inf"), 335e6)],
-        "425": [(16, 425e6), (40, 415e6), (float("inf"), 400e6)]
+        "355": [(16, 355), (40, 345), (float("inf"), 325)],
+        "425": [(16, 425), (40, 415), (float("inf"), 400)]
     }
 
     def __init__(self, grade: str, thickness: float):
@@ -41,10 +41,45 @@ class SteelMaterial:
 
     def __repr__(self):
         return (f"<SteelMaterial grade={self.grade}, thickness={self.thickness} mm, "
-                f"yield_strength={self.yield_strength} Pa, "
-                f"design_yield_strength={self.design_yield_strength:.1f} Pa, "
-                f"E={self.youngs_modulus} Pa, ν={self.poissons_ratio}>")
+                f"yield_strength={self.yield_strength} MPa, "
+                f"design_yield_strength={self.design_yield_strength:.1f} MPa, "
+                f"E={self.youngs_modulus} MPa, ν={self.poissons_ratio}>")
 
+
+# bolt materials------------------------------------------------------------------------------------
+class BoltMaterial:
+
+    def __init__(self, name, fyb, fub):
+
+        self.name = name
+        self.fyb = fyb
+        self.fub = fub
+
+
+class BoltMaterialLibrary:
+
+    _materials = {
+        "4.6":  {"fyb": 240, "fub": 400},
+        "4.8":  {"fyb": 320, "fub": 400},
+        "5.6":  {"fyb": 300, "fub": 500},
+        "5.8":  {"fyb": 400, "fub": 500},
+        "6.8":  {"fyb": 480, "fub": 600},
+        "8.8":  {"fyb": 640, "fub": 800},
+        "10.9": {"fyb": 900, "fub": 1000},
+    }
+
+    @classmethod
+    def create(cls, grade_name):
+        data = cls._materials.get(grade_name)
+
+        if not data:
+            raise ValueError(f"Bolt material grade '{grade_name}' not found.")
+
+        return BoltMaterial(
+            name=grade_name,
+            fyb=data["fyb"],
+            fub=data["fub"]
+        )
 
 if __name__ == "__main__":
     steel_plate = SteelMaterial("355", 30)
