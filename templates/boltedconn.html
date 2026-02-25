@@ -2,9 +2,311 @@
 {% block content %}
 {% include "boltedconn_styles.html" %}
 
-<h1>Bolted Connection Module</h1>
-<p>Under construction.</p>
+<div class="bolt-info-banner">
+    <span class="bolt-info-icon">ⓘ</span>
+    <span class="bolt-info-text">Units in N and mm only</span>
+</div>
 
+
+<div class="bolt-layout-container">
+
+    <!-- LEFT COLUMN -->
+    <div class="bolt-input-column">
+        <form id="bolt-input-form" class="bolt-input-form">
+
+            <div class="bolt-form-row">
+                <label for="bolt_assess">Assessment type</label>
+                <select id="bolt_assess" name="bolt_assess">
+                    <option value="assess" {% if bolt_assess == "assess" %}selected{% endif %}>Assess</option>
+                    <option value="design" {% if bolt_assess == "design" %}selected{% endif %}>Design (optimise)</option>
+                </select>
+            </div>
+
+
+            <!-- ================= GEOMETRY ================= -->
+            <div class="bolt-geometry-section">
+                <h4 class="bolt-section-title">Foundation geometry</h4>
+
+                <div class="bolt-form-row">
+                    <label for="mp_outer_diameter">Outer diameter</label>
+                    <input type="number" step="any" id="mp_outer_diameter" name="mp_outer_diameter"
+                           value="{{ mp_outer_diameter }}">
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="mp_wall_thk">Wall thk</label>
+                    <input type="number" step="any" id="mp_wall_thk" name="mp_wall_thk"
+                           value="{{ mp_wall_thk }}">
+                </div>
+            </div>
+
+            <!--assessment criteria inputs-->
+            <div class="bolt-geometry-section" id="l-flange-section">
+
+                <h4 class="bolt-section-title">L-flange geometry</h4>
+
+                <div class="bolt-form-row">
+                    <label for="flange_height">Height (t)</label>
+                    <input type="number" step="any" id="flange_height" name="flange_height"
+                           value="{{ flange_height }}">
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="flange_length">Length (radial)</label>
+                    <input type="number" step="any" id="flange_length" name="flange_length"
+                           value="{{ flange_length }}">
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="bolt_size">Bolt size</label>
+                    <select id="bolt_size" name="bolt_size">
+                        <option value="M72" {% if bolt_size == "M72" %}selected{% endif %}>M72</option>
+                        <option value="M80" {% if bolt_size == "M80" %}selected{% endif %}>M80</option>
+                        <option value="M90" {% if bolt_size == "M90" %}selected{% endif %}>M90</option>
+                    </select>
+                </div>
+
+                <h4 class="bolt-section-subtitle">Optional</h4>
+
+                <h6 class="bolt-section-italic">If left blank, variables will be auto-calculated (to reduce utilisation)</h6>
+                <div class="bolt-form-row">
+                    <label for="n_bolts">No. of bolts</label>
+                    <input type="number" step="any" id="n_bolts" name="n_bolts"
+                           value="{{ n_bolts }}">
+                </div>
+
+
+                <div class="bolt-form-row">
+                    <label for="b_star">b*</label>
+                    <input type="number" step="any" id="b_star" name="b_star"
+                           value="{{ b_star }}">
+                </div>
+            </div>
+
+            <!-- ================= MATERIALS ================= -->
+            <div class="bolt-geometry-section">
+                <h4 class="bolt-section-title">Materials</h4>
+
+                <div class="bolt-form-row">
+                    <label for="bolt_steel_grade">Bolt steel grade</label>
+                    <select id="bolt_steel_grade" name="bolt_steel_grade">
+                        <option value="10.9" {% if bolt_steel_grade == "10.9" %}selected{% endif %}>10.9</option>
+                        <option value="8.8" {% if bolt_steel_grade == "8.8" %}selected{% endif %}>8.8</option>
+                    </select>
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="flange_steel_grade">Flange steel grade</label>
+                    <select id="flange_steel_grade" name="flange_steel_grade">
+                        <option value="355" {% if flange_steel_grade == "S355" %}selected{% endif %}>S355</option>
+                        <option value="420" {% if flange_steel_grade == "S420" %}selected{% endif %}>S420</option>
+                    </select>
+                </div>
+
+
+                <div class="bolt-form-row">
+                    <label for="tower_steel_grade">Monopile steel grade</label>
+                    <select id="tower_steel_grade" name="tower_steel_grade">
+                        <option value="355" {% if tower_steel_grade == "S355" %}selected{% endif %}>S355</option>
+                        <option value="420" {% if tower_steel_grade == "S420" %}selected{% endif %}>S420</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- ================= LOADING ================= -->
+            <div class="bolt-geometry-section">
+                <h4 class="bolt-section-title">ULS Loading</h4>
+
+                <div class="bolt-form-row">
+                    <label for="ULS_axial_force">Axial force</label>
+                    <input type="number" step="any" id="ULS_axial_force" name="ULS_axial_force"
+                           value="{{ ULS_axial_force }}">
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="ULS_bending_moment">Bending moment</label>
+                    <input type="number" step="any" id="ULS_bending_moment" name="ULS_bending_moment"
+                           value="{{ ULS_bending_moment }}">
+                </div>
+            </div>
+
+            <div class="bolt-geometry-section" id="bolt-optimisation-section">
+                <h4 class="bolt-section-title">Optimisation (flange designer)</h4>
+                <div class="bolt-form-row">
+                    <label for="bolt_target_util">Target utilisation</label>
+                    <input type="number" step="any" id="bolt_target_util" name="bolt_target_util"
+                           value="{{ bolt_target_util }}">
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="opt_bolt_size">Min bolt size</label>
+                    <select id="opt_bolt_size" name="opt_bolt_size">
+                        <option value="M72" {% if opt_bolt_size == "M72" %}selected{% endif %}>M72</option>
+                        <option value="M80" {% if opt_bolt_size == "M80" %}selected{% endif %}>M80</option>
+                        <option value="M90" {% if opt_bolt_size == "M90" %}selected{% endif %}>M90</option>
+                    </select>
+                </div>
+
+
+                <div class="bolt-form-row">
+                    <label for="maintain_a_b_ratio_1_25">
+                        Maintain a/b <= 1.25
+                    </label>
+                    <input type="checkbox"
+                           id="maintain_a_b_ratio_1_25"
+                           name="maintain_a_b_ratio_1_25"
+                           {% if maintain_a_b_ratio_1_25 %}checked{% endif %}>
+                </div>
+            </div>
+
+
+            <button type="submit" class="bolt-submit-button">
+                Submit
+            </button>
+
+        </form>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="bolt-plot-container">
+        <div id="flange-plot-json"></div>
+    </div>
+
+</div>
+
+
+<!-- RESULTS CONTAINER -->
+<div id="bolt-results-container" class="bolt-results-container">
+    <div class="bolt-result-box">
+        <h4>Results</h4>
+        <div id="bolt-res-output"></div>
+    </div>
+    <div class="bolt-result-box">
+        <h4>Geometry Checks</h4>
+        <div id="bolt-geom-output"></div>
+    </div>
+</div>
+
+<!--JS code !!!!!!!!!!!!!!!-->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+    const modeSelect = document.getElementById("bolt_assess");
+    const lFlangeSection = document.getElementById("l-flange-section");
+    const optimisationSection = document.getElementById("bolt-optimisation-section");
+    const flangePlotContainer = document.getElementById("flange-plot-json");
+    const form = document.getElementById("bolt-input-form");
+    const submitBtn = document.querySelector(".bolt-submit-button");
+
+    let submittedValues = {}; // store last submitted values
+
+    // ====== Toggle Assess/Design sections ======
+    function toggleSections() {
+        const mode = modeSelect.value;
+        const resultsContainer = document.getElementById("bolt-results-container");
+
+        if (mode === "assess") {
+            lFlangeSection.style.display = "block";
+            optimisationSection.style.display = "none";
+            flangePlotContainer.style.display = "block";
+            resultsContainer.style.display = "flex"; // show results
+        } else {
+            lFlangeSection.style.display = "none";
+            optimisationSection.style.display = "block";
+            flangePlotContainer.style.display = "none";
+            resultsContainer.style.display = "none"; // hide results
+        }
+    }
+
+    toggleSections(); // initial call
+    modeSelect.addEventListener("change", toggleSections);
+
+    // ====== Form helpers ======
+    function getFormValues() {
+        const data = {};
+        const formData = new FormData(form);
+        formData.forEach((value, key) => { data[key] = value; });
+        data["maintain_a_b_ratio_1_25"] = document.getElementById("maintain_a_b_ratio_1_25").checked;
+        return data;
+    }
+
+    function hasChanged(current, submitted) {
+        for (let key in current) {
+            if (current[key] !== submitted[key]) return true;
+        }
+        return false;
+    }
+
+    // Listen for input changes to update button color
+    form.addEventListener("input", () => {
+        const currentValues = getFormValues();
+        if (hasChanged(currentValues, submittedValues)) {
+            submitBtn.style.backgroundColor = "#FFA500"; // orange if changed
+        } else {
+            submitBtn.style.backgroundColor = "#28a745"; // green if same as last submission
+        }
+    });
+
+    // ====== Form submission ======
+    async function submitForm() {
+        const data = getFormValues();
+
+        try {
+            const response = await fetch("/boltedconn", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            console.log("Server response:", result);
+
+            // store submitted values
+            submittedValues = getFormValues();
+            submitBtn.style.backgroundColor = "#28a745"; // reset to green
+
+            // Update plot only for assess mode
+            if (data.bolt_assess === "assess" && result.flange_plot_json) {
+                const parsed_fig = JSON.parse(result.flange_plot_json);
+                Plotly.react("flange-plot-json", parsed_fig.data, parsed_fig.layout);
+            }
+
+            // Update results box
+            const resBox = document.getElementById("bolt-res-output");
+            const geomBox = document.getElementById("bolt-geom-output");
+            if (resBox && result.flange_util !== undefined) {
+                resBox.innerHTML = `
+                    <div>Utilisation: ${result.flange_util.toFixed(3)}</div>
+                    <div>Bolt sector force: ${result.bolt_sector_force.toFixed(2)}</div>
+                    <div>Fu_A: ${result.Fu_A.toFixed(2)}</div>
+                    <div>Fu_B: ${result.Fu_B.toFixed(2)}</div>
+                    <div>Fu_D: ${result.Fu_D.toFixed(2)}</div>
+                    <div>Fu_E: ${result.Fu_E.toFixed(2)}</div>
+                    <div>Fu governing: ${result.Fu_governing}</div>
+                `;
+                geomBox.innerHTML = `
+                    <div>a/b ratio: ${result.a_b_ratio.toFixed(3)}</div>
+                    <div>No. of bolts: ${result.n_bolts_ass}</div>
+                    `;
+            }
+
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+
+    // Attach form submit
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        submitForm();
+    });
+
+    // === AUTO submit on initial load ===
+    submitForm(); // run once after page load
+});
+
+</script>
 
 
 {% endblock %}

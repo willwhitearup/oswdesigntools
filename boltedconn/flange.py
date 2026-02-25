@@ -7,12 +7,14 @@ import math
 class BoltedFlange:
 
     def __init__(self, outer_diameter, wall_thickness, flange_height, flange_length, bolt_tensioner_tool, bolt_obj, flange_steel, tower_wall_steel,
-                 ULS_bending_moment, ULS_axial_force):
+                 ULS_bending_moment, ULS_axial_force, n_bolts=None, b_star=None):
 
         self.outer_diameter: float = outer_diameter
 
         self.wall_thickness: float = wall_thickness
         self.flange_height: float = flange_height
+        self.total_height: float = self.flange_height * 2  # todo
+
         self.flange_length: float = flange_length
         self.bolt_tensioner_tool: BoltTensionerLibrary = bolt_tensioner_tool
         self.bolt_obj: Bolt = bolt_obj
@@ -22,10 +24,13 @@ class BoltedFlange:
         self.ULS_axial_force = ULS_axial_force
 
         self.valid_geom = True  # assume valid geom
+        self.TobinagaIshiharaFlag = False  # check if a/b ratio triggers the TobinagaIshihara correction (see IEC)
         self.Fu_convergence = True
         self.a = None
         self.b = None
-        self.b_star = None
+        self.a_b_ratio = None
+        self.b_star = b_star
+        self.n_bolts = n_bolts
         self._compute_geometry()
 
         # failure modes
@@ -33,13 +38,15 @@ class BoltedFlange:
         self.Fu_B = None
         self.Fu_D = None
         self.Fu_E = None
+        self.util = None
 
     def _compute_geometry(self):
         self.inner_diameter = self.outer_diameter - 2 * self.wall_thickness
         self.radius = self.outer_diameter / 2
 
         # flange geom
-        self.b_star = self.bolt_tensioner_tool['le_min'] + self.wall_thickness
+        if self.b_star is None:
+            self.b_star = self.bolt_tensioner_tool['le_min'] + self.wall_thickness
         self.b = self.bolt_tensioner_tool['le_min'] + 0.5 * self.wall_thickness
         self.a = self.flange_length - self.b_star
 
@@ -48,7 +55,10 @@ class BoltedFlange:
 
         self.bolt_centre_diameter = self.outer_diameter - 2 * self.b_star
         n_bolts_dp = np.radians(180) / np.asin(self.bolt_tensioner_tool["t"] / self.bolt_centre_diameter)
-        self.n_bolts = math.floor(n_bolts_dp) - math.floor(n_bolts_dp) % 2
+        n_bolts_max = math.floor(n_bolts_dp) - math.floor(n_bolts_dp) % 2
+
+        if self.n_bolts is None or self.n_bolts > n_bolts_max:
+            self.n_bolts = n_bolts_max
 
         # width at the hole
         self.c = np.pi * self.bolt_centre_diameter / self.n_bolts
@@ -69,20 +79,22 @@ class BoltedFlange:
         return (self.ULS_bending_moment / self.section_modulus_single_bolt) * self.shell_section_area_single_bolt - self.ULS_axial_force / self.n_bolts
 
     def geometry_validity_check(self, maintain_a_b_ratio_1_25=False):
-        a_b_ratio = self.a / self.b
+        self.a_b_ratio = self.a / self.b
         alpha = self.flange_height / (self.a + self.b)  # G.14
-        beta = ((a_b_ratio - 1.25) ** 0.32) + 0.45  # G.15
+        beta = ((self.a_b_ratio - 1.25) ** 0.32) + 0.45  # G.15
         bolt_lambda = 1 - (1 - alpha ** beta) ** 5
 
-        if 0. < a_b_ratio <= 1.25:
+        if 0. < self.a_b_ratio <= 1.25:
             pass
-        elif 1.25 < a_b_ratio <= 2.25 and (-0.12 * self.a + 0.55 <= alpha <= 1):  # G.16, G.17
-            print("Extension by Tobinaga and Ishihara is being implemented through modification of the length a. See IEC guidance!")
+        elif 1.25 < self.a_b_ratio <= 2.25 and (-0.12 * self.a + 0.55 <= alpha <= 1):  # G.16, G.17
+            #print("Extension by Tobinaga and Ishihara is being implemented through modification of the length a. See IEC guidance!")
             self.a = self.a * bolt_lambda  # G.12 — now directly overwrites a
+            self.TobinagaIshiharaFlag = True
             if maintain_a_b_ratio_1_25:
                 self.valid_geom = False
         else:
             self.valid_geom = False
+            self.util = np.inf
             # raise Exception(f"Invalid flange geometry. Check a and b values")
 
     def calc_flange_plastic_hinge_resistance(self):
@@ -121,7 +133,7 @@ class BoltedFlange:
 
             # Check convergence
             if abs(Fu - Fu_min) < tolerance:
-                print(f"Fu={Fu}. Iteratively found in {i} loops")
+                # print(f"Fu={Fu}. Iteratively found in {i} loops")
                 break
 
             Fu = Fu_min  # update Fu for next iteration
@@ -139,10 +151,10 @@ class BoltedFlange:
 
     def calc_util(self):
         Fu_dict = {
-            "A": self.Fu_A,
-            "B": self.Fu_B,
-            "D": self.Fu_D,
-            "E": self.Fu_E
+            "Fu_A": self.Fu_A,
+            "Fu_B": self.Fu_B,
+            "Fu_D": self.Fu_D,
+            "Fu_E": self.Fu_E
         }
         self.failure_mode_governing = min(Fu_dict, key=Fu_dict.get)
         self.Fu_resistance_governing = Fu_dict[self.failure_mode_governing]

@@ -1,10 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<style>
 
-</body>
-</html>
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.bolt-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 2px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #333;
+}
+
+.bolt-info-icon {
+    font-weight: bold;
+    color: #007BFF;
+}
+
+
+/* Optional: differentiate subtext */
+.bolt-section-italic {
+    margin-top: 8px;    /* smaller top margin */
+    margin-bottom: 4px; /* smaller bottom margin */
+    font-weight: 200;   /* optional: keep bold but not too heavy */
+    line-height: 1.2;   /* optional: tighter spacing */
+    font-size: 12px;    /* adjust to taste  */
+    font-style: italic;
+}
+
+/* Main two-column layout */
+.bolt-layout-container {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+    border: 2px solid red;     /* temporary debug border */
+  padding: 20px;             /* helps you see spacing */
+}
+
+/* Left column (your existing form styling remains) */
+.bolt-input-form {
+  flex: 0 0 300px;   /* fixed width column */
+  max-width: 300px;
+    border: 2px solid blue;
+  padding: 10px;
+}
+
+/* Right column */
+.bolt-plot-container {
+  flex: 1;
+    border: 2px solid green;
+  padding: 10px;
+}
+
+/* Plot sizing */
+#bolt-plot {
+  width: 100%;
+  height: 600px;
+}
+
+.bolt-form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+/* FIXED label column */
+.bolt-form-row label {
+  flex: 0 0 140px;   /* fixed width column */
+  max-width: 140px;
+}
+
+/* INPUT column */
+.bolt-form-row input,
+.bolt-form-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.bolt-form-row input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.bolt-submit-button {
+    padding: 12px 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background-color: #28a745;
+    width: 120px;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* RESULTS */
+.bolt-results-container {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  justify-content: flex-start;  /* fix: was "left" */
+  flex-wrap: nowrap;             /* optional: keep in one row */
+}
+
+.bolt-result-box {
+  width: 400px;
+  flex: 0 0 auto;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  font-family: monospace;
+  background: #f9f9f9;
+  border-radius: 3px;
+}
+
+#bolt-res-output p {
+margin: 2px 0; /* smaller vertical margin */
+line-height: 1.2; /* optional: tighter line spacing */
+}
+
+</style>

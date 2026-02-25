@@ -9,13 +9,10 @@ from boltedconn.steel import SteelMaterial
 from boltedconn.tensionerdata import BoltTensionerLibrary
 
 
-
-
-
 def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
                                        bolt_steel_grade, flange_steel_grade, tower_steel_grade,
                                        ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
-                                       flange_height, flange_length, bolt_size):
+                                       flange_height, flange_length, bolt_size, n_bolts, b_star):
     # process =======================================================
     # get bolt constants
 
@@ -31,21 +28,23 @@ def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
 
     # flange geometry and bolt data
     flange_obj = BoltedFlange(outer_diameter, wall_thickness, flange_height, flange_length, bolt_tensioner_tool, bolt_obj, flange_steel, tower_wall_steel,
-                              ULS_bending_moment, ULS_axial_force)
+                              ULS_bending_moment, ULS_axial_force, n_bolts, b_star)
     flange_obj.geometry_validity_check(maintain_a_b_ratio_1_25)
 
     if not flange_obj.valid_geom: # penalises the geometry
-        return np.inf
+        #print("invalid geom")
+        return flange_obj
 
     flange_obj.calc_flange_plastic_hinge_resistance()
     if not flange_obj.Fu_convergence:
-        return np.inf
+        #print("non convergence")
+        return flange_obj
 
     flange_obj.calc_bolted_connection_failure_modes()
     flange_obj.calc_util()
     util = flange_obj.util
-    print("Util: ", util)
-    return util
+    #print("Util: ", util)
+    return flange_obj
 
 def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
                               ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
@@ -72,11 +71,13 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
                 # call the strength check func and suppress all prints temporarily
                 with open(os.devnull, "w") as fnull:
                     with redirect_stdout(fnull):
-                        util = bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
+                        flange_obj = bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
                                        bolt_steel_grade, flange_steel_grade, tower_steel_grade,
                                        ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
                                        flange_height, flange_length, bolt_size
                                                                   )
+
+                        util = flange_obj.util
 
 
                 if util <= target_util:
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     flange_length = 400  # radial length
     maintain_a_b_ratio_1_25 = True # keep to stricter geom
 
-    util = bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
+    flange_obj = bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
                                        bolt_steel_grade, flange_steel_grade, tower_steel_grade,
                                        ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
                                        flange_height, flange_length, bolt_size)
