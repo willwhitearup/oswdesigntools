@@ -30,6 +30,7 @@ class BoltedFlange:
         self.b = None
         self.a_b_ratio = None
         self.b_star = b_star
+        self.n_bolts_max = None
         self.n_bolts = n_bolts
         self._compute_geometry()
 
@@ -55,10 +56,10 @@ class BoltedFlange:
 
         self.bolt_centre_diameter = self.outer_diameter - 2 * self.b_star
         n_bolts_dp = np.radians(180) / np.asin(self.bolt_tensioner_tool["t"] / self.bolt_centre_diameter)
-        n_bolts_max = math.floor(n_bolts_dp) - math.floor(n_bolts_dp) % 2
+        self.n_bolts_max = math.floor(n_bolts_dp) - math.floor(n_bolts_dp) % 2
 
-        if self.n_bolts is None or self.n_bolts > n_bolts_max:
-            self.n_bolts = n_bolts_max
+        if self.n_bolts is None or self.n_bolts > self.n_bolts_max:
+            self.n_bolts = self.n_bolts_max
 
         # width at the hole
         self.c = np.pi * self.bolt_centre_diameter / self.n_bolts
@@ -94,8 +95,10 @@ class BoltedFlange:
                 self.valid_geom = False
         else:
             self.valid_geom = False
+
+        # set the utilisation to infinity (i.e. penalise the util)
+        if not self.valid_geom:
             self.util = np.inf
-            # raise Exception(f"Invalid flange geometry. Check a and b values")
 
     def calc_flange_plastic_hinge_resistance(self):
         """See annex G IEC

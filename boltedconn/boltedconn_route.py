@@ -32,6 +32,7 @@ def boltedconn_route():
         # flange geometry
         flange_height = float(data["flange_height"])
         flange_length = float(data["flange_length"])
+        bolt_size = data.get("bolt_size")  # used in assess mode
         # Optional values
         n_bolts = data.get("n_bolts")
         n_bolts = int(n_bolts) if n_bolts else None
@@ -48,54 +49,54 @@ def boltedconn_route():
         ULS_bending_moment = float(data["ULS_bending_moment"])  # Nmm
 
         # ================= OPTIMISATION INPUTS =================
-        bolt_size = data.get("bolt_size")  # used in assess mode
         opt_bolt_size = data.get("opt_bolt_size")  # used in design mode
         bolt_target_util = float(data.get("bolt_target_util", 0.95))
         maintain_a_b_ratio_1_25 = bool(data.get("maintain_a_b_ratio_1_25", False))
 
         # plot options
-        xlim = data.get("xlim_bolt")
         x_axis_vary = data.get("x_axis_vary_bolt")
-        xlim, x_axis_vary = 50, "flange_height"  # todo with actual form shortly!!
 
         if bolt_assess == "assess":
             # Build kwargs dynamically
             numeric_fields = {
-                "outer_diameter": mp_outer_diameter,
-                "wall_thickness": mp_wall_thk,
                 "flange_height": flange_height,
-                "flange_length": flange_length
+                "flange_length": flange_length,
+                "n_bolts": n_bolts
             }
 
             # do the assessment
             flange_obj = bolt_connection_uls_strength_check(mp_outer_diameter, mp_wall_thk,
                                                       bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                                                      ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
+                                                      ULS_bending_moment, ULS_axial_force,
                                                       flange_height, flange_length, bolt_size, n_bolts, b_star)
 
-            # flange plot
+            # flange outline diagram plot
             flange_plot_json = l_flange_plotter(flange_obj)
-
-            # util plot  # todo , send this back but still need x-axis variations
-            bolt_util_plot_json = bolt_util_plotter_process(numeric_fields, x_axis_vary, xlim, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                                                            ULS_bending_moment, ULS_axial_force, bolt_size, n_bolts, b_star)
-
-            return jsonify({'message': 'success',
-                            "flange_plot_json": flange_plot_json,
-                            "bolt_sector_force": flange_obj.bolt_sector_force,
-                            "Fu_A":  flange_obj.Fu_A,
-                            "Fu_B": flange_obj.Fu_B,
-                            "Fu_D": flange_obj.Fu_D,
-                            "Fu_E": flange_obj.Fu_E,
-                            "Fu_governing": flange_obj.failure_mode_governing,
-                            "flange_util": flange_obj.util,
-                            "a_b_ratio": flange_obj.a_b_ratio,
-                            "n_bolts_ass": flange_obj.n_bolts  # nbolts assessed
-                            })
+            # util plot
+            bolt_util_plot_json = bolt_util_plotter_process(numeric_fields, x_axis_vary, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
+                                                            ULS_bending_moment, ULS_axial_force, bolt_size, b_star, mp_outer_diameter, mp_wall_thk,
+                                                            flange_obj.n_bolts_max)
 
         # Design mode i.e. optimisation
         elif bolt_assess == "design":
-            return jsonify({'message': 'design mode, no flange assessment'})
+            a = 1  # todo
+
+        return jsonify({'message': 'success',
+                        "flange_plot_json": flange_plot_json,
+                        "bolt_sector_force": flange_obj.bolt_sector_force,
+                        "Fu_A":  flange_obj.Fu_A,
+                        "Fu_B": flange_obj.Fu_B,
+                        "Fu_D": flange_obj.Fu_D,
+                        "Fu_E": flange_obj.Fu_E,
+                        "Fu_governing": flange_obj.failure_mode_governing,
+                        "flange_util": flange_obj.util,
+                        "a_b_ratio": flange_obj.a_b_ratio,
+                        "n_bolts_ass": flange_obj.n_bolts,  # nbolts assessed
+                        "TobinagaIshiharaFlag": flange_obj.TobinagaIshiharaFlag,
+                        "bolt_util_plot_json": bolt_util_plot_json  # results json plot
+                        })
+
+
 
     # GET request
     else:
@@ -118,16 +119,21 @@ def boltedconn_route():
 
 
 
-def bolt_util_plotter_process(numeric_fields, x_axis_vary, xlim, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                              ULS_bending_moment, ULS_axial_force, bolt_size, n_bolts, b_star):
+def bolt_util_plotter_process(numeric_fields, x_axis_vary, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
+                              ULS_bending_moment, ULS_axial_force, bolt_size, b_star, mp_outer_diameter, mp_wall_thk, n_bolts_max):
     """plot the x varying input vs FuA, FuB etc.
 
     todo: special plot if nBolts varies as need to cap the max no. of bolts on x-axis
     """
     maintain_a_b_ratio_1_25 = False
-    ## plotter
     base_val = numeric_fields[x_axis_vary]
-    x_arr = np.linspace(base_val * (1 - xlim / 100), base_val * (1 + xlim / 100), 21)  # +/- 50% of nominal
+    xlim = 0.5
+    if x_axis_vary == "n_bolts":
+        num_points = n_bolts_max - int(base_val * (1 - xlim)) + 1
+        x_arr = np.linspace(int(base_val * (1 - xlim)), n_bolts_max, num_points)  # +/- 50% of nominal
+    else:
+        x_arr = np.linspace(base_val * (1 - xlim), base_val * (1 + xlim), 21)  # +/- 50% of nominal
+
     Fu_As, Fu_Bs, Fu_Ds, Fu_Es = [], [], [], []
     F_actuals = []
     for x in x_arr:
@@ -136,12 +142,12 @@ def bolt_util_plotter_process(numeric_fields, x_axis_vary, xlim, bolt_steel_grad
         kwargs[x_axis_vary] = x
 
         # call function with numeric fields unpacked, other args explicitly
-        flange_obj = bolt_connection_uls_strength_check(kwargs["outer_diameter"], kwargs["wall_thickness"],
+        flange_obj = bolt_connection_uls_strength_check(mp_outer_diameter, mp_wall_thk,
                                                              bolt_steel_grade, flange_steel_grade, tower_steel_grade,
                                                              ULS_bending_moment, ULS_axial_force,
-                                                             maintain_a_b_ratio_1_25, kwargs["flange_height"],
+                                                             kwargs["flange_height"],
                                                              kwargs["flange_length"],
-                                                             bolt_size, n_bolts, b_star)
+                                                             bolt_size, kwargs["n_bolts"], b_star)
 
         if flange_obj.util is None or math.isinf(flange_obj.util):
             Fu_A, Fu_B, Fu_D, Fu_E = 0., 0., 0., 0.
@@ -152,7 +158,6 @@ def bolt_util_plotter_process(numeric_fields, x_axis_vary, xlim, bolt_steel_grad
         Fu_Bs.append(Fu_B)
         Fu_Ds.append(Fu_D)
         Fu_Es.append(Fu_E)
-
         F_actuals.append(flange_obj.bolt_sector_force)
 
     bolt_util_plot_json = bolted_connection_utils_plot(x_arr.tolist(), x_axis_vary, Fu_As, Fu_Bs, Fu_Ds, Fu_Es,

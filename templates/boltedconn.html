@@ -131,6 +131,21 @@
                 </div>
             </div>
 
+<!--            plot options-->
+            <div class="bolt-geometry-section">
+                <h4 class="bolt-section-title">Plot options</h4>
+
+                <div class="bolt-form-row">
+                    <label for="x_axis_vary_bolt">X-axis vary</label>
+                    <select id="x_axis_vary_bolt" name="x_axis_vary_bolt">
+                        <option value="flange_height" {% if x_axis_vary_bolt == "flange_height" %}selected{% endif %}>flange_height</option>
+                        <option value="flange_length" {% if x_axis_vary_bolt == "flange_length" %}selected{% endif %}>flange_length</option>
+                        <option value="n_bolts" {% if x_axis_vary_bolt == "n_bolts" %}selected{% endif %}>n_bolts</option>
+                    </select>
+                </div>
+
+            </div>
+
             <div class="bolt-geometry-section" id="bolt-optimisation-section">
                 <h4 class="bolt-section-title">Optimisation (flange designer)</h4>
                 <div class="bolt-form-row">
@@ -188,6 +203,10 @@
     </div>
 </div>
 
+<div id="bolt-util-plot-container" style="display:none;">
+    <div id="bolt-util-plot" class="bolt-util-plot-container"></div>
+</div>
+
 <!--JS code !!!!!!!!!!!!!!!-->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
@@ -206,17 +225,20 @@
     function toggleSections() {
         const mode = modeSelect.value;
         const resultsContainer = document.getElementById("bolt-results-container");
+        const utilResultsContainer = document.getElementById("bolt-util-plot-container");
 
         if (mode === "assess") {
             lFlangeSection.style.display = "block";
             optimisationSection.style.display = "none";
             flangePlotContainer.style.display = "block";
             resultsContainer.style.display = "flex"; // show results
+            utilResultsContainer.style.display = "flex"; // show results
         } else {
             lFlangeSection.style.display = "none";
             optimisationSection.style.display = "block";
             flangePlotContainer.style.display = "none";
             resultsContainer.style.display = "none"; // hide results
+            utilResultsContainer.style.display = "none"; // hide results
         }
     }
 
@@ -248,9 +270,9 @@
             submitBtn.style.backgroundColor = "#28a745"; // green if same as last submission
         }
     });
-
     // ====== Form submission ======
     async function submitForm() {
+
         const data = getFormValues();
 
         try {
@@ -259,23 +281,30 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             });
+
             const result = await response.json();
             console.log("Server response:", result);
 
-            // store submitted values
+            // Store submitted values
             submittedValues = getFormValues();
             submitBtn.style.backgroundColor = "#28a745"; // reset to green
 
-            // Update plot only for assess mode
-            if (data.bolt_assess === "assess" && result.flange_plot_json) {
-                const parsed_fig = JSON.parse(result.flange_plot_json);
-                Plotly.react("flange-plot-json", parsed_fig.data, parsed_fig.layout);
-            }
-
-            // Update results box
             const resBox = document.getElementById("bolt-res-output");
             const geomBox = document.getElementById("bolt-geom-output");
-            if (resBox && result.flange_util !== undefined) {
+            const utilContainer = document.getElementById("bolt-util-plot-container");
+            const utilPlotDiv = document.getElementById("bolt-util-plot");
+            const flangePlotDiv = document.getElementById("flange-plot-json");
+
+            // ===== Assess mode only =====
+            if (data.bolt_assess === "assess") {
+
+                // ---- Flange plot ----
+                if (result.flange_plot_json) {
+                    const parsed_fig = JSON.parse(result.flange_plot_json);
+                    Plotly.react(flangePlotDiv, parsed_fig.data, parsed_fig.layout);
+                }
+
+                // ---- Results box ----
                 resBox.innerHTML = `
                     <div>Utilisation: ${result.flange_util.toFixed(3)}</div>
                     <div>Bolt sector force: ${result.bolt_sector_force.toFixed(2)}</div>
@@ -285,10 +314,42 @@
                     <div>Fu_E: ${result.Fu_E.toFixed(2)}</div>
                     <div>Fu governing: ${result.Fu_governing}</div>
                 `;
+
                 geomBox.innerHTML = `
-                    <div>a/b ratio: ${result.a_b_ratio.toFixed(3)}</div>
+                    <div>a/b: ${result.a_b_ratio.toFixed(3)}</div>
+                    <div>Tobinaga Ishihara extension: ${result.TobinagaIshiharaFlag ? "Yes (a/b>1.25)" : "No (a/b≤1.25)"}</div>
                     <div>No. of bolts: ${result.n_bolts_ass}</div>
-                    `;
+                `;
+
+                // ---- Utilisation plot ----
+                const utilContainer = document.getElementById("bolt-util-plot-container");
+                const utilPlotDiv = document.getElementById("bolt-util-plot");
+
+                if (result.bolt_util_plot_json) {
+                    utilContainer.style.display = "block";  // make sure visible first
+                    const utilFig = JSON.parse(result.bolt_util_plot_json);
+
+                    Plotly.react(
+                        utilPlotDiv,
+                        utilFig.data,
+                        utilFig.layout,
+                        { responsive: true }
+                    );
+                } else {
+                    utilContainer.style.display = "none";
+                    utilPlotDiv.innerHTML = "";
+                }
+
+            } else {
+                // ===== Design mode =====
+                // Hide everything
+
+                resBox.innerHTML = "";
+                geomBox.innerHTML = "";
+
+                utilContainer.style.display = "none";
+                utilPlotDiv.innerHTML = "";
+                flangePlotDiv.innerHTML = "";
             }
 
         } catch (error) {

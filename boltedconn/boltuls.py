@@ -11,8 +11,8 @@ from boltedconn.tensionerdata import BoltTensionerLibrary
 
 def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
                                        bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                                       ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
-                                       flange_height, flange_length, bolt_size, n_bolts, b_star):
+                                       ULS_bending_moment, ULS_axial_force,
+                                       flange_height, flange_length, bolt_size, n_bolts, b_star, maintain_a_b_ratio_1_25=False):
     # process =======================================================
     # get bolt constants
 
@@ -32,12 +32,10 @@ def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
     flange_obj.geometry_validity_check(maintain_a_b_ratio_1_25)
 
     if not flange_obj.valid_geom: # penalises the geometry
-        #print("invalid geom")
         return flange_obj
 
     flange_obj.calc_flange_plastic_hinge_resistance()
     if not flange_obj.Fu_convergence:
-        #print("non convergence")
         return flange_obj
 
     flange_obj.calc_bolted_connection_failure_modes()
@@ -73,12 +71,10 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
                     with redirect_stdout(fnull):
                         flange_obj = bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
                                        bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                                       ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
-                                       flange_height, flange_length, bolt_size
-                                                                  )
+                                       ULS_bending_moment, ULS_axial_force,
+                                       flange_height, flange_length, bolt_size, n_bolts=None, b_star=None, maintain_a_b_ratio_1_25=maintain_a_b_ratio_1_25)
 
                         util = flange_obj.util
-
 
                 if util <= target_util:
                     geom_dict = {"flange_area": flange_height * flange_length, "flange_height": flange_height,
@@ -133,8 +129,8 @@ if __name__ == "__main__":
 
     flange_obj = bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
                                        bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                                       ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
-                                       flange_height, flange_length, bolt_size)
+                                       ULS_bending_moment, ULS_axial_force,
+                                       flange_height, flange_length, bolt_size, n_bolts=None, b_star=None, maintain_a_b_ratio_1_25=maintain_a_b_ratio_1_25)
 
     # user inputs for optimising
     incrs = 5  # search every 5mm increment size
