@@ -57,29 +57,42 @@
                            value="{{ flange_length }}">
                 </div>
 
+<!--                <div class="bolt-form-row">-->
+<!--                    <label for="bolt_size">Bolt size</label>-->
+<!--                    <select id="bolt_size" name="bolt_size">-->
+<!--                        <option value="M72" {% if bolt_size == "M72" %}selected{% endif %}>M72</option>-->
+<!--                        <option value="M80" {% if bolt_size == "M80" %}selected{% endif %}>M80</option>-->
+<!--                        <option value="M90" {% if bolt_size == "M90" %}selected{% endif %}>M90</option>-->
+<!--                    </select>-->
+<!--                </div>-->
+
+
                 <div class="bolt-form-row">
                     <label for="bolt_size">Bolt size</label>
                     <select id="bolt_size" name="bolt_size">
-                        <option value="M72" {% if bolt_size == "M72" %}selected{% endif %}>M72</option>
-                        <option value="M80" {% if bolt_size == "M80" %}selected{% endif %}>M80</option>
-                        <option value="M90" {% if bolt_size == "M90" %}selected{% endif %}>M90</option>
+                        {% for size in bolt_sizes %}
+                            <option value="{{ size }}" {% if bolt_size == size %}selected{% elif not bolt_size and size == "M90" %}selected{% endif %}>
+                                {{ size }}
+                            </option>
+                        {% endfor %}
                     </select>
                 </div>
 
+
+                <!--OPTIONAL-->
                 <h4 class="bolt-section-subtitle">Optional</h4>
 
-                <h6 class="bolt-section-italic">If left blank, variables will be auto-calculated (to reduce utilisation)</h6>
+                <h6 class="bolt-section-italic">If blank, bolts no. is maximised; b* minimised for tensioner tool req's (see "Flange details" for values)</h6>
                 <div class="bolt-form-row">
                     <label for="n_bolts">No. of bolts</label>
-                    <input type="number" step="any" id="n_bolts" name="n_bolts"
-                           value="{{ n_bolts }}">
+                    <input type="number" step="any" id="n_bolts" name="n_bolts" value="">
+<!--                    value="{{ n_bolts }}">-->
                 </div>
-
 
                 <div class="bolt-form-row">
                     <label for="b_star">b*</label>
-                    <input type="number" step="any" id="b_star" name="b_star"
-                           value="{{ b_star }}">
+                    <input type="number" step="any" id="b_star" name="b_star" value="">
+<!--                           value="{{ b_star }}">-->
                 </div>
             </div>
 
@@ -92,6 +105,7 @@
                     <select id="bolt_steel_grade" name="bolt_steel_grade">
                         <option value="10.9" {% if bolt_steel_grade == "10.9" %}selected{% endif %}>10.9</option>
                         <option value="8.8" {% if bolt_steel_grade == "8.8" %}selected{% endif %}>8.8</option>
+                        <option value="6.8" {% if bolt_steel_grade == "8.8" %}selected{% endif %}>6.8</option>
                     </select>
                 </div>
 
@@ -100,6 +114,7 @@
                     <select id="flange_steel_grade" name="flange_steel_grade">
                         <option value="355" {% if flange_steel_grade == "S355" %}selected{% endif %}>S355</option>
                         <option value="420" {% if flange_steel_grade == "S420" %}selected{% endif %}>S420</option>
+                        <option value="460" {% if flange_steel_grade == "S460" %}selected{% endif %}>S460</option>
                     </select>
                 </div>
 
@@ -109,6 +124,7 @@
                     <select id="tower_steel_grade" name="tower_steel_grade">
                         <option value="355" {% if tower_steel_grade == "S355" %}selected{% endif %}>S355</option>
                         <option value="420" {% if tower_steel_grade == "S420" %}selected{% endif %}>S420</option>
+                        <option value="460" {% if tower_steel_grade == "S460" %}selected{% endif %}>S460</option>
                     </select>
                 </div>
 
@@ -138,7 +154,7 @@
                 <div class="bolt-form-row">
                     <label for="x_axis_vary_bolt">X-axis vary</label>
                     <select id="x_axis_vary_bolt" name="x_axis_vary_bolt">
-                        <option value="flange_height" {% if x_axis_vary_bolt == "flange_height" %}selected{% endif %}>flange_height</option>
+                        <option value="flange_height" {% if x_axis_vary_bolt == "flange_height" %}selected{% endif %}>flange_height (t)</option>
                         <option value="flange_length" {% if x_axis_vary_bolt == "flange_length" %}selected{% endif %}>flange_length</option>
                         <option value="n_bolts" {% if x_axis_vary_bolt == "n_bolts" %}selected{% endif %}>n_bolts</option>
                     </select>
@@ -198,81 +214,95 @@
         <div id="bolt-res-output"></div>
     </div>
     <div class="bolt-result-box">
-        <h4>Geometry Checks</h4>
+        <h4>Flange details</h4>
         <div id="bolt-geom-output"></div>
     </div>
 </div>
 
-<div id="bolt-util-plot-container" style="display:none;">
+<!-- plot of the Fu_A, Fu_B etc utilisation plotly plot-->
+<div id="bolt-util-plot-container">
     <div id="bolt-util-plot" class="bolt-util-plot-container"></div>
+</div>
+
+<!-- Optimisation table (hidden initially) -->
+<div id="bolt-opt-table-container" class="bolt-opt-table-container" style="display:none;">
+    <div class="bolt-opt-table-title">Optimal flange geometries</div>
+    <div id="bolt-opt-table"></div>
 </div>
 
 <!--JS code !!!!!!!!!!!!!!!-->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
+
     const modeSelect = document.getElementById("bolt_assess");
     const lFlangeSection = document.getElementById("l-flange-section");
     const optimisationSection = document.getElementById("bolt-optimisation-section");
-    const flangePlotContainer = document.getElementById("flange-plot-json");
+
+    const flangePlotDiv = document.getElementById("flange-plot-json");
+    const utilContainer = document.getElementById("bolt-util-plot-container");
+    const utilPlotDiv = document.getElementById("bolt-util-plot");
+
     const form = document.getElementById("bolt-input-form");
     const submitBtn = document.querySelector(".bolt-submit-button");
 
-    let submittedValues = {}; // store last submitted values
+    const resContainer = document.getElementById("bolt-results-container");
 
-    // ====== Toggle Assess/Design sections ======
+    const resBox = document.getElementById("bolt-res-output");
+    const geomBox = document.getElementById("bolt-geom-output");
+    const optContainer = document.getElementById("bolt-opt-table-container");
+    const optTableDiv = document.getElementById("bolt-opt-table");
+
+    let submittedValues = {};
+
+    // ===============================
+    // Toggle Assess / Design Sections
+    // ===============================
     function toggleSections() {
         const mode = modeSelect.value;
-        const resultsContainer = document.getElementById("bolt-results-container");
-        const utilResultsContainer = document.getElementById("bolt-util-plot-container");
-
         if (mode === "assess") {
             lFlangeSection.style.display = "block";
             optimisationSection.style.display = "none";
-            flangePlotContainer.style.display = "block";
-            resultsContainer.style.display = "flex"; // show results
-            utilResultsContainer.style.display = "flex"; // show results
+            flangePlotDiv.style.display = "block";
+            utilContainer.style.display = "block";
+            resContainer.style.display = "flex";  // Show results container
         } else {
             lFlangeSection.style.display = "none";
             optimisationSection.style.display = "block";
-            flangePlotContainer.style.display = "none";
-            resultsContainer.style.display = "none"; // hide results
-            utilResultsContainer.style.display = "none"; // hide results
+            flangePlotDiv.style.display = "none";
+            utilContainer.style.display = "none";
+            resContainer.style.display = "none";  // Hide results container in design mode
         }
     }
 
-    toggleSections(); // initial call
+    toggleSections();
     modeSelect.addEventListener("change", toggleSections);
 
-    // ====== Form helpers ======
+    // ===============================
+    // Form Helpers
+    // ===============================
     function getFormValues() {
         const data = {};
-        const formData = new FormData(form);
-        formData.forEach((value, key) => { data[key] = value; });
-        data["maintain_a_b_ratio_1_25"] = document.getElementById("maintain_a_b_ratio_1_25").checked;
+        new FormData(form).forEach((value, key) => { data[key] = value; });
+        data["maintain_a_b_ratio_1_25"] =
+            document.getElementById("maintain_a_b_ratio_1_25").checked;
         return data;
     }
 
     function hasChanged(current, submitted) {
-        for (let key in current) {
-            if (current[key] !== submitted[key]) return true;
-        }
-        return false;
+        return Object.keys(current).some(key => current[key] !== submitted[key]);
     }
 
-    // Listen for input changes to update button color
     form.addEventListener("input", () => {
         const currentValues = getFormValues();
-        if (hasChanged(currentValues, submittedValues)) {
-            submitBtn.style.backgroundColor = "#FFA500"; // orange if changed
-        } else {
-            submitBtn.style.backgroundColor = "#28a745"; // green if same as last submission
-        }
+        submitBtn.style.backgroundColor =
+            hasChanged(currentValues, submittedValues) ? "#FFA500" : "#28a745";
     });
-    // ====== Form submission ======
-    async function submitForm() {
 
+    // ===============================
+    // Submit Logic
+    // ===============================
+    async function submitForm() {
         const data = getFormValues();
 
         try {
@@ -285,26 +315,41 @@
             const result = await response.json();
             console.log("Server response:", result);
 
-            // Store submitted values
             submittedValues = getFormValues();
-            submitBtn.style.backgroundColor = "#28a745"; // reset to green
+            submitBtn.style.backgroundColor = "#28a745";
 
-            const resBox = document.getElementById("bolt-res-output");
-            const geomBox = document.getElementById("bolt-geom-output");
-            const utilContainer = document.getElementById("bolt-util-plot-container");
-            const utilPlotDiv = document.getElementById("bolt-util-plot");
-            const flangePlotDiv = document.getElementById("flange-plot-json");
-
-            // ===== Assess mode only =====
+            // --------- ASSESS MODE ---------
             if (data.bolt_assess === "assess") {
 
-                // ---- Flange plot ----
+                optContainer.style.display = "none";
+                optTableDiv.innerHTML = "";
+
+                flangePlotDiv.style.display = "block";
+                utilContainer.style.display = "block";
+
+                // Flange plot
                 if (result.flange_plot_json) {
-                    const parsed_fig = JSON.parse(result.flange_plot_json);
-                    Plotly.react(flangePlotDiv, parsed_fig.data, parsed_fig.layout);
+                    const fig = JSON.parse(result.flange_plot_json);
+                    if (flangePlotDiv.data) {
+                        Plotly.react(flangePlotDiv, fig.data, fig.layout, { responsive: true });
+                    } else {
+                        Plotly.newPlot(flangePlotDiv, fig.data, fig.layout, { responsive: true });
+                    }
+                    Plotly.Plots.resize(flangePlotDiv);
                 }
 
-                // ---- Results box ----
+                // Bolt util plot
+                if (result.bolt_util_plot_json) {
+                    const utilFig = JSON.parse(result.bolt_util_plot_json);
+                    if (utilPlotDiv.data) {
+                        Plotly.react(utilPlotDiv, utilFig.data, utilFig.layout, { responsive: true });
+                    } else {
+                        Plotly.newPlot(utilPlotDiv, utilFig.data, utilFig.layout, { responsive: true });
+                    }
+                    Plotly.Plots.resize(utilPlotDiv);
+                }
+
+                // Results boxes
                 resBox.innerHTML = `
                     <div>Utilisation: ${result.flange_util.toFixed(3)}</div>
                     <div>Bolt sector force: ${result.bolt_sector_force.toFixed(2)}</div>
@@ -316,40 +361,64 @@
                 `;
 
                 geomBox.innerHTML = `
+                    <div>Valid geometry: ${result.bolt_valid_geom_flag ? "Yes" : "No"}</div>
+                    <div>No. of bolts: ${result.n_bolts_ass}
+                        ${result.n_bolts_tried > result.n_bolts_max
+                            ? `(input ${result.n_bolts_tried} ignored, max ${result.n_bolts_max} allowed)`
+                            : ""}
+                    </div>
+                    <div>a: ${result.bolt_a.toFixed(3)}</div>
+                    <div>b*: ${result.b_star}</div>
                     <div>a/b: ${result.a_b_ratio.toFixed(3)}</div>
-                    <div>Tobinaga Ishihara extension: ${result.TobinagaIshiharaFlag ? "Yes (a/b>1.25)" : "No (a/b≤1.25)"}</div>
-                    <div>No. of bolts: ${result.n_bolts_ass}</div>
+                    <div>alpha: ${result.bolt_alpha.toFixed(3)}</div>
+                    <div>Fu convergence: ${result.Fu_convergence_flag ? "Yes" : "No"}</div>
+                    <div>Tobinaga Ishihara extension: ${
+                        result.TobinagaIshiharaFlag
+                        ? "Yes (a/b>1.25)"
+                        : "No (-0.12a + 0.55 <=alpha <=1 & ≤1.25a/b<2.25)"
+                    }</div>
+                    <div>Flange net mass [te]: ${result.flange_net_mass.toFixed(2)}</div>
                 `;
+            }
 
-                // ---- Utilisation plot ----
-                const utilContainer = document.getElementById("bolt-util-plot-container");
-                const utilPlotDiv = document.getElementById("bolt-util-plot");
+            // --------- DESIGN MODE ---------
+            else {
 
-                if (result.bolt_util_plot_json) {
-                    utilContainer.style.display = "block";  // make sure visible first
-                    const utilFig = JSON.parse(result.bolt_util_plot_json);
+                flangePlotDiv.style.display = "none";
+                utilContainer.style.display = "none";
 
-                    Plotly.react(
-                        utilPlotDiv,
-                        utilFig.data,
-                        utilFig.layout,
-                        { responsive: true }
-                    );
-                } else {
-                    utilContainer.style.display = "none";
-                    utilPlotDiv.innerHTML = "";
-                }
-
-            } else {
-                // ===== Design mode =====
-                // Hide everything
+                if (flangePlotDiv.data) Plotly.purge(flangePlotDiv);
+                if (utilPlotDiv.data) Plotly.purge(utilPlotDiv);
 
                 resBox.innerHTML = "";
                 geomBox.innerHTML = "";
 
-                utilContainer.style.display = "none";
-                utilPlotDiv.innerHTML = "";
-                flangePlotDiv.innerHTML = "";
+                const rows = result.df_optimal_res;
+
+                if (rows.length > 0) {
+                    const columns = Object.keys(rows[0]);
+                    let tableHTML = `<table><thead><tr>`;
+                    columns.forEach(col => tableHTML += `<th>${col}</th>`);
+                    tableHTML += `</tr></thead><tbody>`;
+                    rows.forEach(row => {
+                        tableHTML += `<tr>`;
+                        columns.forEach(col => {
+                            let value = row[col];
+                            if (typeof value === "number")
+                                value = Number.isInteger(value) ? value : value.toFixed(3);
+                            tableHTML += `<td>${value}</td>`;
+                        });
+                        tableHTML += `</tr>`;
+                    });
+                    tableHTML += `</tbody></table>`;
+
+                    optTableDiv.innerHTML = tableHTML;
+                    optContainer.style.display = "block";
+                } else {
+                    optTableDiv.innerHTML =
+                        "<div style='padding:10px; color:#ff0000; font-weight:bold;'>NO RESULTS!</div>";
+                    optContainer.style.display = "block";
+                }
             }
 
         } catch (error) {
@@ -357,17 +426,12 @@
         }
     }
 
-    // Attach form submit
-    form.addEventListener("submit", function(e) {
+    form.addEventListener("submit", e => {
         e.preventDefault();
         submitForm();
     });
 
-    // === AUTO submit on initial load ===
-    submitForm(); // run once after page load
+    submitForm();
 });
-
 </script>
-
-
 {% endblock %}

@@ -1,17 +1,9 @@
 import plotly.graph_objs as go
 import numpy as np
 import plotly.io as pio
-
-from boltedconn.boltdata import Bolt
 from boltedconn.flange import BoltedFlange
 
 
-# wall_thk: float,
-# flange_length: float,
-# flange_thickness: float,
-# total_height: float,
-# hole_diameter: float,
-# b_star: float
 def l_flange_plotter(flange_obj: BoltedFlange):
     """
     Single L-flange profile.
@@ -24,9 +16,11 @@ def l_flange_plotter(flange_obj: BoltedFlange):
     total_height = flange_obj.total_height
     hole_diameter = flange_obj.bolt_obj.hole_diameter
     b_star = flange_obj.b_star
-
+    b = flange_obj.b
+    bolt_size = flange_obj.bolt_obj.bolt_size
+    n_bolts = flange_obj.n_bolts
     # radius between flange and wall thickness
-    r = flange_height / 8
+    r = flange_height / 8.5
     n_arc_pts: int = 12  # smoothness of radius
 
     # ============================================================
@@ -77,176 +71,51 @@ def l_flange_plotter(flange_obj: BoltedFlange):
                              mode="lines", line=dict(color="black", width=2, dash="dot"), showlegend=False))
 
     ## annotations
-    fig = flange_t_annotation(fig, flange_length, flange_height)
-    fig = b_star_annotation(fig, flange_height, b_star)
-    fig = flange_height_annotation(fig, total_height)
-    fig = flange_length_annotation(fig, total_height, flange_length)
-    fig = hole_diameter_annotation(fig, b_star, flange_height, hole_diameter)
+    # vertical dim lines
+    vert_line_annotation(fig, flange_length * 0.1, 0, -total_height, "total height")
+    vert_line_annotation(fig, -flange_length * 1.075, 0, -flange_height, "t")
+    # horz dim lines
+    horz_line_annotation(fig, -total_height * 1.2, -flange_length , 0, "flange length")
+    horz_line_annotation(fig, flange_height / 3, -flange_length, -b_star, "a")  # a
+    horz_line_annotation(fig, flange_height / 3, -b_star, 0, "b*")
+    horz_line_annotation(fig, flange_height / 6, -wall_thk/2-b, -wall_thk/2, "b")
+    horz_line_annotation(fig, -total_height * 1.1, 0, -wall_thk, "wall thk")
+    horz_line_annotation(fig, -flange_height * 1.2, -b_star-hole_diameter/2, -b_star + hole_diameter/2, "hole diameter")
 
     # fig size / extent and layout
     fig.update_layout(
-        title=f'L-flange diagram',
+        title=f'L-flange diagram {n_bolts} x {bolt_size} bolts',
         width=800,  # adjust figure width
         height=800,  # adjust figure height (square looks nice)
         xaxis=dict(range=[-flange_length * 1.2, flange_length * 0.2], scaleanchor='y', title='X (mm)'),
         yaxis=dict(range=[-total_height * 1.2, flange_height * 0.5], title='Y (mm)'),
         showlegend=False)
 
-    # fig.show()
+    #fig.show()
 
     return pio.to_json(fig)
 
 
-def flange_length_annotation(fig, total_height, flange_length):
-
-    y_dim = - 1.075 * total_height
-
-    # dim line
-    fig.add_trace(go.Scatter(x=[0, -flange_length], y=[y_dim, y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
-
-    # text annotation
-    fig.add_annotation(x=-flange_length / 2, y=y_dim, ax=-flange_length, ay=y_dim, text="flange length", showarrow=False,
-                       font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
-
+def horz_line_annotation(fig, line_y_dim, min_x, max_x, annotation_text):
+    # horz dim line
+    fig.add_trace(go.Scatter(x=[min_x, max_x], y=[line_y_dim, line_y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
     # Left and right tick mark
-    fig.add_trace(go.Scatter(x=[0, 0], y=[y_dim - 3, y_dim + 3], mode="lines", line=dict(color="black", width=2), showlegend=False))
-    fig.add_trace(go.Scatter(x=[-flange_length, -flange_length], y=[y_dim - 5, y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
-
-    return fig
-
-
-
-def b_star_annotation(fig, flange_thickness, b_star):
-
-    # b* annotation
-    y_dim = flange_thickness / 4  # position above the flange
-
-    # dim line
-    fig.add_trace(go.Scatter(x=[0, -b_star], y=[y_dim, y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
-
+    fig.add_trace(go.Scatter(x=[max_x, max_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
+    fig.add_trace(go.Scatter(x=[min_x, min_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
     # text annotation
-    fig.add_annotation(x=-b_star / 2, y=y_dim, ax=-b_star, ay=y_dim, text="b*", showarrow=False,
-                       font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
+    fig.add_annotation(x=(min_x + max_x) / 2, y=line_y_dim, text=annotation_text, showarrow=False, font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
+    return None
 
-    # Left and right tick mark
-    fig.add_trace(go.Scatter(x=[0, 0], y=[y_dim - 5, y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
-    fig.add_trace(go.Scatter(x=[-b_star, -b_star], y=[y_dim - 5, y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
-
-    return fig
-
-
-def hole_diameter_annotation(fig, b_star, flange_thickness, hole_diameter):
-
-    # b* annotation
-    y_dim = -flange_thickness * 1.2  # position above the flange
-    xmin, xmax = -b_star - hole_diameter*0.5, -b_star + hole_diameter*0.5
-
-    # dim line
-    fig.add_trace(go.Scatter(x=[xmin, xmax], y=[y_dim, y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
-
-    # text annotation
-    fig.add_annotation(x=-b_star, y=y_dim * 1.1, text="hole diameter", showarrow=False,
-                       font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
-
-    # Left and right tick mark
-    fig.add_trace(go.Scatter(x=[xmin, xmin], y=[y_dim - 5, y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
-    fig.add_trace(go.Scatter(x=[xmax, xmax], y=[y_dim - 5, y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
-
-    return fig
-
-
-def flange_t_annotation(fig, flange_length, flange_thickness):
-
-    x_dim = -flange_length-50  # position of vertical dimension line
-    y_top = 0  # top of flange
-    tick_size = 5  # length of horizontal ticks
-
+def vert_line_annotation(fig, line_x_dim, min_y, max_y, annotation_text):
     # Vertical dimension line
-    fig.add_trace(go.Scatter(
-        x=[x_dim, x_dim],
-        y=[-flange_thickness, y_top],
-        mode="lines",
-        line=dict(color="black", width=2),
-        showlegend=False
-    ))
-
-    # Top tick
-    fig.add_trace(go.Scatter(
-        x=[x_dim - tick_size, x_dim + tick_size],
-        y=[y_top, y_top],
-        mode="lines",
-        line=dict(color="black", width=2),
-        showlegend=False
-    ))
-
-    # Bottom tick
-    fig.add_trace(go.Scatter(
-        x=[x_dim - tick_size, x_dim + tick_size],
-        y=[-flange_thickness, -flange_thickness],
-        mode="lines",
-        line=dict(color="black", width=2),
-        showlegend=False
-    ))
-
+    fig.add_trace(go.Scatter(x=[line_x_dim, line_x_dim], y=[min_y, max_y], mode="lines", line=dict(color="black", width=2), showlegend=False))
+    # Top tick Bottom tick
+    fig.add_trace(go.Scatter(x=[line_x_dim - 5, line_x_dim + 5], y=[max_y, max_y], mode="lines", line=dict(color="black", width=2), showlegend=False))
+    fig.add_trace(go.Scatter(x=[line_x_dim - 5, line_x_dim + 5], y=[min_y, min_y], mode="lines", line=dict(color="black", width=2), showlegend=False))
     # Label in middle
-    fig.add_annotation(
-        x=x_dim,  # slightly left of the line
-        y=(y_top - flange_thickness) / 2,
-        text="t",
-        showarrow=False,
-        font=dict(size=12, color="black"),
-        bgcolor="white",
-        bordercolor="black",
-        borderpad=2
-    )
-    return fig
+    fig.add_annotation(x=line_x_dim,  y=(min_y + max_y) / 2, text=annotation_text, showarrow=False, font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
+    return None
 
-
-def flange_height_annotation(fig, total_height):
-    x_offset = 60  # horizontal offset to left of flange
-    y_top = 0
-    y_bottom = -total_height
-    tick_size = 5  # length of ticks
-
-    # Vertical dimension line
-    fig.add_trace(go.Scatter(
-        x=[x_offset, x_offset],
-        y=[y_bottom, y_top],
-        mode="lines",
-        line=dict(color="black", width=2),
-        showlegend=False
-    ))
-
-    # Top tick
-    fig.add_trace(go.Scatter(
-        x=[x_offset - tick_size, x_offset + tick_size],
-        y=[y_top, y_top],
-        mode="lines",
-        line=dict(color="black", width=2),
-        showlegend=False
-    ))
-
-    # Bottom tick
-    fig.add_trace(go.Scatter(
-        x=[x_offset - tick_size, x_offset + tick_size],
-        y=[y_bottom, y_bottom],
-        mode="lines",
-        line=dict(color="black", width=2),
-        showlegend=False
-    ))
-
-    # Label in middle
-    fig.add_annotation(
-        x=x_offset,  # slight left offset for readability
-        y=(y_top + y_bottom) / 2,
-        text="total height",
-        showarrow=False,
-        font=dict(size=12, color="black"),
-        bgcolor="white",
-        bordercolor="black",
-        borderpad=2
-    )
-    return fig
 
 if __name__ == "__main__":
 

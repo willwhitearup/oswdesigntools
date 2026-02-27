@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import os
 from contextlib import redirect_stdout
 from pprint import pprint
@@ -47,8 +48,8 @@ def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
 def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
                               ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
                               target_util,
-                              flange_height_min, flange_height_max,
-                              flange_length_min, flange_length_max, incrs
+                              flange_height_max,
+                              flange_length_max, incrs
                               ):
 
     # searching....
@@ -57,15 +58,17 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
     print("==================================================")
     bolt_sizes = list(BoltLibrary._bolts.keys())
     bolt_sizes.sort(key=lambda x: int(x[1:]))  # removes 'M' prefix
+    #bolt_sizes = ["M90"]
     print("Finding optimal geometry for the following bolt sizes: ", bolt_sizes)
+    flange_height_min = 20  # seems ok, small!
     geom_acceptable = {}
     for bolt_size in bolt_sizes:
         print(f"Searching for flange geometries for bolt size: {bolt_size}...")
         geom_acceptable[bolt_size] = {}
         counter = 0  # new counter for each bolt size
         for flange_height in np.arange(flange_height_min, flange_height_max, incrs):
+            flange_length_min = wall_thickness + BoltLibrary._bolts[bolt_size]["hole_diameter"] + 20
             for flange_length in np.arange(flange_length_min, flange_length_max, incrs):
-
                 # call the strength check func and suppress all prints temporarily
                 with open(os.devnull, "w") as fnull:
                     with redirect_stdout(fnull):
@@ -78,7 +81,7 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
 
                 if util <= target_util:
                     geom_dict = {"flange_area": flange_height * flange_length, "flange_height": flange_height,
-                        "flange_length": flange_length, "util": round(util, 3)
+                        "flange_length": flange_length, "util": round(util, 3), "bolt_size": bolt_size
                     }
                     geom_acceptable[bolt_size][f"{bolt_size}_geom_{counter}"] = geom_dict
                     counter += 1
@@ -98,12 +101,16 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
             optimal_res[bolt_size] = top_geoms
 
     if optimal_res:
+        df_optimal_res = pd.DataFrame.from_dict(optimal_res[bolt_size], orient="index")
+        df_optimal_res.index.name = "ID"
+        df_optimal_res.reset_index(inplace=True)
         print(f"Optimal geometries for smallest feasible bolt {bolt_size}:")
-        pprint(optimal_res[bolt_size])
+        print(df_optimal_res)
     else:
+        df_optimal_res = None
         print("Flange design for the given inputs can not be found! Exiting!")
 
-    return optimal_res
+    return df_optimal_res
 
 
 
@@ -112,7 +119,7 @@ if __name__ == "__main__":
     # Inputs =======================================================
     # foundation geometry
     outer_diameter = 7500
-    wall_thickness = 100
+    wall_thickness = 10
     bolt_steel_grade = "10.9"
     flange_steel_grade = "355"
     tower_steel_grade = "355"
@@ -132,18 +139,21 @@ if __name__ == "__main__":
                                        ULS_bending_moment, ULS_axial_force,
                                        flange_height, flange_length, bolt_size, n_bolts=None, b_star=None, maintain_a_b_ratio_1_25=maintain_a_b_ratio_1_25)
 
+    print(flange_obj.b_star)
+    print(flange_obj.n_bolts)
+    print(flange_obj.util)
     # user inputs for optimising
-    incrs = 5  # search every 5mm increment size
-    flange_height_min, flange_height_max = 50, 500
-    flange_length_min, flange_length_max = wall_thickness + 10, 1500
-    target_util = 0.95
+    # incrs = 5  # search every 5mm increment size
+    # flange_height_max = 500
+    # flange_length_max = 1500
+    # target_util = 0.95
+    # df_optimal_res = flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
+    #                           ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
+    #                           target_util,
+    #                           flange_height_max,
+    #                           flange_length_max, incrs
+    #                           )
 
-    flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                              ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
-                              target_util,
-                              flange_height_min, flange_height_max,
-                              flange_length_min, flange_length_max, incrs
-                              )
 
 
 

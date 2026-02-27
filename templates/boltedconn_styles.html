@@ -133,4 +133,51 @@ line-height: 1.2; /* optional: tighter line spacing */
     margin-top: 10px;
 }
 
+#bolt-util-plot-container {
+    visibility: none;
+}
+
+
+    /* Container matches your results box style */
+.bolt-opt-table-container {
+    display: block;
+    width: 800px;              /* match your bolt-result-box width */
+    max-width: 100%;           /* shrink on smaller screens */
+    border: 1px solid #ccc;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 3px;
+    font-family: monospace;
+    margin-top: 1.5rem;
+    overflow-x: auto;          /* scroll if table too wide */
+    box-sizing: border-box;    /* include padding in width */
+}
+
+/* Title */
+.bolt-opt-table-title {
+    font-family: monospace;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Table styling */
+#bolt-opt-table table {
+    width: 100%;               /* table fills container */
+    border-collapse: collapse;
+    table-layout: auto;        /* columns size to content */
+}
+
+#bolt-opt-table th,
+#bolt-opt-table td {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+    text-align: center;
+    word-wrap: break-word;
+    font-family: monospace;
+}
+
+#bolt-opt-table th {
+    background-color: #eee;
+    font-weight: bold;
+}
 </style>

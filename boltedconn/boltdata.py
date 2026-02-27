@@ -12,9 +12,9 @@ class Bolt:
     slip_planes = 1
     slip_factor = 0.2
 
-    def __init__(self, name, diameter, pitch, hole_diameter, washer_diameter, nut_height, bolt_material_grade):
+    def __init__(self, bolt_size, diameter, pitch, hole_diameter, washer_diameter, nut_height, bolt_material_grade):
 
-        self.name: str = name
+        self.bolt_size: str = bolt_size  # e.g. "M72"
         self.diameter: float = diameter
         self.pitch: float = pitch
         self.hole_diameter: float = hole_diameter
@@ -56,11 +56,18 @@ class Bolt:
 class BoltLibrary:
 
     _bolts = {
+        "M64": {
+            "diameter": 64,
+            "pitch": 6,
+            "hole_diameter": 70,
+            "washer_diameter": 108.8,
+            "nut_height": 58,
+        },
         "M72": {
             "diameter": 72,
             "pitch": 6,
             "hole_diameter": 78,
-            "washer_diameter": 125,
+            "washer_diameter": 128,
             "nut_height": 65,
         },
         "M80": {
@@ -76,22 +83,29 @@ class BoltLibrary:
             "hole_diameter": 96,
             "washer_diameter": 157,
             "nut_height": 81,
+        },
+        "M100": {
+            "diameter": 100,
+            "pitch": 6,
+            "hole_diameter": 106,
+            "washer_diameter": 178,
+            "nut_height": 93,
         }
 
     }
 
     @classmethod
-    def create(cls, name, bolt_material_grade):
-        data = cls._bolts[name]
-        return Bolt(name=name, bolt_material_grade=bolt_material_grade, **data
+    def create(cls, bolt_size, bolt_material_grade):
+        data = cls._bolts[bolt_size]
+        return Bolt(bolt_size=bolt_size, bolt_material_grade=bolt_material_grade, **data
                     )
 
 # bolt materials------------------------------------------------------------------------------------
 class BoltMaterial:
 
-    def __init__(self, name, fyb, fub):
+    def __init__(self, grade, fyb, fub):
 
-        self.name = name
+        self.grade = grade
         self.fyb = fyb
         self.fub = fub
 
@@ -111,14 +125,14 @@ class BoltMaterialLibrary:
     }
 
     @classmethod
-    def create(cls, grade_name):
-        data = cls._materials.get(grade_name)
+    def create(cls, grade):
+        data = cls._materials.get(grade)
 
         if not data:
-            raise ValueError(f"Bolt material grade '{grade_name}' not found.")
+            raise ValueError(f"Bolt material grade '{grade}' not found.")
 
         return BoltMaterial(
-            name=grade_name,
+            grade=grade,
             fyb=data["fyb"],
             fub=data["fub"]
         )
@@ -128,7 +142,3 @@ class BoltMaterialLibrary:
 if __name__ == "__main__":
     grade_10_9 = BoltMaterialLibrary.create("10.9")
     m72_bolt = BoltLibrary.create("M72", grade_10_9)
-
-
-
-    a=1

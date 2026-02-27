@@ -10,7 +10,8 @@ class SteelMaterial:
     # Yield strengths (Pa) by grade and thickness ranges (max thickness inclusive)
     _yield_table = {
         "355": [(16, 355), (40, 345), (float("inf"), 325)],
-        "425": [(16, 425), (40, 415), (float("inf"), 400)]
+        "420": [(16, 420), (40, 410), (float("inf"), 400)],
+        "460": [(16, 460), (40, 450), (float("inf"), 440)]
     }
 
     def __init__(self, grade: str, thickness: float):

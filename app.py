@@ -35,11 +35,11 @@ app.add_url_rule('/k_joint', 'k_joint', k_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/x_joint', 'x_joint', x_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/ty_joint', 'ty_joint', ty_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/kt_joint', 'kt_joint', kt_joint_route, methods=['GET', 'POST'])
-# conicals TODO
+# conicals
 app.add_url_rule('/conescfs', 'cone_route', cone_route, methods=['GET', 'POST'])
-
+# joint detailing
 app.add_url_rule('/joint_detailing', 'joint_detailing', joint_detailing, methods=['GET', 'POST'])
-# gc tubularjointscfs
+# gc and bolted connection
 app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
 app.add_url_rule('/boltedconn', 'boltedconn_route', boltedconn_route, methods=['GET', 'POST'])
 # kitesurf
