@@ -41,7 +41,7 @@
             </div>
 
             <!--assessment criteria inputs-->
-            <div class="bolt-geometry-section" id="l-flange-section">
+            <div class="bolt-geometry-section l-flange-section">
 
                 <h4 class="bolt-section-title">L-flange geometry</h4>
 
@@ -133,6 +133,7 @@
             <!-- ================= LOADING ================= -->
             <div class="bolt-geometry-section">
                 <h4 class="bolt-section-title">ULS Loading</h4>
+                <h6 class="bolt-section-italic">Loads should be factored for ULS. No further load factors are applied.</h6>
 
                 <div class="bolt-form-row">
                     <label for="ULS_axial_force">Axial force</label>
@@ -148,7 +149,7 @@
             </div>
 
 <!--            plot options-->
-            <div class="bolt-geometry-section">
+            <div class="bolt-geometry-section l-flange-section">
                 <h4 class="bolt-section-title">Plot options</h4>
 
                 <div class="bolt-form-row">
@@ -236,7 +237,7 @@
 document.addEventListener("DOMContentLoaded", function() {
 
     const modeSelect = document.getElementById("bolt_assess");
-    const lFlangeSection = document.getElementById("l-flange-section");
+    const lFlangeSections = document.querySelectorAll(".l-flange-section");  // get the form bits to show / hide between design assess
     const optimisationSection = document.getElementById("bolt-optimisation-section");
 
     const flangePlotDiv = document.getElementById("flange-plot-json");
@@ -261,13 +262,15 @@ document.addEventListener("DOMContentLoaded", function() {
     function toggleSections() {
         const mode = modeSelect.value;
         if (mode === "assess") {
-            lFlangeSection.style.display = "block";
+            // lFlangeSection.style.display = "block";
+            lFlangeSections.forEach(section => section.style.display = "block");
             optimisationSection.style.display = "none";
             flangePlotDiv.style.display = "block";
             utilContainer.style.display = "block";
             resContainer.style.display = "flex";  // Show results container
         } else {
-            lFlangeSection.style.display = "none";
+            // lFlangeSection.style.display = "none";
+            lFlangeSections.forEach(section => section.style.display = "none");
             optimisationSection.style.display = "block";
             flangePlotDiv.style.display = "none";
             utilContainer.style.display = "none";

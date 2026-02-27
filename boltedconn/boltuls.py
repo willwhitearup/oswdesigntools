@@ -81,7 +81,7 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
 
                 if util <= target_util:
                     geom_dict = {"flange_area": flange_height * flange_length, "flange_height": flange_height,
-                        "flange_length": flange_length, "util": round(util, 3), "bolt_size": bolt_size
+                        "flange_length": flange_length, "util": round(util, 3), "bolt_size": bolt_size, "n_bolts": flange_obj.n_bolts, "b*": flange_obj.b_star
                     }
                     geom_acceptable[bolt_size][f"{bolt_size}_geom_{counter}"] = geom_dict
                     counter += 1

@@ -95,7 +95,9 @@ def l_flange_plotter(flange_obj: BoltedFlange):
 
     return pio.to_json(fig)
 
-
+# add dimension lines to flange
+###
+####
 def horz_line_annotation(fig, line_y_dim, min_x, max_x, annotation_text):
     # horz dim line
     fig.add_trace(go.Scatter(x=[min_x, max_x], y=[line_y_dim, line_y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
