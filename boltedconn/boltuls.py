@@ -49,7 +49,7 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
                               ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
                               target_util,
                               flange_height_max,
-                              flange_length_max, incrs
+                              flange_length_max, incrs, opt_bolt_size
                               ):
 
     # searching....
@@ -58,7 +58,8 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
     print("==================================================")
     bolt_sizes = list(BoltLibrary._bolts.keys())
     bolt_sizes.sort(key=lambda x: int(x[1:]))  # removes 'M' prefix
-    #bolt_sizes = ["M90"]
+    if opt_bolt_size in bolt_sizes:
+        bolt_sizes = bolt_sizes[bolt_sizes.index(opt_bolt_size):]  # just keep values after the opt_bolt_size
     print("Finding optimal geometry for the following bolt sizes: ", bolt_sizes)
     flange_height_min = 20  # seems ok, small!
     geom_acceptable = {}

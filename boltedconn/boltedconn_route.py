@@ -110,7 +110,7 @@ def boltedconn_route():
 
         # Design mode i.e. optimisation
         elif bolt_assess == "design":
-            incrs = 10
+            incrs = 4
             flange_height_max = 1000
             flange_length_max = 1000
 
@@ -119,7 +119,7 @@ def boltedconn_route():
                                       ULS_bending_moment, ULS_axial_force, maintain_a_b_ratio_1_25,
                                       bolt_target_util,
                                       flange_height_max,
-                                      flange_length_max, incrs
+                                      flange_length_max, incrs, opt_bolt_size
                                       )
 
             df_optimal_res = df_optimal_res.to_dict(orient='records') if df_optimal_res is not None else []

@@ -174,12 +174,13 @@
                 <div class="bolt-form-row">
                     <label for="opt_bolt_size">Min bolt size</label>
                     <select id="opt_bolt_size" name="opt_bolt_size">
-                        <option value="M72" {% if opt_bolt_size == "M72" %}selected{% endif %}>M72</option>
-                        <option value="M80" {% if opt_bolt_size == "M80" %}selected{% endif %}>M80</option>
-                        <option value="M90" {% if opt_bolt_size == "M90" %}selected{% endif %}>M90</option>
+                        {% for size in bolt_sizes %}
+                            <option value="{{ size }}" {% if opt_bolt_size == size %}selected{% elif not opt_bolt_size and size == "M72" %}selected{% endif %}>
+                                {{ size }}
+                            </option>
+                        {% endfor %}
                     </select>
                 </div>
-
 
                 <div class="bolt-form-row">
                     <label for="maintain_a_b_ratio_1_25">
@@ -191,7 +192,6 @@
                            {% if maintain_a_b_ratio_1_25 %}checked{% endif %}>
                 </div>
             </div>
-
 
             <button type="submit" class="bolt-submit-button">
                 Submit
@@ -307,6 +307,17 @@ document.addEventListener("DOMContentLoaded", function() {
     // ===============================
     async function submitForm() {
         const data = getFormValues();
+
+        // Show thinking message immediately in design mode
+        if (data.bolt_assess === "design") {
+            optContainer.style.display = "block";
+            optTableDiv.innerHTML = `
+                <div style="padding:20px;">
+                    <div style="font-weight:bold; margin-bottom:10px;">
+                        ...Pls hold...running flange geometry design optimisation...
+                    </div>
+            `;
+        }
 
         try {
             const response = await fetch("/boltedconn", {
