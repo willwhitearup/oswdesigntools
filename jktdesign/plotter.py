@@ -151,10 +151,11 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
         x5, y5 = c_o_a_targetline([tp_width / 2, tp_btm], [batter_1_width / 2, batter_1_elev], tp_btm, tp_width, c_o_a_LAT)
         fig.add_trace(go.Scatter(x=[-tp_width / 2, x4], y=[tp_btm, y4], mode='lines', line=dict(color='red', dash="dash"), name='WTG CoA target'))
         fig.add_trace(go.Scatter(x=[tp_width / 2, x5], y=[tp_btm, y5], mode='lines', line=dict(color='red', dash="dash"), showlegend=False))
-
+        y_max = rna_cog
     else:
         # TP btm line only--------------------------------------------------------------------------------------------------
         fig.add_trace(go.Scatter(x=[-tp_width/2, tp_width/2], y=[tp_btm, tp_btm], line=dict(color='purple'), name='TP btm width'))
+        y_max = tp_btm
 
     # plot jacket sections (2D plotting)
     fig = leg_object_plotting(fig, jkt_obj.leg_objs)  # plot the Leg sections
@@ -178,9 +179,35 @@ def jacket_plotter(jkt_obj: Jacket, lat: float, msl: float, splash_lower: float,
                              text=[f'pile top EL{y1}'], textposition='top left', textfont=dict(color='grey'), showlegend=False))
 
     # labels and title
-    fig.update_layout(yaxis_title='elevation rel LAT [mm]', yaxis=dict(scaleanchor="x", scaleratio=1), legend=dict(x=1, y=1))
+    fig.update_layout(yaxis_title='elevation rel LAT [mm]',
+                      yaxis=dict(scaleanchor="x", scaleratio=1),
+                      legend=dict(x=1, y=1))
+
+    # # Axis ranges
+    # x_min = -1.5*jacket_footprint
+    # x_max = 1.5*jacket_footprint
+    # y_min = -1.1 * water_depth
+    # y_max_axis = y_max
+    #
+    # fig.update_layout(
+    #     width=600,
+    #     height=800,
+    #     xaxis=dict(
+    #         range=[x_min, x_max],
+    #         scaleanchor="y"
+    #     ),
+    #     yaxis=dict(
+    #         title="Elevation rel pile top (mm)",
+    #         range=[y_min, y_max_axis]
+    #     )
+    # )
+
+
     # Show the plot
     # fig.show()
+
+
+
 
     # Convert the plot to JSON
     plot_json = pio.to_json(fig)

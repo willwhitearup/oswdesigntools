@@ -4,7 +4,7 @@
 
 <div class="bolt-info-banner">
     <span class="bolt-info-icon">ⓘ</span>
-    <span class="bolt-info-text">Units in N and mm only</span>
+    <span class="bolt-info-text">L flange design to DNV-ST-0126 & IEC 61400-6 (2025). Units in N and mm only.</span>
 </div>
 
 
@@ -57,16 +57,6 @@
                            value="{{ flange_length }}">
                 </div>
 
-<!--                <div class="bolt-form-row">-->
-<!--                    <label for="bolt_size">Bolt size</label>-->
-<!--                    <select id="bolt_size" name="bolt_size">-->
-<!--                        <option value="M72" {% if bolt_size == "M72" %}selected{% endif %}>M72</option>-->
-<!--                        <option value="M80" {% if bolt_size == "M80" %}selected{% endif %}>M80</option>-->
-<!--                        <option value="M90" {% if bolt_size == "M90" %}selected{% endif %}>M90</option>-->
-<!--                    </select>-->
-<!--                </div>-->
-
-
                 <div class="bolt-form-row">
                     <label for="bolt_size">Bolt size</label>
                     <select id="bolt_size" name="bolt_size">
@@ -78,17 +68,14 @@
                     </select>
                 </div>
 
-
                 <!--OPTIONAL-->
                 <h4 class="bolt-section-subtitle">Optional</h4>
-
                 <h6 class="bolt-section-italic">If blank, bolts no. is maximised; b* minimised for tensioner tool req's (see "Flange details" for values)</h6>
                 <div class="bolt-form-row">
                     <label for="n_bolts">No. of bolts</label>
                     <input type="number" step="any" id="n_bolts" name="n_bolts" value="">
 <!--                    value="{{ n_bolts }}">-->
                 </div>
-
                 <div class="bolt-form-row">
                     <label for="b_star">b*</label>
                     <input type="number" step="any" id="b_star" name="b_star" value="">
