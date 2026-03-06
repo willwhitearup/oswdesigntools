@@ -92,7 +92,7 @@
                     <select id="bolt_steel_grade" name="bolt_steel_grade">
                         <option value="10.9" {% if bolt_steel_grade == "10.9" %}selected{% endif %}>10.9</option>
                         <option value="8.8" {% if bolt_steel_grade == "8.8" %}selected{% endif %}>8.8</option>
-                        <option value="6.8" {% if bolt_steel_grade == "8.8" %}selected{% endif %}>6.8</option>
+                        <option value="6.8" {% if bolt_steel_grade == "6.8" %}selected{% endif %}>6.8</option>
                     </select>
                 </div>
 
@@ -214,7 +214,7 @@
 
 <!-- Optimisation table (hidden initially) -->
 <div id="bolt-opt-table-container" class="bolt-opt-table-container" style="display:none;">
-    <div class="bolt-opt-table-title">Optimal flange geometries</div>
+    <div class="bolt-opt-table-title">Optimal flange geometries (sorted by mass ascending)</div>
     <div id="bolt-opt-table"></div>
 </div>
 

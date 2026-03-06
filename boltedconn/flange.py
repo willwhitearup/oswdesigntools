@@ -76,6 +76,7 @@ class BoltedFlange:
 
     @property
     def net_mass(self):
+        # drilled bolt volumes for all the n bolts around circumference
         bolt_vol = self.n_bolts * np.pi * (self.bolt_obj.hole_diameter / 2) ** 2 * self.flange_height
         circumf = np.pi * self.outer_diameter
         net_vol = self.csa * circumf - bolt_vol

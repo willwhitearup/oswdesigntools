@@ -41,8 +41,8 @@ def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
 
     flange_obj.calc_bolted_connection_failure_modes()
     flange_obj.calc_util()
-    util = flange_obj.util
-    #print("Util: ", util)
+    # util = flange_obj.util
+    # print("Util: ", util)
     return flange_obj
 
 def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
@@ -81,7 +81,8 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
                         util = flange_obj.util
 
                 if util <= target_util:
-                    geom_dict = {"flange_area": flange_height * flange_length, "flange_height": flange_height,
+                    flange_net_mass = flange_obj.net_mass
+                    geom_dict = {"flange_net_mass": flange_net_mass, "flange_height": flange_height,
                         "flange_length": flange_length, "util": round(util, 3), "bolt_size": bolt_size, "n_bolts": flange_obj.n_bolts, "b*": flange_obj.b_star
                     }
                     geom_acceptable[bolt_size][f"{bolt_size}_geom_{counter}"] = geom_dict
@@ -97,8 +98,13 @@ def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, 
     for bolt_size, geoms in geom_acceptable.items():
         if geoms:
             # sort by area
-            sorted_geoms = dict(sorted(geoms.items(), key=lambda item: item[1]["flange_area"]))
+            sorted_geoms = dict(sorted(geoms.items(), key=lambda item: item[1]["flange_net_mass"]))
             top_geoms = dict(list(sorted_geoms.items())[:5])  # keep top 5
+
+            # rename key
+            for geom in top_geoms.values():
+                geom["flange net mass (te)"] = geom.pop("flange_net_mass") / 1000
+
             optimal_res[bolt_size] = top_geoms
 
     if optimal_res:
