@@ -17,6 +17,12 @@ def kitesurf_route():
         # Get location from query param, default to "wsm" if not provided
         loc = form_data.get("location", "wsm")
 
+        # Reset stored user settings for this location
+        if form_data.get("reset_loc_data"):
+            if "user_loc_data" in session and loc in session["user_loc_data"]:
+                session["user_loc_data"].pop(loc)
+                session.modified = True
+
         use_defaults = form_data.get("use_defaults", False)
         loc_data = get_loc_data_for_location(loc)
 
