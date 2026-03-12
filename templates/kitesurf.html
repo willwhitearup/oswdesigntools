@@ -45,10 +45,11 @@
 
     <div id="save-status" style="margin-top:10px; color:green;"></div>
 </div>
-
-
 <script>
 
+// ------------------------
+// Debounce helper
+// ------------------------
 function debounce(func, wait) {
     let timeout;
     return function(...args) {
@@ -57,7 +58,69 @@ function debounce(func, wait) {
     };
 }
 
+// ------------------------
+// Build forecast table
+// ------------------------
+function buildForecastTable(data) {
+    let html = "<table border='1'><tr>";
+    data.columns.forEach(col => html += `<th>${col}</th>`);
+    html += "</tr>";
+    data.rows.forEach(row => {
+        html += "<tr>";
+        row.forEach(cell => html += `<td>${cell}</td>`);
+        html += "</tr>";
+    });
+    html += "</table>";
+    document.getElementById("forecast-table").innerHTML = html;
+}
+
+// ------------------------
+// Update filter inputs
+// ------------------------
+function updateLocData(locData) {
+    document.getElementById("wd-from").value = locData.wind_direction[0];
+    document.getElementById("wd-to").value = locData.wind_direction[1];
+    document.getElementById("ws-from").value = locData.wind_speed[0];
+    document.getElementById("ws-to").value = locData.wind_speed[1];
+    document.getElementById("tide-type").value = locData.tide_window[0];
+    document.getElementById("tide-range").value = locData.tide_window[1];
+    document.getElementById("gust-limit").value = locData.wind_gust_limit;
+    document.getElementById("save-status").textContent = "";
+}
+
+// ------------------------
+// Fetch forecast from server
+// ------------------------
+function fetchForecast(location, customData = null) {
+    const payload = { form_data: { location } };
+    if (customData) payload.form_data.custom_loc_data = customData;
+
+    fetch("/kitesurf", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        buildForecastTable(data);
+        updateLocData(data.loc_data);
+
+        document.getElementById("edit-title").textContent =
+            `Applied forecast filters for ${location}`;
+        document.getElementById("reset-defaults").textContent =
+            `Reset to ${location} defaults`;
+    });
+}
+
+// ------------------------
+// Send filters (called on input change / Enter / blur)
+// ------------------------
+let activeFetchController = null;
+
 function sendFilters() {
+    // Cancel any ongoing fetch
+    if (activeFetchController) activeFetchController.abort();
+
     const custom = {
         wind_direction: [
             Number(document.getElementById("wd-from").value),
@@ -74,25 +137,39 @@ function sendFilters() {
         wind_gust_limit: Number(document.getElementById("gust-limit").value)
     };
 
+    const location = locationSelect.value;
+
+    activeFetchController = new AbortController();
+
     fetch("/kitesurf", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            form_data: {
-                location: locationSelect.value,
-                custom_loc_data: custom
-            }
-        })
+        body: JSON.stringify({ form_data: { location, custom_loc_data: custom } }),
+        signal: activeFetchController.signal
     })
-    .then(r => r.json())
-    .then(() => {
-        fetchForecast(locationSelect.value);
+    .then(response => response.json())
+    .then(data => {
+        buildForecastTable(data);
+        updateLocData(data.loc_data);
+        document.getElementById("edit-title").textContent =
+            `Applied forecast filters for ${location}`;
+        document.getElementById("reset-defaults").textContent =
+            `Reset to ${location} defaults`;
+    })
+    .catch(err => {
+        if (err.name === "AbortError") return; // previous fetch was cancelled
+        console.error(err);
     });
 }
 
-// Debounced version to avoid too many calls
-const sendFiltersDebounced = debounce(sendFilters, 200);
-// all filter inputs
+// ------------------------
+// Debounced version
+// ------------------------
+const sendFiltersDebounced = debounce(sendFilters, 300); // 300ms pause after typing
+
+// ------------------------
+// Filter input events
+// ------------------------
 const filterInputs = [
     "wd-from", "wd-to",
     "ws-from", "ws-to",
@@ -100,18 +177,15 @@ const filterInputs = [
     "gust-limit"
 ];
 
-// Trigger update on Enter key
 filterInputs.forEach(id => {
     const el = document.getElementById(id);
 
-    // live update while typing / selecting
     if (el.tagName === "SELECT") {
         el.addEventListener("change", sendFiltersDebounced);
     } else {
         el.addEventListener("input", sendFiltersDebounced);
     }
 
-    // immediate update on Enter
     el.addEventListener("keydown", function(e) {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -119,125 +193,41 @@ filterInputs.forEach(id => {
         }
     });
 
-    // immediate update on blur (clicking out)
     el.addEventListener("blur", sendFilters);
 });
 
-
+// ------------------------
+// Location change
+// ------------------------
 const locationSelect = document.getElementById("location-select");
+locationSelect.addEventListener("change", () => fetchForecast(locationSelect.value));
 
-
-/* ------------------------------------------------------------------
-   Fetch forecast + loc_data from Flask
------------------------------------------------------------------- */
-function fetchForecast(location) {
-
-    // update dynamic title
-    document.getElementById("edit-title").textContent =
-        `Applied forecast filters for ${location}`;
-
-    // update reset button text
-    document.getElementById("reset-defaults").textContent =
-        `Reset to ${location} defaults`;
-
-    fetch("/kitesurf", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({form_data: {location: location}})
-    })
-    .then(response => response.json())
-    .then(data => {
-
-        /* ---------- Build forecast table ---------- */
-
-        let html = "<table border='1'><tr>";
-        data.columns.forEach(col => html += `<th>${col}</th>`);
-        html += "</tr>";
-
-        data.rows.forEach(row => {
-            html += "<tr>";
-            row.forEach(cell => html += `<td>${cell}</td>`);
-            html += "</tr>";
-        });
-
-        html += "</table>";
-        document.getElementById("forecast-table").innerHTML = html;
-
-
-        /* ---------- Load location data ---------- */
-        const locData = data.loc_data;
-
-        document.getElementById("wd-from").value = locData.wind_direction[0];
-        document.getElementById("wd-to").value = locData.wind_direction[1];
-
-        document.getElementById("ws-from").value = locData.wind_speed[0];
-        document.getElementById("ws-to").value = locData.wind_speed[1];
-
-        document.getElementById("tide-type").value = locData.tide_window[0];
-        document.getElementById("tide-range").value = locData.tide_window[1];
-
-        document.getElementById("gust-limit").value = locData.wind_gust_limit;
-
-        document.getElementById("save-status").textContent = "";
-    });
-}
-
-
+// ------------------------
+// Reset defaults
+// ------------------------
 document.getElementById("reset-defaults").addEventListener("click", function () {
-
-    const locName = locationSelect.value;
-
     fetch("/kitesurf", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             form_data: {
-                location: locName,
+                location: locationSelect.value,
                 reset_loc_data: true
             }
         })
     })
     .then(response => response.json())
     .then(data => {
-
-        const locData = data.loc_data;
-
-        document.getElementById("wd-from").value = locData.wind_direction[0];
-        document.getElementById("wd-to").value = locData.wind_direction[1];
-
-        document.getElementById("ws-from").value = locData.wind_speed[0];
-        document.getElementById("ws-to").value = locData.wind_speed[1];
-
-        document.getElementById("tide-type").value = locData.tide_window[0];
-        document.getElementById("tide-range").value = locData.tide_window[1];
-
-        document.getElementById("gust-limit").value = locData.wind_gust_limit;
-
-        fetchForecast(locName);
-
-        document.getElementById("save-status").textContent =
-            "Defaults restored.";
-
+        updateLocData(data.loc_data);
+        fetchForecast(locationSelect.value);
+        document.getElementById("save-status").textContent = "Defaults restored.";
     });
-
 });
 
-
-/* ------------------------------------------------------------------
-   Location change reload
------------------------------------------------------------------- */
-
-locationSelect.addEventListener("change", function () {
-    fetchForecast(locationSelect.value);
-});
-
-
-/* ------------------------------------------------------------------
-   Load default forecast on page open
------------------------------------------------------------------- */
-
+// ------------------------
+// Load default forecast on page load
+// ------------------------
 fetchForecast(locationSelect.value);
-
 
 </script>
 
