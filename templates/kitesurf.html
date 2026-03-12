@@ -40,7 +40,6 @@
     <input id="gust-limit" type="number" step="1" style="width:80px;"><br><br>
 
     <div style="display:flex; gap:10px;">
-        <button id="save-loc-data">Update forecast with settings</button>
         <button id="reset-defaults"></button>
     </div>
 
@@ -49,6 +48,81 @@
 
 
 <script>
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+function sendFilters() {
+    const custom = {
+        wind_direction: [
+            Number(document.getElementById("wd-from").value),
+            Number(document.getElementById("wd-to").value)
+        ],
+        wind_speed: [
+            Number(document.getElementById("ws-from").value),
+            Number(document.getElementById("ws-to").value)
+        ],
+        tide_window: [
+            document.getElementById("tide-type").value,
+            Number(document.getElementById("tide-range").value)
+        ],
+        wind_gust_limit: Number(document.getElementById("gust-limit").value)
+    };
+
+    fetch("/kitesurf", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            form_data: {
+                location: locationSelect.value,
+                custom_loc_data: custom
+            }
+        })
+    })
+    .then(r => r.json())
+    .then(() => {
+        fetchForecast(locationSelect.value);
+    });
+}
+
+// Debounced version to avoid too many calls
+const sendFiltersDebounced = debounce(sendFilters, 200);
+// all filter inputs
+const filterInputs = [
+    "wd-from", "wd-to",
+    "ws-from", "ws-to",
+    "tide-type", "tide-range",
+    "gust-limit"
+];
+
+// Trigger update on Enter key
+filterInputs.forEach(id => {
+    const el = document.getElementById(id);
+
+    // live update while typing / selecting
+    if (el.tagName === "SELECT") {
+        el.addEventListener("change", sendFiltersDebounced);
+    } else {
+        el.addEventListener("input", sendFiltersDebounced);
+    }
+
+    // immediate update on Enter
+    el.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendFilters();
+        }
+    });
+
+    // immediate update on blur (clicking out)
+    el.addEventListener("blur", sendFilters);
+});
+
 
 const locationSelect = document.getElementById("location-select");
 
@@ -108,48 +182,6 @@ function fetchForecast(location) {
     });
 }
 
-
-/* ------------------------------------------------------------------
-   Save custom user-defined loc_data
------------------------------------------------------------------- */
-
-document.getElementById("save-loc-data").addEventListener("click", function () {
-
-    const custom = {
-        wind_direction: [
-            Number(document.getElementById("wd-from").value),
-            Number(document.getElementById("wd-to").value)
-        ],
-        wind_speed: [
-            Number(document.getElementById("ws-from").value),
-            Number(document.getElementById("ws-to").value)
-        ],
-        tide_window: [
-            document.getElementById("tide-type").value,
-            Number(document.getElementById("tide-range").value)
-        ],
-        wind_gust_limit: Number(document.getElementById("gust-limit").value)
-    };
-
-    fetch("/kitesurf", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            form_data: {
-                location: locationSelect.value,
-                custom_loc_data: custom
-            }
-        })
-    })
-    .then(r => r.json())
-    .then(() => {
-        document.getElementById("save-status").textContent =
-            "Custom settings saved and forecast refreshed.";
-
-        fetchForecast(locationSelect.value);
-    });
-
-});
 
 document.getElementById("reset-defaults").addEventListener("click", function () {
 
