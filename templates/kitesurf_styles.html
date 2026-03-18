@@ -61,6 +61,8 @@
     gap: 20px;
     align-items: flex-start;
     margin-top: 20px;
+    max-width: 1000px;
+    width: 100%;
 }
 
 /* Filters panel */
@@ -68,7 +70,7 @@
     border: 1px solid #ccc;
     padding: 15px;
     border-radius: 12px; /* match table rounding */
-    width: 380px;
+    width: 350px;
     flex-shrink: 0;
     background: white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* match table */
@@ -105,4 +107,36 @@
         height: 350px;
     }
 }
+
+
+
+    /* Flex row for label + inputs */
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;           /* space between label and inputs */
+    margin-bottom: 12px; /* spacing between rows */
+}
+
+/* Labels fixed width for alignment */
+.filter-row label {
+    flex-shrink: 0;
+    width: 130px;         /* adjust as needed */
+    font-weight: 550;
+}
+
+/* Inputs style */
+.filter-row input,
+.filter-row select {
+    flex: 0 0 80px;              /* take remaining space */
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.double-input input {
+    flex: 0 0 70px; /* shrink from 80px to fit */
+}
+
 </style>

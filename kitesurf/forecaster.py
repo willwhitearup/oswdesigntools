@@ -4,14 +4,15 @@ from kitesurf.tideapi import get_tides_api
 from kitesurf.windapi import get_wind_forecast
 
 
-def get_good_week_forecast(lat, lon, loc_data):
-
+def get_good_week_forecast(lat, lon, loc_data, remove_filters=False):
+    print(remove_filters)
     df_sun_times = get_sunrise_sunset_api(lat, lon)
     df_tide_times = get_tides_api(lat, lon)
     df_wind_forecast = get_wind_forecast(lat, lon)
 
     filtered_list = []
     for date, data in df_wind_forecast.groupby("date"):
+
         # extract stuff from data to filter
         time = data["datetime"]
         forecast_wind_speed = data["wind_speed"]
@@ -44,12 +45,17 @@ def get_good_week_forecast(lat, lon, loc_data):
 
         #### apply all the masks
         mask = light_hours_allow & tide_hours_allow & wind_direction_allow & wind_speed_allow & wind_gusts_allow
+
+        if remove_filters:
+            mask[:] = True
+
         filtered_list.append(data[mask])
 
     df = pd.concat(filtered_list, ignore_index=True)
     df.drop(columns="date", inplace=True)
     col_order = ["datetime", "wind_speed", "wind_direction", "wind_gusts", "tide_low_time", "tide_high_time"]
     df = df[col_order]
+
     return df
 
 if __name__ == "__main__":

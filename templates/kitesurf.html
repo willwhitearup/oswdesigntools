@@ -23,28 +23,44 @@
     <!-- LEFT: Filters -->
     <div id="loc-edit" class="filters-panel">
 
-        <label>Wind direction [from] (min, max):</label><br>
-        <input id="wd-from" type="number" step="1">
-        <input id="wd-to" type="number" step="1"><br><br>
+        <div class="filter-row">
+            <label for="wd-from">Wind direction:</label>
+            <div class="double-input">
+                <input id="wd-from" type="number" step="1">
+                <input id="wd-to" type="number" step="1">
+            </div>
+        </div>
 
-        <label>Wind speed (min, max):</label><br>
-        <input id="ws-from" type="number" step="0.1">
-        <input id="ws-to" type="number" step="0.1"><br><br>
+        <div class="filter-row">
+            <label for="ws-from">Wind speed [min, max]:</label>
+            <div class="double-input">
+                <input id="ws-from" type="number" step="0.1">
+                <input id="ws-to" type="number" step="0.1">
+            </div>
+        </div>
 
-        <label>Tide type (high/low):</label><br>
-        <select id="tide-type">
-            <option value="high">High</option>
-            <option value="low">Low</option>
-        </select><br><br>
+        <div class="filter-row">
+            <label for="tide-type">Tide type:</label>
+            <select id="tide-type">
+                <option value="">--</option> <!-- allows clearing -->
+                <option value="high">High</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
 
-        <label>Tide window ± (hours):</label><br>
-        <input id="tide-range" type="number" step="0.5"><br><br>
+        <div class="filter-row">
+            <label for="tide-range">Tide window ± (hours):</label>
+            <input id="tide-range" type="number" step="0.5">
+        </div>
 
-        <label>Gust limit max (above wind speed)</label><br>
-        <input id="gust-limit" type="number" step="1"><br><br>
+        <div class="filter-row">
+            <label for="gust-limit">Gust limit max:</label>
+            <input id="gust-limit" type="number" step="1">
+        </div>
 
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; margin-top:10px;">
             <button id="reset-defaults"></button>
+            <button id="remove-filters">Remove Filters</button>
         </div>
 
         <div id="save-status" style="margin-top:10px; color:green;"></div>
@@ -106,6 +122,42 @@ function updateLocData(locData) {
     document.getElementById("gust-limit").value = locData.wind_gust_limit;
     document.getElementById("save-status").textContent = "";
 }
+
+// ------------------------
+// Remove filters button
+// ------------------------
+document.getElementById("remove-filters").addEventListener("click", function() {
+    // Clear inputs
+    document.getElementById("wd-from").value = "";
+    document.getElementById("wd-to").value = "";
+    document.getElementById("ws-from").value = "";
+    document.getElementById("ws-to").value = "";
+    document.getElementById("tide-type").value = "";
+    document.getElementById("tide-range").value = "";
+    document.getElementById("gust-limit").value = "";
+
+    document.getElementById("save-status").textContent = "Filters cleared.";
+
+    // Send remove_filters flag to backend
+    const location = locationSelect.value;
+    fetch("/kitesurf", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            form_data: {
+                location: location,
+                remove_filters: true
+            }
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        buildForecastTable(data);
+        updateLocData(data.loc_data);
+        renderWindMap(data.map_wind_dir_plot);
+    });
+});
+
 
 // ------------------------
 // Fetch forecast

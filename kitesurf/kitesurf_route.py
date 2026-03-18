@@ -27,9 +27,9 @@ def kitesurf_route():
                 session.modified = True
 
         use_defaults = form_data.get("use_defaults", False)
+        remove_filters = form_data.get("remove_filters", False)
+        print("remove fileter is:", remove_filters)
         loc_data = get_loc_data_for_location(loc)
-
-        print(loc_data)
 
         if not use_defaults:
             if "custom_loc_data" in form_data:
@@ -52,7 +52,7 @@ def kitesurf_route():
 
         # get the lat lon of location and then store all in df
         lat, lon = get_lat_lon_for_location(loc)
-        df = get_good_week_forecast(lat, lon, loc_data)
+        df = get_good_week_forecast(lat, lon, loc_data, remove_filters)
 
         # get the loc image
         wind_direction_min, wind_direction_max = loc_data["wind_direction"][0], loc_data["wind_direction"][1]

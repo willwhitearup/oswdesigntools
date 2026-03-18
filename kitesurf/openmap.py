@@ -4,6 +4,8 @@ import plotly.io as pio
 
 
 def map_plot(lat, lon, wind_start, wind_end):
+    """plot using open map the spot and the sector angles circle showing working wind directions
+    """
     wind_start = wind_start % 360
     wind_end = wind_end % 360
     if wind_end < wind_start:
@@ -25,8 +27,6 @@ def map_plot(lat, lon, wind_start, wind_end):
     # close sector
     sector_lats = np.concatenate(([lat], arc_lats, [lat]))
     sector_lons = np.concatenate(([lon], arc_lons, [lon]))
-    # sector_lats = np.concatenate(([lat], arc_lats, [lat, lat]))
-    # sector_lons = np.concatenate(([lon], arc_lons, [lon, lon]))
 
     fig = go.Figure()
 
@@ -69,11 +69,10 @@ def map_plot(lat, lon, wind_start, wind_end):
                 )
             ]
         ),
-        margin=dict(l=0, r=0, t=0, b=0),   # 👈 critical
-        paper_bgcolor="rgba(0,0,0,0)",     # 👈 remove white frame
-        plot_bgcolor="rgba(0,0,0,0)"       # 👈 remove inner bg
+        margin=dict(l=0, r=0, t=0, b=0),   #
+        paper_bgcolor="rgba(0,0,0,0)",     # remove white frame
+        plot_bgcolor="rgba(0,0,0,0)"       # remove inner bg
     )
-
 
     #fig.show()
     pio_json = pio.to_json(fig)
