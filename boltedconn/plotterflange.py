@@ -3,7 +3,6 @@ import numpy as np
 import plotly.io as pio
 from boltedconn.flange import BoltedFlange
 
-
 def l_flange_plotter(flange_obj: BoltedFlange):
     """
     Single L-flange profile.
