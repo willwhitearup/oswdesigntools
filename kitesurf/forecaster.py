@@ -35,15 +35,20 @@ def get_good_week_forecast(lat, lon, loc_data, remove_filters=False):
         data["tide_low_time"] = tide_date["tide_min_time"].iloc[0].hour
         data["tide_high_time"] = tide_date["tide_max_time"].iloc[0].hour
 
-        # filter wind direction
-        wind_direction_allow = (forecast_wind_direction >= loc_data["wind_direction"][0]) & (forecast_wind_direction <= loc_data["wind_direction"][1])
+        # filter wind direction (note 360 degree sector and allowable directions can cross the 360 direction)
+        # e.g. loc_data["wind_direction"] = (180, 2.5)
+        if loc_data["wind_direction"][0] >= loc_data["wind_direction"][1]:
+            wind_direction_allow = (forecast_wind_direction >= loc_data["wind_direction"][0]) | (forecast_wind_direction <= loc_data["wind_direction"][1])
+        else:
+            wind_direction_allow = (forecast_wind_direction >= loc_data["wind_direction"][0]) & (forecast_wind_direction <= loc_data["wind_direction"][1])
+
         # filter wind speeds
         wind_speed_allow = (forecast_wind_speed >= loc_data["wind_speed"][0]) & (forecast_wind_speed <= loc_data["wind_speed"][1])
         # filter wind gusts
         gusting = forecast_wind_gust - forecast_wind_speed
         wind_gusts_allow = (gusting <= loc_data["wind_gust_limit"])
 
-        #### apply all the masks
+        ### apply all the masks
         mask = light_hours_allow & tide_hours_allow & wind_direction_allow & wind_speed_allow & wind_gusts_allow
 
         if remove_filters:

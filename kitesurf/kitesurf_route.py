@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, render_template, session
 from kitesurf.forecaster import get_good_week_forecast
-from kitesurf.kitespots import get_lat_lon_for_location, get_loc_data_for_location
+from kitesurf.kitespots import get_lat_lon_for_location, get_loc_data_for_location, KITESPOTS
 from kitesurf.openmap import map_plot
 
 # from kitesurf.whatsapp_notifier import  send_whatsapp_message
@@ -28,7 +28,7 @@ def kitesurf_route():
 
         use_defaults = form_data.get("use_defaults", False)
         remove_filters = form_data.get("remove_filters", False)
-        print("remove fileter is:", remove_filters)
+        # print("remove fileter is:", remove_filters)
         loc_data = get_loc_data_for_location(loc)
 
         if not use_defaults:
@@ -95,6 +95,6 @@ def kitesurf_route():
 
 def get_defaults():
     return {
-        "locations": ["wsm", "brighton"],
+        "locations": sorted(KITESPOTS.keys()),
         "default_location": "wsm"
     }
