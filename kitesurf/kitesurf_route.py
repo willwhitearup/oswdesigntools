@@ -54,10 +54,6 @@ def kitesurf_route():
         # get the lat lon of location and then store all in df
         lat, lon = get_lat_lon_for_location(loc)
         df = get_good_week_forecast(lat, lon, loc_data, remove_filters)
-        df["wind_arr"] = df.apply(
-            lambda row: plot_wind_arrow(row["wind_speed"], row["wind_direction"]),
-            axis=1
-        )
 
         # get the loc image
         wind_direction_min, wind_direction_max = loc_data["wind_direction"][0], loc_data["wind_direction"][1]

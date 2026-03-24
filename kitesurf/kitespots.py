@@ -35,7 +35,12 @@ KITESPOTS = {
                      "tide_window": ("high", 4),
                      "wind_direction": (270, 359),
                      "wind_speed": (15, 35),
-                     "wind_gust_limit": 15}
+                     "wind_gust_limit": 15},
+    "southEndonSea_EastBeach": {"lat_lon": (51.53122189505167,0.8022566271774867),
+                        "tide_window": ("low", 3),
+                        "wind_direction": (50, 225),
+                        "wind_speed": (15, 35),
+                        "wind_gust_limit": 15}
 
 }
 

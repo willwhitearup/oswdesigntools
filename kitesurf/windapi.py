@@ -16,22 +16,25 @@ def get_wind_forecast(lat: float, lon: float) -> dict:
         "longitude": lon,
         "hourly": "wind_speed_10m,wind_gusts_10m,wind_direction_10m",
         "timezone": "Europe/London",
+        "windspeed_unit": "kn"   # get windspeed in knots
     }
 
     r = requests.get(url, params=params, verify=False)  # verify uses system certs or certifi
     r.raise_for_status()
     data = r.json()
-
+    # print(data.get("hourly_units"))  # ADD THIS
     hourly = data.get("hourly", {})
 
     # return only the wind-related hourly data
     winddata = {
         "time": hourly.get("time", []),
-        "wind_speed": hourly.get("wind_speed_10m", []),
+        "wind_speed [kts]": hourly.get("wind_speed_10m", []),
         "wind_gusts": hourly.get("wind_gusts_10m", []),
-        "wind_direction": hourly.get("wind_direction_10m", []),
+        "wind_direction": hourly.get("wind_direction_10m", []),  #  wind direction is FROM
     }
 
+    # ONLY uncomment if wanted direction TO
+    # winddata["wind_direction"] = [(i + 180) % 360 for i in winddata["wind_direction"]]
     df = pd.DataFrame(winddata)
 
     # Convert 'time' to datetime

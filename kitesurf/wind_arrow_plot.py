@@ -31,82 +31,46 @@ def wind_speed_to_color(speed, max_speed=40):
 
     return f"rgb{stops[-1][1]}"
 
+
 def plot_wind_arrow(wind_speed, wind_direction, max_speed=25, shaft_width=4, head_width=8, arrow_length_scale=0.7):
-    """
-    Plots a filled wind arrow centered at (0,0) with meteorological color scale.
-    """
-    theta = np.radians(wind_direction)
+    """Plots a filled wind arrow centered at (0,0) with meteorological color scale."""
     L = 10 * arrow_length_scale
     shaft_length = L * 0.6
+    half = L / 2 + 0.5
+    theta = np.radians(180 - wind_direction)
 
-    # Arrow polygon local coordinates
-    x = np.array([
-        -shaft_width/2, shaft_width/2, shaft_width/2,
-        head_width/2, 0, -head_width/2, -shaft_width/2
-    ])
-    y = np.array([
-        0, 0, shaft_length,
-        shaft_length, L, shaft_length, shaft_length
-    ])
+    x = np.array([-shaft_width/2, shaft_width/2, shaft_width/2, head_width/2, 0, -head_width/2, -shaft_width/2])
+    y = np.array([0, 0, shaft_length, shaft_length, L, shaft_length, shaft_length])
 
-    # Shift to center
-    centroid_x = np.mean(x)
-    centroid_y = np.mean(y)
-    x_centered = x - centroid_x
-    y_centered = y - centroid_y
+    x -= np.mean(x)
+    y -= np.mean(y)
 
-    # Rotate
-    x_rot = x_centered * np.cos(theta) - y_centered * np.sin(theta)
-    y_rot = x_centered * np.sin(theta) + y_centered * np.cos(theta)
+    x_rot = (x * np.cos(theta) - y * np.sin(theta)).tolist()
+    y_rot = (x * np.sin(theta) + y * np.cos(theta)).tolist()
 
-    x_rot = x_rot.tolist()  # ADD THIS
-    y_rot = y_rot.tolist()  # ADD THIS
-
-    # Color from meteorological scale
     color = wind_speed_to_color(wind_speed, max_speed)
 
-    # Plot
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=x_rot,
-        y=y_rot,
-        mode='lines',
-        fill='toself',
-        fillcolor=color,
-        line=dict(color=color, width=1),
-        hoverinfo='skip',
-        showlegend=False
+    fig = go.Figure(go.Scatter(
+        x=x_rot, y=y_rot,
+        mode='lines', fill='toself',
+        fillcolor=color, line=dict(color=color, width=1),
+        hoverinfo='skip', showlegend=False
     ))
-
+    arr_size = 25  # change the wind arrow figure size
     fig.update_layout(
-        width=50,
-        height=50,
+        width=arr_size, height=arr_size,
         margin=dict(l=0, r=0, t=0, b=0, pad=0),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(
-            range=[-10, 10],
-            visible=False,
-            showgrid=False,
-            zeroline=False,
-            scaleanchor="y"
-        ),
-        yaxis=dict(
-            range=[-10, 10],
-            visible=False,
-            showgrid=False,
-            zeroline=False
-        ),
-        showlegend=False
+        showlegend=False,
+        xaxis=dict(range=[-half, half], visible=False, showgrid=False, zeroline=False, scaleanchor="y"),
+        yaxis=dict(range=[-half, half], visible=False, showgrid=False, zeroline=False)
     )
 
-    # fig.show()
-    pio_json = pio.to_json(fig)
-    return pio_json
+    return pio.to_json(fig)
 
 
 # Example usage
 if __name__ == "__main__":
     # Low, medium, high, max
-    for ws in [5, 12, 18, 25]:
-        plot_wind_arrow(wind_speed=ws, wind_direction=60)
+    _ = plot_wind_arrow(wind_speed=5, wind_direction=60)

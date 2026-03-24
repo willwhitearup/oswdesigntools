@@ -1,6 +1,7 @@
 import pandas as pd
 from kitesurf.sunhoursapi import get_sunrise_sunset_api
 from kitesurf.tideapi import get_tides_api
+from kitesurf.wind_arrow_plot import plot_wind_arrow
 from kitesurf.windapi import get_wind_forecast
 
 
@@ -16,7 +17,7 @@ def get_good_week_forecast(lat, lon, loc_data, remove_filters=False):
 
         # extract stuff from data to filter
         time = data["datetime"]
-        forecast_wind_speed = data["wind_speed"]
+        forecast_wind_speed = data["wind_speed [kts]"]
         forecast_wind_direction = data["wind_direction"]
         forecast_wind_gust = data["wind_gusts"]
 
@@ -59,9 +60,10 @@ def get_good_week_forecast(lat, lon, loc_data, remove_filters=False):
 
     df = pd.concat(filtered_list, ignore_index=True)
     df.drop(columns="date", inplace=True)
-    col_order = ["datetime", "wind_speed", "wind_direction", "wind_gusts", "tide_low_time", "tide_high_time"]
-    df = df[col_order]
+    df["wind_arr"] = df.apply(lambda row: plot_wind_arrow(row["wind_speed [kts]"], row["wind_direction"]), axis=1)
 
+    col_order = ["datetime", "wind_speed [kts]", "wind_direction", "wind_arr", "wind_gusts", "tide_low_time", "tide_high_time"]
+    df = df[col_order]
     return df
 
 if __name__ == "__main__":
@@ -70,7 +72,7 @@ if __name__ == "__main__":
     lon = -2.9760
     loc_data = {"tide_window": ("high", 3),  # 3 hours either side of high tide.
                 "wind_direction": (180, 330), # wind direction is from and this is the allowable wind direction window
-                "wind_speed": (5, 50),
+                "wind_speed [kts]": (5, 50),
                 "wind_gust_limit": 15}
 
     df = get_good_week_forecast(lat, lon, loc_data)

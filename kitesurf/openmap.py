@@ -69,6 +69,8 @@ def map_plot(lat, lon, wind_start, wind_end):
                 )
             ]
         ),
+        # width=450,
+        # height=320,
         margin=dict(l=0, r=0, t=0, b=0),   #
         paper_bgcolor="rgba(0,0,0,0)",     # remove white frame
         plot_bgcolor="rgba(0,0,0,0)"       # remove inner bg

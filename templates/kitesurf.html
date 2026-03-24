@@ -2,7 +2,8 @@
 {% block content %}
 {% include "kitesurf_styles.html" %}
 
-<h2>Kitesurfing filtered forecast (1 week look-ahead)</h2>
+<h2 style="margin-bottom:4px;margin-top:2px;">Kitesurfing GO! times</h2>
+<h4 style="margin-top:8px;">Good hourly times shown for a 1-week forecast using custom spot filters</h4>
 
 <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
     <label for="location-select">Spot:</label>
@@ -98,7 +99,10 @@ function buildForecastTable(data) {
         html += "<tr>";
         data.columns.forEach(col => {
             if (col === "wind_arr") {
-                html += `<td style="padding:0; line-height:0;"><div id="plot-${i}" style="width:60px; height:60px;"></div></td>`;
+                const fig = JSON.parse(row.wind_arr);
+                const w = fig.layout.width;
+                const h = fig.layout.height;
+                html += `<td style="padding:0; line-height:0; vertical-align:middle; text-align:center;"><div id="plot-${i}" style="width:${w}px; height:${h}px; display:block; margin:0 auto;"></div></td>`;
             } else {
                 html += `<td>${row[col]}</td>`;
             }
@@ -122,7 +126,7 @@ function buildForecastTable(data) {
 // ------------------------
 function renderWindMap(plotJson) {
     const fig = JSON.parse(plotJson);
-    Plotly.react("wind-map", fig.data, fig.layout);
+    Plotly.react("wind-map", fig.data, fig.layout, {responsive: true});
 }
 
 // ------------------------
@@ -181,6 +185,13 @@ document.getElementById("remove-filters").addEventListener("click", function() {
 function fetchForecast(location, customData = null) {
     const payload = { form_data: { location } };
     if (customData) payload.form_data.custom_loc_data = customData;
+
+    document.getElementById("forecast-table").innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; color:#8a2be2; font-size:1rem; margin-top:10px;">
+            <div style="width:20px; height:20px; border:3px solid #8a2be2; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+            Loading forecast...
+        </div>
+    `;
 
     fetch("/kitesurf", {
         method: "POST",
