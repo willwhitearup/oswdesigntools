@@ -1,7 +1,9 @@
 import plotly.graph_objects as go
+import plotly.io as pio
 import numpy as np
 
-def wind_speed_to_color(speed, max_speed=25):
+
+def wind_speed_to_color(speed, max_speed=40):
     """
     Maps wind speed to a meteorological-style color scale:
     blue → green → yellow → red → deep purple
@@ -27,7 +29,6 @@ def wind_speed_to_color(speed, max_speed=25):
             b = int(stops[i][1][2] + t * (stops[i+1][1][2] - stops[i][1][2]))
             return f"rgb({r},{g},{b})"
 
-    # fallback
     return f"rgb{stops[-1][1]}"
 
 def plot_wind_arrow(wind_speed, wind_direction, max_speed=25, shaft_width=4, head_width=8, arrow_length_scale=0.7):
@@ -35,9 +36,8 @@ def plot_wind_arrow(wind_speed, wind_direction, max_speed=25, shaft_width=4, hea
     Plots a filled wind arrow centered at (0,0) with meteorological color scale.
     """
     theta = np.radians(wind_direction)
-    L = wind_speed * arrow_length_scale
+    L = 10 * arrow_length_scale
     shaft_length = L * 0.6
-    head_length = L * 0.4
 
     # Arrow polygon local coordinates
     x = np.array([
@@ -59,6 +59,9 @@ def plot_wind_arrow(wind_speed, wind_direction, max_speed=25, shaft_width=4, hea
     x_rot = x_centered * np.cos(theta) - y_centered * np.sin(theta)
     y_rot = x_centered * np.sin(theta) + y_centered * np.cos(theta)
 
+    x_rot = x_rot.tolist()  # ADD THIS
+    y_rot = y_rot.tolist()  # ADD THIS
+
     # Color from meteorological scale
     color = wind_speed_to_color(wind_speed, max_speed)
 
@@ -70,21 +73,36 @@ def plot_wind_arrow(wind_speed, wind_direction, max_speed=25, shaft_width=4, hea
         mode='lines',
         fill='toself',
         fillcolor=color,
-        line=dict(color=color),
-        hoverinfo='skip'
+        line=dict(color=color, width=1),
+        hoverinfo='skip',
+        showlegend=False
     ))
 
     fig.update_layout(
-        title=f"Wind Arrow: {wind_speed:.1f} m/s at {wind_direction}°",
-        xaxis=dict(range=[-max_speed, max_speed], zeroline=False, showgrid=False),
-        yaxis=dict(range=[-max_speed, max_speed], zeroline=False, showgrid=False),
-        width=400,
-        height=400,
-        plot_bgcolor='white',
+        width=50,
+        height=50,
+        margin=dict(l=0, r=0, t=0, b=0, pad=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(
+            range=[-10, 10],
+            visible=False,
+            showgrid=False,
+            zeroline=False,
+            scaleanchor="y"
+        ),
+        yaxis=dict(
+            range=[-10, 10],
+            visible=False,
+            showgrid=False,
+            zeroline=False
+        ),
         showlegend=False
     )
 
-    fig.show()
+    # fig.show()
+    pio_json = pio.to_json(fig)
+    return pio_json
 
 
 # Example usage

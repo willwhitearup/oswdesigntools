@@ -5,7 +5,8 @@ from kitesurf.windapi import get_wind_forecast
 
 
 def get_good_week_forecast(lat, lon, loc_data, remove_filters=False):
-    print(remove_filters)
+    """filter the raw week long forecast data using location specific filtering
+    """
     df_sun_times = get_sunrise_sunset_api(lat, lon)
     df_tide_times = get_tides_api(lat, lon)
     df_wind_forecast = get_wind_forecast(lat, lon)
