@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "rrfs_styles.html" %}
+
+<div class="rrfs-info-banner">
+    <span class="rrfs-info-icon">ⓘ</span>
+    <span class="rrfs-info-text">Root reduction factors (RRFs) to DNV-RP-C203 App B</span>
+</div>
+
+<div class="rrfs-layout-container">
+
+    <!-- LEFT COLUMN -->
+    <div class="rrfs-input-column">
+        <form id="rrfs-input-form" class="rrfs-input-form" method="POST">
+
+            <!-- JOINT IMAGE -->
+            <div class="rrfs-joint-image-wrapper">
+                <img id="rrfs-joint-image"
+                     src="{{ url_for('static', filename='x_joint_img.png') }}"
+                     alt="Joint image"
+                     class="rrfs-joint-image">
+            </div>
+
+            <div class="rrfs-form-row">
+                <label for="rrfs_assess">Joint</label>
+                <select id="rrfs_assess" name="rrfs_assess">
+                    <option value="rrfs-x" {% if rrfs_assess == "rrfs-x" %}selected{% endif %}>X</option>
+                    <option value="rrfs-yt" {% if rrfs_assess == "rrfs-yt" %}selected{% endif %}>YT</option>
+                    <option value="rrfs-k" {% if rrfs_assess == "rrfs-k" %}selected{% endif %}>K</option>
+                </select>
+            </div>
+
+            <!-- ================= GEOMETRY ================= -->
+            <div class="rrfs-geometry-section">
+                <h4 class="rrfs-section-title">Geometry</h4>
+
+                <div class="rrfs-form-row">
+                    <label for="rrfs_beta">Beta</label>
+                    <input type="number" step="any" id="rrfs_beta" name="rrfs_beta"
+                           value="{{ beta }}">
+                </div>
+
+                <div class="rrfs-form-row">
+                    <label for="rrfs_gamma">Gamma</label>
+                    <input type="number" step="any" id="rrfs_gamma" name="rrfs_gamma"
+                           value="{{ gamma }}">
+                </div>
+
+                <div class="rrfs-form-row">
+                    <label for="rrfs_tau">Tau</label>
+                    <input type="number" step="any" id="rrfs_tau" name="rrfs_tau"
+                           value="{{ tau }}">
+                </div>
+
+                <div class="rrfs-form-row">
+                    <label for="rrfs_theta">Theta</label>
+                    <input type="number" step="any" id="rrfs_theta" name="rrfs_theta"
+                           value="{{ theta }}">
+                </div>
+
+                <div class="rrfs-form-row">
+                    <label for="rrfs_zeta">Zeta</label>
+                    <input type="number" step="any" id="rrfs_zeta" name="rrfs_zeta"
+                           value="{{ zeta }}">
+                </div>
+
+            </div>
+
+
+            <!-- ================= plot ================= -->
+            <div class="rrfs-plot-section">
+                <h4 class="rrfs-section-title">Plot options</h4>
+
+                <div class="rrfs-form-row">
+                    <label for="rrfs_x_axis_vary">X-axis variable</label>
+                    <input type="number" step="any" id="rrfs_x_axis_vary" name="rrfs_x_axis_vary"
+                           value="{{ tbc }}">
+                </div>
+
+            </div>
+
+            <button type="submit" class="rrfs-submit-button">
+                Submit
+            </button>
+
+        </form>
+    </div>
+
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const assessSelect = document.getElementById("rrfs_assess");
+
+    const thetaRow = document.getElementById("rrfs_theta").closest(".rrfs-form-row");
+    const zetaRow = document.getElementById("rrfs_zeta").closest(".rrfs-form-row");
+
+    const jointImage = document.getElementById("rrfs-joint-image");
+
+    function updateJointInputs() {
+
+        const jointType = assessSelect.value;
+
+        // Reset visibility
+        thetaRow.style.display = "";
+        zetaRow.style.display = "";
+
+        // X joint
+        if (jointType === "rrfs-x") {
+
+            thetaRow.style.display = "none";
+            zetaRow.style.display = "none";
+
+            jointImage.src = "{{ url_for('static', filename='x_joint_img.png') }}";
+        }
+
+        // YT joint
+        else if (jointType === "rrfs-yt") {
+
+            zetaRow.style.display = "none";
+
+            jointImage.src = "{{ url_for('static', filename='kt_joint_img.png') }}";
+        }
+
+        // K joint
+        else if (jointType === "rrfs-k") {
+
+            jointImage.src = "{{ url_for('static', filename='k_joint_img.png') }}";
+        }
+    }
+
+    // Initial update
+    updateJointInputs();
+
+    // On dropdown change
+    assessSelect.addEventListener("change", updateJointInputs);
+
+});
+</script>
+
+{% endblock %}

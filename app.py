@@ -15,7 +15,7 @@ from boltedconn.boltedconn_route import boltedconn_route
 
 from kitesurf.kitesurf_route import kitesurf_route
 from conescfs.cone_route import cone_route
-
+from rrfs.rrfs import rrfs_route
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -35,6 +35,8 @@ app.add_url_rule('/k_joint', 'k_joint', k_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/x_joint', 'x_joint', x_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/ty_joint', 'ty_joint', ty_joint_route, methods=['GET', 'POST'])
 app.add_url_rule('/kt_joint', 'kt_joint', kt_joint_route, methods=['GET', 'POST'])
+# rrfs
+app.add_url_rule('/rrfs', 'rrfs_route', rrfs_route, methods=['GET', 'POST'])
 # conicals
 app.add_url_rule('/conescfs', 'cone_route', cone_route, methods=['GET', 'POST'])
 # joint detailing

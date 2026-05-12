@@ -67,6 +67,8 @@ def plot_wind_arrow(wind_speed, wind_direction, max_speed=25, shaft_width=4, hea
         yaxis=dict(range=[-half, half], visible=False, showgrid=False, zeroline=False)
     )
 
+    # fig.show()
+
     return pio.to_json(fig)
 
 

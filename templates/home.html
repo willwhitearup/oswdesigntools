@@ -186,11 +186,42 @@
     margin-top: 1px;
   }
 
-  .joint-diamond a.conical-bottom {
-    grid-column: 2;  /* center it */
-    grid-row: 4;     /* new fourth row below KT */
-    margin-bottom: 20px;  /* adds space to bottom row */
+  /* Bottom buttons under diamond */
+  .bottom-joint-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: -5px;
+    width: 100%;
   }
+
+  /* Match diamond button styling */
+  .bottom-extra-button {
+    background: #f0f0f0;
+    border: 2px solid #007BFF;
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 120px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+    font-size: 0.9rem;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  .bottom-extra-button:hover {
+    background: #007BFF;
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
 </style>
 
 <div class="flowchart" aria-label="Main flowchart container">
@@ -199,10 +230,10 @@
     <!-- Vertical steps aligned over diamond center -->
     <div class="flow-steps" aria-label="Vertical steps aligned above TY Joint">
       <a href="/architect" class="step-box">1D architect</a>
-      <div class="arrow-down">&#8595;</div>
-      <a href="/jktsections" class="step-box">2D sections</a>
-      <div class="arrow-down">&#8595;</div>
-      <a href="/mto" class="step-box">MTO</a>
+<!--      <div class="arrow-down">&#8595;</div>-->
+<!--      <a href="/jktsections" class="step-box">2D sections</a>-->
+<!--      <div class="arrow-down">&#8595;</div>-->
+<!--      <a href="/mto" class="step-box">MTO</a>-->
     </div>
   </div>
 
@@ -223,10 +254,21 @@
       <div class="joint-desc">Table B-5</div>
     </a>
 
-    <!-- Conical SCFs button below KT joint -->
-    <a href="/conescfs" class="conical-bottom">Conical SCFs
+  </div>
+
+  <!-- Bottom centred buttons -->
+  <div class="bottom-joint-buttons" aria-label="other-buttons">
+
+    <a href="/rrfs" class="bottom-extra-button">
+      RRFs
+      <div class="joint-desc">RRF equations</div>
+    </a>
+
+    <a href="/conescfs" class="bottom-extra-button">
+      Conical SCFs
       <div class="joint-desc">SCFs for conical joints</div>
     </a>
+
   </div>
 
   <!-- Detailing and Grout buttons side by side -->
