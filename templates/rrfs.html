@@ -11,7 +11,7 @@
 
     <!-- LEFT COLUMN -->
     <div class="rrfs-input-column">
-        <form id="rrfs-input-form" class="rrfs-input-form" method="POST">
+        <form id="rrfs-input-form" class="rrfs-input-form">
 
             <!-- JOINT IMAGE -->
             <div class="rrfs-joint-image-wrapper">
@@ -67,14 +67,16 @@
             </div>
 
 
-            <!-- ================= plot ================= -->
+            <!-- ================= plot x-axis variable ================= -->
             <div class="rrfs-plot-section">
                 <h4 class="rrfs-section-title">Plot options</h4>
 
                 <div class="rrfs-form-row">
-                    <label for="rrfs_x_axis_vary">X-axis variable</label>
-                    <input type="number" step="any" id="rrfs_x_axis_vary" name="rrfs_x_axis_vary"
-                           value="{{ tbc }}">
+                    <label for="rrfs_x_axis_vary">X-axis vary</label>
+                    <select id="rrfs_x_axis_vary" name="rrfs_x_axis_vary">
+                        <option value="rrfs_beta" {% if rrfs_x_axis_vary == "beta" %}selected{% endif %}>beta</option>
+                        <option value="rrfs_tau" {% if rrfs_x_axis_vary == "tau" %}selected{% endif %}>tau</option>
+                    </select>
                 </div>
 
             </div>
@@ -88,9 +90,10 @@
 
 </div>
 
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("rrfs-input-form");
 
     const assessSelect = document.getElementById("rrfs_assess");
 
@@ -99,15 +102,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const jointImage = document.getElementById("rrfs-joint-image");
 
+    // ===============================
+    // Joint visibility + images
+    // ===============================
     function updateJointInputs() {
 
         const jointType = assessSelect.value;
 
-        // Reset visibility
         thetaRow.style.display = "";
         zetaRow.style.display = "";
 
-        // X joint
         if (jointType === "rrfs-x") {
 
             thetaRow.style.display = "none";
@@ -116,7 +120,6 @@ document.addEventListener("DOMContentLoaded", function () {
             jointImage.src = "{{ url_for('static', filename='x_joint_img.png') }}";
         }
 
-        // YT joint
         else if (jointType === "rrfs-yt") {
 
             zetaRow.style.display = "none";
@@ -124,20 +127,69 @@ document.addEventListener("DOMContentLoaded", function () {
             jointImage.src = "{{ url_for('static', filename='kt_joint_img.png') }}";
         }
 
-        // K joint
         else if (jointType === "rrfs-k") {
 
             jointImage.src = "{{ url_for('static', filename='k_joint_img.png') }}";
         }
     }
 
-    // Initial update
     updateJointInputs();
 
-    // On dropdown change
     assessSelect.addEventListener("change", updateJointInputs);
+
+    // ===============================
+    // Get form values
+    // ===============================
+    function getFormValues() {
+
+        const data = {};
+
+        new FormData(form).forEach((value, key) => {
+            data[key] = value;
+        });
+
+        return data;
+    }
+
+    // ===============================
+    // Submit form
+    // ===============================
+    async function submitForm() {
+
+        const data = getFormValues();
+
+        try {
+
+            const response = await fetch("/rrfs", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            console.log(result);
+
+        } catch (error) {
+
+            console.error("Error:", error);
+        }
+    }
+
+    form.addEventListener("submit", function(e) {
+
+        e.preventDefault();
+
+        submitForm();
+    });
 
 });
 </script>
+
 
 {% endblock %}

@@ -15,7 +15,7 @@ def plotly_fig_plot(xvals: list, xaxis_label: str,
     layout = go.Layout(
         title=f'RRFs title 1',
         xaxis=dict(title=f'{xaxis_label}', showgrid=True, gridcolor='lightgray'),
-        yaxis=dict(title='Resistance Force', showgrid=True, gridcolor='lightgray', range=[y_lower, y_upper]),
+        yaxis=dict(title='yaxis_label', showgrid=True, gridcolor='lightgray'),
         hovermode='closest',
         template='plotly_white'
     )

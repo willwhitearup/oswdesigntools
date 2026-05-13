@@ -20,12 +20,12 @@ def boltedconn_route():
         if not data:
             return jsonify({'error': 'No JSON received'}), 400
 
-        print("****************")
-        print(data)
+        # print("****************")
+        # print(data)
 
         bolt_sizes = list(BoltLibrary._bolts.keys())
         bolt_sizes.sort(key=lambda x: int(x[1:]))  # removes 'M' prefix
-        print(bolt_sizes)
+        # print(bolt_sizes)
         # ================= DESIGN / ASSESS MODE =================
         bolt_assess = data["bolt_assess"]
 

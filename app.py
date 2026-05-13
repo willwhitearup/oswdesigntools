@@ -15,7 +15,7 @@ from boltedconn.boltedconn_route import boltedconn_route
 
 from kitesurf.kitesurf_route import kitesurf_route
 from conescfs.cone_route import cone_route
-from rrfs.rrfs import rrfs_route
+from rrfs.rrfs_route import rrfs_route
 
 # initialise app variable for Flask obj
 app = Flask(__name__, template_folder='templates', static_folder='static')
