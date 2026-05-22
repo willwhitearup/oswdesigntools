@@ -124,8 +124,8 @@
             <div class="cone-form-row">
                 <label for="scf_inclusion">Cone SCF inclusion</label>
                 <select id="scf_inclusion" name="scf_inclusion">
-                    <option value="yes_multiply" {% if scf_inclusion == 'yes_multiply' %}selected{% endif %}>Yes - multiply</option>
                     <option value="yes_linear_add" {% if scf_inclusion == 'yes_linear_add' %}selected{% endif %}>Yes - linear addition</option>
+                    <option value="yes_multiply" {% if scf_inclusion == 'yes_multiply' %}selected{% endif %}>Yes - multiply</option>
                     <option value="no" {% if scf_inclusion == 'no' %}selected{% endif %}>No</option>
                 </select>
             </div>

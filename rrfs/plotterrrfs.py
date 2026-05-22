@@ -64,7 +64,7 @@ def plotly_fig_plot(plot_title: str, xaxis_label: str, curves: list):
         template='plotly_white'
     )
 
-    fig.show()
+    # fig.show()
 
     plot_json = pio.to_json(fig)
 

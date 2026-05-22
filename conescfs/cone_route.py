@@ -1,11 +1,8 @@
-import copy
-
 import numpy as np
 from flask import Flask, request, jsonify, render_template, url_for
 # local
 from conescfs.coneplotter import cone_scfs_plot
 from conescfs.scfprocess import cone_scf_single, cone_scf_sweep, tt_scf_process, cone_tt_scf_process
-from conescfs.thktransitionscfs import calc_scf_thickness_transition
 
 app = Flask(__name__)
 
@@ -52,27 +49,17 @@ def cone_route():
                                                     thickness_transition=abs(thickness_cone-thickness_tubular))
 
         # cone SCF processing-------------------------------------------------------------------------------------------
-        # using the minimum thickness of either the cone and tube, gives governing SCFs at the critical loc i.e.
-        # at small diameter junction, the outside SCFs are larger, and at large diameter junction, the inside SCFs are larger
-        use_minimum_t = True
-        if "yes" in scf_inclusion:
-            if use_minimum_t:
-                thickness_tubular_override = min(thickness_tubular, thickness_cone)
-                thickness_cone_override = min(thickness_tubular, thickness_cone)
-            else:
-                thickness_tubular_override = max(thickness_tubular, thickness_cone)
-                thickness_cone_override = max(thickness_tubular, thickness_cone)
-        else:
-            thickness_tubular_override, thickness_cone_override = thickness_tubular, thickness_cone
+        cone_scf_numeric_fields = {"radius_tubular": radius_tubular,
+                                   "thickness_tubular": thickness_tubular,
+                                   "thickness_cone": thickness_cone,
+                                   "alpha": alpha}
 
-        cone_scf_numeric_fields = {"radius_tubular": radius_tubular, "thickness_tubular": thickness_tubular_override,
-            "thickness_cone": thickness_cone_override, "alpha": alpha}
-
+        # plot the graph plots inputs
         base_val = cone_scf_numeric_fields[cone_x_axis_vary]
         xlim = float(cone_x_axis_lims.split("t")[-1]) # "t25", "t50", "t100"
         x_arr = np.linspace(base_val * (1 - xlim/100), base_val * (1 + xlim/100), 21)  # +/- 50% of the nominal value
 
-        single_results = cone_scf_single(radius_tubular, thickness_tubular_override, thickness_cone_override, alpha, junction_type)
+        single_results = cone_scf_single(radius_tubular, thickness_tubular, thickness_cone, alpha, junction_type)
         sweep_results = cone_scf_sweep(junction_type, cone_x_axis_vary, x_arr, cone_scf_numeric_fields)
 
         # single (one off) SCF results---------------------
@@ -125,7 +112,7 @@ def cone_route():
         conescfs_plot_json_out = cone_scfs_plot(x_arr.tolist(), scf_tube_outs, scf_tube_out_appfs, scf_cone_outs, scf_cone_out_appfs, junction_type, cone_x_axis_vary, "OUTSIDE")
 
         # scf messages re. implementation approach
-        scf_msgs = get_scf_implementation_msgs(scf_inclusion, thickness_tubular_override)
+        scf_msgs = get_scf_implementation_msgs(scf_inclusion)
 
 
         # Return results as JSON
@@ -214,23 +201,20 @@ def get_cone_and_tt_imgs(junction_type, transition_side, scf_weld_type, thicknes
 
     return f_cone_img, f_tt_img
 
-def get_scf_implementation_msgs(scf_inclusion, thickness_tubular_override):
+def get_scf_implementation_msgs(scf_inclusion):
     scf_msgs = {}
     if scf_inclusion == "yes_multiply":
-        scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are multiplied."
+        scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are multiplied e.g. SCF_cone x SCF_tt"
     elif scf_inclusion == "yes_linear_add":
-        scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are linearly summed (e.g. 1.2 + 1.4 = 1.6)."
+        scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are linearly summed e.g. SCF_cone + (SCF_tt - 1.0)"
     else:
         scf_msgs["1"] = "Cone SCFs are not combined with thickness transition SCFs."
 
     if "yes" in scf_inclusion:
         scf_msgs["2"] = (
-            f"Cone SCFs are calculated assuming a single thickness only; the minimum thickness of cone and tubular thicknesses ({thickness_tubular_override}) is used. "
-            f"This approach isolates the SCF to be from the bending induced by the cone angle only i.e. SCF from bending induced from centre line eccentricity between adjacent sections is NOT considered.")
+            f"Cone SCFs are calculated assuming the actual thicknesses either side of the cone angle and consider just the bending stiffness of the cone")
         scf_msgs["3"] = (
             "Thickness transition SCFs consider both the geometric effect (sharp corner between 2 plates of different thickness) and the SCF from "
             "bending induced from centre line eccentricity between adjacent sections.")
-        scf_msgs["4"] = ("This approach is used to avoid double counting the SCF induced from bending due to the "
-                         "centre line eccentricity i.e. this effect can be removed from the Cone SCF calculation but not be from the thickness transition SCF calculation.")
 
     return scf_msgs
