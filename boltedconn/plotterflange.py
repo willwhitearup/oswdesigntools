@@ -87,7 +87,7 @@ def l_flange_plotter(flange_obj: BoltedFlange):
         width=800,  # adjust figure width
         height=800,  # adjust figure height (square looks nice)
         xaxis=dict(range=[-flange_length * 1.2, flange_length * 0.2], scaleanchor='y', title='X (mm)'),
-        yaxis=dict(range=[-total_height * 1.2, flange_height * 0.5], title='Y (mm)'),
+        yaxis=dict(range=[-total_height * 1.3, flange_height * 0.5], title='Y (mm)'),
         showlegend=False)
 
     #fig.show()
