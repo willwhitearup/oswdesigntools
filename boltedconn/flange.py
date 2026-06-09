@@ -52,7 +52,8 @@ class BoltedFlange:
         # flange geom
         if self.b_star is None:
             self.b_star = self.bolt_tensioner_tool['le_min'] + self.wall_thickness
-        self.b = self.bolt_tensioner_tool['le_min'] + 0.5 * self.wall_thickness
+        self.b = self.b_star - 0.5 * self.wall_thickness
+
         self.a = self.flange_length - self.b_star
 
         washer_annulus = 0.5 * (self.bolt_obj.washer_diameter - self.bolt_obj.hole_diameter)
@@ -99,12 +100,12 @@ class BoltedFlange:
         self.alpha = self.flange_height / (self.a + self.b)  # G.14
         beta = ((self.a_b_ratio - 1.25) ** 0.32) + 0.45  # G.15
         bolt_lambda = 1 - (1 - self.alpha ** beta) ** 5
-
         if 0. < self.a_b_ratio <= 1.25:
             pass
         elif 1.25 < self.a_b_ratio <= 2.25 and (-0.12 * self.a + 0.55 <= self.alpha <= 1):  # G.16, G.17
             #print("Extension by Tobinaga and Ishihara is being implemented through modification of the length a. See IEC guidance!")
             self.a = self.a * bolt_lambda  # G.12 — now directly overwrites a
+            print("modified a", self.a)
             self.TobinagaIshiharaFlag = True
             if maintain_a_b_ratio_1_25:
                 self.valid_geom = False
@@ -183,6 +184,14 @@ class BoltedFlange:
         # calculate util
         self.util = self.bolt_sector_force / self.Fu_resistance_governing
 
+        # print("*****")
+        # print("le_min", self.bolt_tensioner_tool['le_min'])
+        # print("wall thk", self.wall_thickness)
+        # print("b*, b: ", self.b_star, self.b)
+        # print("n_bolts", self.n_bolts)
+        # print("Ft,R", self.bolt_obj.F_tR)
+        # print("Fu_B", self.Fu_resistance_governing, Fu_dict["Fu_B"])
+        # print("UR", self.util)
 
 
 

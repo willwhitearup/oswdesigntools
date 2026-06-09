@@ -114,5 +114,46 @@ def get_gc_defaults():
         "grout_strength": grout_strength,
         "grout_E": grout_E
     }
-
-
+#
+# def get_gc_defaults():
+#
+#     # test ones
+#     leg_od = 2800.
+#     leg_t = 75.
+#     pile_od = 3250.
+#     pile_t = 75.
+#     gc_length = 7000.
+#     n_sks = 10
+#     sk_width = 52.
+#     sk_height = 26.
+#     sk_spacing = 350.
+#
+#     # Load conditions (N and Nmm)
+#     fx = -100000.
+#     fy = -9000000.
+#     fz = 0
+#
+#     mx = -20000000 * 1e3  # Nmm
+#     my = 0 # Nmm
+#
+#     grout_strength = 80.0 # MPa (N/mm2)
+#     grout_E = 38000.0  # MPa  (N/mm2)
+#
+#     return {
+#         "leg_od": leg_od,
+#         "leg_t": leg_t,
+#         "pile_od": pile_od,
+#         "pile_t": pile_t,
+#         "gc_length": gc_length,
+#         "n_sks": n_sks,
+#         "sk_width": sk_width,
+#         "sk_height": sk_height,
+#         "sk_spacing": sk_spacing,
+#         "fx": fx,
+#         "fy": fy,
+#         "fz": fz,
+#         "mx": mx,
+#         "my": my,
+#         "grout_strength": grout_strength,
+#         "grout_E": grout_E
+#     }

@@ -66,7 +66,7 @@ def l_flange_plotter(flange_obj: BoltedFlange):
             line=dict(color=edge_colour, width=2), showlegend=False))
 
     # bolt axis dotted line
-    fig.add_trace(go.Scatter(x=[-b_star, -b_star], y=[flange_height / 3, -flange_height * 4 / 3],
+    fig.add_trace(go.Scatter(x=[-b_star, -b_star], y=[flange_height / 2.5, -flange_height * 4 / 3],
                              mode="lines", line=dict(color="black", width=2, dash="dot"), showlegend=False))
 
     ## annotations
@@ -75,11 +75,11 @@ def l_flange_plotter(flange_obj: BoltedFlange):
     vert_line_annotation(fig, -flange_length * 1.075, 0, -flange_height, "t")
     # horz dim lines
     horz_line_annotation(fig, -total_height * 1.2, -flange_length , 0, "flange length")
-    horz_line_annotation(fig, flange_height / 3, -flange_length, -b_star, "a")  # a
-    horz_line_annotation(fig, flange_height / 3, -b_star, 0, "b*")
+    horz_line_annotation(fig, flange_height / 2.5, -flange_length, -b_star, "a")  # a
+    horz_line_annotation(fig, flange_height / 2.5, -b_star, 0, "b*")
     horz_line_annotation(fig, flange_height / 6, -wall_thk/2-b, -wall_thk/2, "b")
     horz_line_annotation(fig, -total_height * 1.1, 0, -wall_thk, "wall thk")
-    horz_line_annotation(fig, -flange_height * 1.2, -b_star-hole_diameter/2, -b_star + hole_diameter/2, "hole diameter")
+    horz_line_annotation(fig, -flange_height * 1.2, -b_star-hole_diameter/2, -b_star + hole_diameter/2, "hole ⌀")
 
     # fig size / extent and layout
     fig.update_layout(
@@ -97,22 +97,27 @@ def l_flange_plotter(flange_obj: BoltedFlange):
 # add dimension lines to flange
 ###
 ####
-def horz_line_annotation(fig, line_y_dim, min_x, max_x, annotation_text):
+def horz_line_annotation(fig, line_y_dim, min_x, max_x, annotation_text, show_dim=True):
     # horz dim line
     fig.add_trace(go.Scatter(x=[min_x, max_x], y=[line_y_dim, line_y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
     # Left and right tick mark
     fig.add_trace(go.Scatter(x=[max_x, max_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
     fig.add_trace(go.Scatter(x=[min_x, min_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
     # text annotation
+    if show_dim == True:
+        annotation_text = annotation_text + "<br>" + f"({abs(max_x - min_x)})"
     fig.add_annotation(x=(min_x + max_x) / 2, y=line_y_dim, text=annotation_text, showarrow=False, font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
     return None
 
-def vert_line_annotation(fig, line_x_dim, min_y, max_y, annotation_text):
+def vert_line_annotation(fig, line_x_dim, min_y, max_y, annotation_text, show_dim=True):
     # Vertical dimension line
     fig.add_trace(go.Scatter(x=[line_x_dim, line_x_dim], y=[min_y, max_y], mode="lines", line=dict(color="black", width=2), showlegend=False))
     # Top tick Bottom tick
     fig.add_trace(go.Scatter(x=[line_x_dim - 5, line_x_dim + 5], y=[max_y, max_y], mode="lines", line=dict(color="black", width=2), showlegend=False))
     fig.add_trace(go.Scatter(x=[line_x_dim - 5, line_x_dim + 5], y=[min_y, min_y], mode="lines", line=dict(color="black", width=2), showlegend=False))
+    # text annotation
+    if show_dim == True:
+        annotation_text = annotation_text + "<br>" + f"({abs(max_y - min_y)})"
     # Label in middle
     fig.add_annotation(x=line_x_dim,  y=(min_y + max_y) / 2, text=annotation_text, showarrow=False, font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
     return None
