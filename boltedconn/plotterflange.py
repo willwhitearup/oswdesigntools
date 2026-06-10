@@ -3,7 +3,7 @@ import numpy as np
 import plotly.io as pio
 from boltedconn.flange import BoltedFlange
 
-def l_flange_plotter(flange_obj: BoltedFlange):
+def l_flange_plotter(flange_obj: BoltedFlange, add_bolt_tensioner_dims: bool):
     """
     Single L-flange profile.
     Origin (0,0) at top outer diameter.
@@ -66,7 +66,7 @@ def l_flange_plotter(flange_obj: BoltedFlange):
             line=dict(color=edge_colour, width=2), showlegend=False))
 
     # bolt axis dotted line
-    fig.add_trace(go.Scatter(x=[-b_star, -b_star], y=[flange_height / 2.5, -flange_height * 4 / 3],
+    fig.add_trace(go.Scatter(x=[-b_star, -b_star], y=[flange_height / 2.5, -total_height],
                              mode="lines", line=dict(color="black", width=2, dash="dot"), showlegend=False))
 
     ## annotations
@@ -81,13 +81,17 @@ def l_flange_plotter(flange_obj: BoltedFlange):
     horz_line_annotation(fig, -total_height * 1.1, 0, -wall_thk, "wall thk")
     horz_line_annotation(fig, -flange_height * 1.2, -b_star-hole_diameter/2, -b_star + hole_diameter/2, "hole ⌀")
 
+    if add_bolt_tensioner_dims:
+        horz_line_annotation(fig, -total_height, -wall_thk/2-b, -wall_thk, "le min", linecolor="grey")
+
+
     # fig size / extent and layout
     fig.update_layout(
         title=f'L-flange diagram {n_bolts} x {bolt_size} bolts',
         width=800,  # adjust figure width
         height=800,  # adjust figure height (square looks nice)
         xaxis=dict(range=[-flange_length * 1.2, flange_length * 0.2], scaleanchor='y', title='X (mm)'),
-        yaxis=dict(range=[-total_height * 1.3, flange_height * 0.5], title='Y (mm)'),
+        yaxis=dict(range=[-total_height * 1.3, flange_height * 0.6], title='Y (mm)'),
         showlegend=False)
 
     #fig.show()
@@ -97,16 +101,16 @@ def l_flange_plotter(flange_obj: BoltedFlange):
 # add dimension lines to flange
 ###
 ####
-def horz_line_annotation(fig, line_y_dim, min_x, max_x, annotation_text, show_dim=True):
+def horz_line_annotation(fig, line_y_dim, min_x, max_x, annotation_text, show_dim=True, linecolor="black"):
     # horz dim line
-    fig.add_trace(go.Scatter(x=[min_x, max_x], y=[line_y_dim, line_y_dim], mode="lines", line=dict(color="black", width=2), showlegend=False))
+    fig.add_trace(go.Scatter(x=[min_x, max_x], y=[line_y_dim, line_y_dim], mode="lines", line=dict(color=linecolor, width=2), showlegend=False))
     # Left and right tick mark
-    fig.add_trace(go.Scatter(x=[max_x, max_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
-    fig.add_trace(go.Scatter(x=[min_x, min_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color="black", width=2), showlegend=False))
+    fig.add_trace(go.Scatter(x=[max_x, max_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color=linecolor, width=2), showlegend=False))
+    fig.add_trace(go.Scatter(x=[min_x, min_x], y=[line_y_dim - 5, line_y_dim + 5], mode="lines", line=dict(color=linecolor, width=2), showlegend=False))
     # text annotation
     if show_dim == True:
         annotation_text = annotation_text + "<br>" + f"({abs(max_x - min_x)})"
-    fig.add_annotation(x=(min_x + max_x) / 2, y=line_y_dim, text=annotation_text, showarrow=False, font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
+    fig.add_annotation(x=(min_x + max_x) / 2, y=line_y_dim, text=annotation_text, showarrow=False, font=dict(size=12, color=linecolor), bgcolor="white", bordercolor=linecolor, borderpad=2)
     return None
 
 def vert_line_annotation(fig, line_x_dim, min_y, max_y, annotation_text, show_dim=True):

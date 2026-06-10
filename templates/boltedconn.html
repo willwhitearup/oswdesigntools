@@ -148,6 +148,18 @@
                     </select>
                 </div>
 
+                <div class="bolt-form-row">
+                    <label for="add_bolt_tensioner_dims">
+                        Show bolt tensioner dims
+                    </label>
+                    <input type="checkbox"
+                           id="add_bolt_tensioner_dims"
+                           name="add_bolt_tensioner_dims"
+                           {% if add_bolt_tensioner_dims %}checked{% endif %}>
+                </div>
+
+
+
             </div>
 
             <div class="bolt-geometry-section" id="bolt-optimisation-section">

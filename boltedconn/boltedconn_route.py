@@ -57,6 +57,8 @@ def boltedconn_route():
         maintain_a_b_ratio_1_25 = bool(data.get("maintain_a_b_ratio_1_25", False))
         # plot options
         x_axis_vary = data.get("x_axis_vary_bolt")
+        add_bolt_tensioner_dims = bool(data.get("add_bolt_tensioner_dims", False))
+        print(add_bolt_tensioner_dims)
 
         if bolt_assess == "assess":
             # do the assessment
@@ -65,19 +67,18 @@ def boltedconn_route():
                                                             flange_height, flange_length, bolt_size, n_bolts, b_star)
 
             # get a visual plotly outline plot of the flange
-            flange_plot_json = l_flange_plotter(flange_obj)
+            flange_plot_json = l_flange_plotter(flange_obj, add_bolt_tensioner_dims)
 
             if not flange_obj.valid_geom or not flange_obj.Fu_convergence:
                 bolt_util_plot_json = None
             else:
-                a=1
                 # util plot
-                # bolt_util_plot_json = bolt_util_plotter_process(x_axis_vary, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
-                #                                                 ULS_bending_moment, ULS_axial_force, bolt_size, b_star, mp_outer_diameter, mp_wall_thk,
-                #                                                 flange_obj.n_bolts_max, flange_obj.flange_height, flange_obj.flange_length, flange_obj.n_bolts)
-                #
+                bolt_util_plot_json = bolt_util_plotter_process(x_axis_vary, bolt_steel_grade, flange_steel_grade, tower_steel_grade,
+                                                                ULS_bending_moment, ULS_axial_force, bolt_size, b_star, mp_outer_diameter, mp_wall_thk,
+                                                                flange_obj.n_bolts_max, flange_obj.flange_height, flange_obj.flange_length, flange_obj.n_bolts)
+
             # todo debug code to remove plot temporarily!!!!!!!!!!!
-            bolt_util_plot_json=None
+            # bolt_util_plot_json=None
             # convert inf to a 0 for JS rendering
             if np.isinf(flange_obj.util) or np.isnan(flange_obj.util) or flange_obj.util is None:
                 flange_obj.util = 0.

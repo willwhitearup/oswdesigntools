@@ -102,24 +102,24 @@ class BoltTensionerLibrary:
             "H1": 523.1,
             "h3_min": 173.75,
             "h3_max": 172.5,
-            "dt_min": 3625,
+            "dt_min": 3500,
             "H9": 90,
             "C1": 138.25,
             "C2": 103.375,
             "le_min": 101.,  # 98 + 3, see ITH tool M90 data sheet
-            "t": 166.5
+            "t": 168.5  # 162.5 + (2 * 3) = 168.5 as C2=3
         },
         "M100": {
             "diameter": 100,
             "H1": 551.3,
             "h3_min": 192.5,
             "h3_max": 175,
-            "dt_min": 4250,
+            "dt_min": 4000,  # guess!!
             "H9": 92.5,
             "C1": 144.5,
             "C2": 120.25,
-            "le_min": 110.,
-            "t": 189.5
+            "le_min": 110.,  # guess!!
+            "t": 188.5
         }
 
     }

@@ -60,7 +60,11 @@ class BoltedFlange:
         self.b_dashE = self.b - 0.5 * self.bolt_obj.hole_diameter - 0.5 * washer_annulus
 
         self.bolt_centre_diameter = self.outer_diameter - 2 * self.b_star
+
+        # dt_min = max(self.bolt_tensioner_tool["dt_min"], self.bolt_centre_diameter)  # not yet used, but should be?/ see ITH bolt stuff
+        # n_bolts_dp_meth2 = np.radians(180) / np.asin(self.bolt_tensioner_tool["t"] / dt_min)
         n_bolts_dp = np.radians(180) / np.asin(self.bolt_tensioner_tool["t"] / self.bolt_centre_diameter)
+
         self.n_bolts_max = math.floor(n_bolts_dp) - math.floor(n_bolts_dp) % 2
 
         if self.n_bolts is None or self.n_bolts > self.n_bolts_max:
@@ -105,7 +109,6 @@ class BoltedFlange:
         elif 1.25 < self.a_b_ratio <= 2.25 and (-0.12 * self.a + 0.55 <= self.alpha <= 1):  # G.16, G.17
             #print("Extension by Tobinaga and Ishihara is being implemented through modification of the length a. See IEC guidance!")
             self.a = self.a * bolt_lambda  # G.12 — now directly overwrites a
-            print("modified a", self.a)
             self.TobinagaIshiharaFlag = True
             if maintain_a_b_ratio_1_25:
                 self.valid_geom = False
