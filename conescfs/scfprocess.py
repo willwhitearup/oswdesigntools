@@ -42,42 +42,21 @@ def cone_scf_sweep(junction_type, cone_x_axis_vary, x_arr, numeric_inputs):
 
 def tt_scf_process(thickness_tubular, thickness_cone, radius_tubular, transition_side, weld_width, delta_m, delta_0,
                    scf_taper_ratio, scf_weld_type):
-
-    thk_diff = abs(thickness_tubular - thickness_cone)
-
     # thicker tube than cone
     if thickness_tubular >= thickness_cone:
-
         thickness_thick_member, thickness_thin_member = thickness_tubular, thickness_cone
-
-        if transition_side == "inside":  # i.e. outer diameter is flush
-            diameter_thick_member = radius_tubular * 2
-            diameter_thin_member = radius_tubular * 2
-        elif transition_side == "outside":
-            diameter_thick_member = radius_tubular * 2
-            diameter_thin_member = radius_tubular * 2 - 2 * thk_diff
-
-
-    # thicker cone than tube
-    elif thickness_cone > thickness_tubular:
-
+    else:
         thickness_thick_member, thickness_thin_member = thickness_cone, thickness_tubular
 
-        if transition_side == "inside":  # i.e. outer diameter is flush
-            diameter_thick_member = radius_tubular * 2
-            diameter_thin_member = radius_tubular * 2
-
-        elif transition_side == "outside":
-            diameter_thick_member = radius_tubular * 2 + 2 * thk_diff
-            diameter_thin_member = radius_tubular * 2
+    D = radius_tubular * 2
 
     # calculate weld width
-    scf_inside_tt, scf_outside_tt = calc_scf_thickness_transition(diameter_thick_member, diameter_thin_member,
+    scf_inside_tt, scf_outside_tt, length = calc_scf_thickness_transition(D,
                                                                   thickness_thick_member, thickness_thin_member, weld_width,
                                                                   delta_m, delta_0, scf_taper_ratio, scf_weld_type,
                                                                   transition_side)
 
-    return scf_inside_tt, scf_outside_tt
+    return scf_inside_tt, scf_outside_tt, length
 
 
 def cone_tt_scf_process(single_results, scf_inside_tt, scf_outside_tt, scf_inclusion):

@@ -90,7 +90,7 @@ def cone_route():
 
         # thickness transition SCF processing--------------------------------------------------------------------------
         # scfs inside and outside
-        scf_inside_tt, scf_outside_tt = tt_scf_process(thickness_tubular, thickness_cone, radius_tubular,
+        scf_inside_tt, scf_outside_tt, length = tt_scf_process(thickness_tubular, thickness_cone, radius_tubular,
                                                        transition_side, weld_width, delta_m, delta_0, scf_taper_ratio,
                                                        scf_weld_type)
 
@@ -112,7 +112,7 @@ def cone_route():
         conescfs_plot_json_out = cone_scfs_plot(x_arr.tolist(), scf_tube_outs, scf_tube_out_appfs, scf_cone_outs, scf_cone_out_appfs, junction_type, cone_x_axis_vary, "OUTSIDE")
 
         # scf messages re. implementation approach
-        scf_msgs = get_scf_implementation_msgs(scf_inclusion)
+        scf_msgs = get_scf_implementation_msgs(scf_inclusion, length)
 
 
         # Return results as JSON
@@ -201,8 +201,8 @@ def get_cone_and_tt_imgs(junction_type, transition_side, scf_weld_type, thicknes
 
     return f_cone_img, f_tt_img
 
-def get_scf_implementation_msgs(scf_inclusion):
-    scf_msgs = {}
+def get_scf_implementation_msgs(scf_inclusion, length):
+    scf_msgs = {"0": f"Weld width, L, {length} used in thickness transition SCF eqn."}
     if scf_inclusion == "yes_multiply":
         scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are multiplied e.g. SCF_cone x SCF_tt"
     elif scf_inclusion == "yes_linear_add":
