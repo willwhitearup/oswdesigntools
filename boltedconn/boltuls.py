@@ -41,8 +41,6 @@ def bolt_connection_uls_strength_check(outer_diameter, wall_thickness,
 
     flange_obj.calc_bolted_connection_failure_modes()
     flange_obj.calc_util()
-    # util = flange_obj.util
-    # print("Util: ", util)
     return flange_obj
 
 def flange_searching_geometry(outer_diameter, wall_thickness, bolt_steel_grade, flange_steel_grade, tower_steel_grade,

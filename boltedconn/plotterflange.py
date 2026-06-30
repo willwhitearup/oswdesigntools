@@ -71,7 +71,7 @@ def l_flange_plotter(flange_obj: BoltedFlange, add_bolt_tensioner_dims: bool):
 
     ## annotations
     # vertical dim lines
-    show_dim=False
+    show_dim=True
     vert_line_annotation(fig, flange_length * 0.1, 0, -total_height, "total height", show_dim=show_dim)
     vert_line_annotation(fig, -flange_length * 1.075, 0, -flange_height, "t", show_dim=show_dim)
     # horz dim lines

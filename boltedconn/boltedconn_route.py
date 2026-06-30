@@ -58,7 +58,6 @@ def boltedconn_route():
         # plot options
         x_axis_vary = data.get("x_axis_vary_bolt")
         add_bolt_tensioner_dims = bool(data.get("add_bolt_tensioner_dims", False))
-        print(add_bolt_tensioner_dims)
 
         if bolt_assess == "assess":
             # do the assessment
