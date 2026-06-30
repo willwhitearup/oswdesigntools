@@ -202,19 +202,16 @@ def get_cone_and_tt_imgs(junction_type, transition_side, scf_weld_type, thicknes
     return f_cone_img, f_tt_img
 
 def get_scf_implementation_msgs(scf_inclusion, length):
+
+    # include messages here to always show
     scf_msgs = {"0": f"Weld width, L, {length} used in thickness transition SCF eqn."}
+
     if scf_inclusion == "yes_multiply":
-        scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are multiplied e.g. SCF_cone x SCF_tt"
+        txt = "Cone SCFs and thickness transition SCFs are multiplied e.g. SCF_cone x SCF_tt"
     elif scf_inclusion == "yes_linear_add":
-        scf_msgs["1"] = "Cone SCFs and thickness transition SCFs are linearly summed e.g. SCF_cone + (SCF_tt - 1.0)"
+        txt = "Cone SCFs and thickness transition SCFs are linearly summed e.g. SCF_cone + (SCF_tt - 1.0)"
     else:
-        scf_msgs["1"] = "Cone SCFs are not combined with thickness transition SCFs."
+        txt = "Cone SCFs are not combined with thickness transition SCFs."
 
-    if "yes" in scf_inclusion:
-        scf_msgs["2"] = (
-            f"Cone SCFs are calculated assuming the actual thicknesses either side of the cone angle and consider just the bending stiffness of the cone")
-        scf_msgs["3"] = (
-            "Thickness transition SCFs consider both the geometric effect (sharp corner between 2 plates of different thickness) and the SCF from "
-            "bending induced from centre line eccentricity between adjacent sections.")
-
+    scf_msgs["1"] = txt
     return scf_msgs

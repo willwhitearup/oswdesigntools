@@ -71,18 +71,19 @@ def l_flange_plotter(flange_obj: BoltedFlange, add_bolt_tensioner_dims: bool):
 
     ## annotations
     # vertical dim lines
-    vert_line_annotation(fig, flange_length * 0.1, 0, -total_height, "total height")
-    vert_line_annotation(fig, -flange_length * 1.075, 0, -flange_height, "t")
+    show_dim=False
+    vert_line_annotation(fig, flange_length * 0.1, 0, -total_height, "total height", show_dim=show_dim)
+    vert_line_annotation(fig, -flange_length * 1.075, 0, -flange_height, "t", show_dim=show_dim)
     # horz dim lines
-    horz_line_annotation(fig, -total_height * 1.2, -flange_length , 0, "flange length")
-    horz_line_annotation(fig, flange_height / 2.5, -flange_length, -b_star, "a")  # a
-    horz_line_annotation(fig, flange_height / 2.5, -b_star, 0, "b*")
-    horz_line_annotation(fig, flange_height / 6, -wall_thk/2-b, -wall_thk/2, "b")
-    horz_line_annotation(fig, -total_height * 1.1, 0, -wall_thk, "wall thk")
-    horz_line_annotation(fig, -flange_height * 1.2, -b_star-hole_diameter/2, -b_star + hole_diameter/2, "hole ⌀")
+    horz_line_annotation(fig, -total_height * 1.2, -flange_length , 0, "flange length", show_dim=show_dim)
+    horz_line_annotation(fig, flange_height / 2.5, -flange_length, -b_star, "a", show_dim=show_dim)  # a
+    horz_line_annotation(fig, flange_height / 2.5, -b_star, 0, "b*", show_dim=show_dim)
+    horz_line_annotation(fig, flange_height / 6, -wall_thk/2-b, -wall_thk/2, "b", show_dim=show_dim)
+    horz_line_annotation(fig, -total_height * 1.1, 0, -wall_thk, "wall thk", show_dim=show_dim)
+    horz_line_annotation(fig, -flange_height * 1.2, -b_star-hole_diameter/2, -b_star + hole_diameter/2, "hole ⌀", show_dim=show_dim)
 
     if add_bolt_tensioner_dims:
-        horz_line_annotation(fig, -total_height, -wall_thk/2-b, -wall_thk, "le min", linecolor="grey")
+        horz_line_annotation(fig, -total_height, -wall_thk/2-b, -wall_thk, "le min", linecolor="grey", show_dim=show_dim)
 
 
     # fig size / extent and layout

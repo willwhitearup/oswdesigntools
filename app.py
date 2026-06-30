@@ -1,4 +1,8 @@
 import os
+
+
+
+
 from flask import Flask, render_template, session
 from jktdesign.architect import jacket_architect
 from jktdesign.jktsections import jacket_sections, jacket_sections_plot
@@ -46,6 +50,11 @@ app.add_url_rule('/gc', 'gc_route', gc_route, methods=['GET', 'POST'])
 app.add_url_rule('/boltedconn', 'boltedconn_route', boltedconn_route, methods=['GET', 'POST'])
 # kitesurf
 app.add_url_rule('/kitesurf', 'kitesurf_route', kitesurf_route, methods=['GET', 'POST'])
+# onshape CAD viewing
+
+from onshape.onshape_route import onshape_route, onshape_model_glb
+app.add_url_rule('/cad_tp_type1',           'onshape',           onshape_route,      methods=['GET'])
+app.add_url_rule('/cad_tp_type1/model.glb', 'onshape_model_glb', onshape_model_glb,  methods=['GET'])
 
 
 if __name__ == '__main__':

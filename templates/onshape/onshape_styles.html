@@ -1,0 +1,40 @@
+{# Styles for the Onshape CAD viewer page. Included from onshape.html. #}
+<style>
+    /* Side-by-side: inputs left, viewer right */
+    .onshape-container {
+        display: flex;
+        gap: 20px;
+        margin: 16px 0;
+        align-items: flex-start;
+    }
+    .onshape-form-container {
+        flex: 0 0 280px;          /* fixed-width left panel */
+        background: #f6f7f9;
+        padding: 16px;
+        border-radius: 8px;
+    }
+    .onshape-viewer-wrapper {
+        flex: 1 1 auto;           /* viewer takes remaining width */
+        min-width: 0;             /* prevents overflow on narrow screens */
+    }
+    .onshape-info-banner {
+        margin: 16px 0;
+        padding: 10px 14px;
+        background: #eef6ff;
+        border-left: 4px solid #0a84ff;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+    .onshape-info-icon {
+        color: #0a84ff;
+        font-size: 18px;
+    }
+    /* Stack on narrow screens */
+    @media (max-width: 900px) {
+        .onshape-container { flex-direction: column; }
+        .onshape-form-container { flex: 0 0 auto; width: 100%; }
+    }
+</style>
