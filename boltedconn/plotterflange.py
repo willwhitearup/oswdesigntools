@@ -3,7 +3,7 @@ import numpy as np
 import plotly.io as pio
 from boltedconn.flange import BoltedFlange
 
-def l_flange_plotter(flange_obj: BoltedFlange, add_bolt_tensioner_dims: bool):
+def l_flange_plotter_xxx(flange_obj: BoltedFlange, add_bolt_tensioner_dims: bool):
     """
     Single L-flange profile.
     Origin (0,0) at top outer diameter.
@@ -126,6 +126,118 @@ def vert_line_annotation(fig, line_x_dim, min_y, max_y, annotation_text, show_di
     # Label in middle
     fig.add_annotation(x=line_x_dim,  y=(min_y + max_y) / 2, text=annotation_text, showarrow=False, font=dict(size=12, color="black"), bgcolor="white", bordercolor="black", borderpad=2)
     return None
+
+
+
+
+#### test
+def l_flange_plotter(flange_obj: BoltedFlange, show_dim_values: bool, mirror_about_x_axis: bool, add_bolt_tensioner_dims: bool):
+    """
+    Single L-flange profile.
+    Origin (0,0) at top outer diameter.
+    If mirror_about_x_axis=True, the whole profile (and its dims) is flipped about y=0.
+    """
+
+    wall_thk = flange_obj.wall_thickness
+    flange_length = flange_obj.flange_length
+    flange_height = flange_obj.flange_height
+    total_height = flange_obj.total_height
+    hole_diameter = flange_obj.bolt_obj.hole_diameter
+    b_star = flange_obj.b_star
+    b = flange_obj.b
+    bolt_size = flange_obj.bolt_obj.bolt_size
+    n_bolts = flange_obj.n_bolts
+    # radius between flange and wall thickness
+    r = flange_height / 8.5
+    n_arc_pts: int = 12  # smoothness of radius
+
+    # mirror multiplier for all y-coordinates
+    sy = -1 if mirror_about_x_axis else 1
+
+    # ============================================================
+    # 1) Vertical leg down to fillet
+    xs_leg = [0, 0, -wall_thk, -wall_thk]
+    ys_leg = [0, -total_height, -total_height, -flange_height - r]
+
+    # ============================================================
+    # 2) Internal fillet (quarter circle)
+    cx = -wall_thk - r
+    cy = -flange_height - r
+    theta = np.linspace(0, np.pi / 2, n_arc_pts)
+    xs_arc = list(cx + r * np.cos(theta))
+    ys_arc = list(cy + r * np.sin(theta))
+
+    # ============================================================
+    # 3) From fillet to first bolt-hole edge
+    xs_to_hole = [-b_star + hole_diameter / 2, -b_star + hole_diameter / 2, 0]
+    ys_to_hole = [-flange_height, 0, 0]
+
+    # 4) Outer flange section beyond bolt hole
+    xs_outer = [-b_star - hole_diameter / 2, -flange_length, -flange_length, -b_star - hole_diameter / 2, -b_star - hole_diameter / 2]
+    ys_outer = [-flange_height, -flange_height, 0, 0, -flange_height]
+
+    # ============================================================
+    # 5) Close first filled region explicitly
+    xs_part1 = xs_leg + xs_arc + xs_to_hole + [xs_leg[0]]
+    ys_part1 = ys_leg + ys_arc + ys_to_hole + [ys_leg[0]]
+
+    # apply mirror to all y arrays
+    ys_part1 = [sy * y for y in ys_part1]
+    ys_outer = [sy * y for y in ys_outer]
+
+    # ============================================================
+    # 6) Create figure
+    fig = go.Figure()
+
+    flange_colour = "#EF553B"  # steel red
+    edge_colour = "#B22222"
+    # First filled region (left side of bolt hole)
+    fig.add_trace(go.Scatter(x=xs_part1, y=ys_part1, mode="lines", fill="toself", fillcolor=flange_colour,
+            line=dict(color=edge_colour, width=2), showlegend=False))
+
+    # Second filled region (right side of bolt hole)
+    fig.add_trace(go.Scatter(x=xs_outer, y=ys_outer, mode="lines", fill="toself", fillcolor=flange_colour,
+            line=dict(color=edge_colour, width=2), showlegend=False))
+
+    # bolt axis dotted line
+    fig.add_trace(go.Scatter(x=[-b_star, -b_star],
+                             y=[sy * (flange_height / 2.5), sy * (-total_height)],
+                             mode="lines", line=dict(color="black", width=2, dash="dot"), showlegend=False))
+
+    ## annotations
+    # show_dim_values = True
+    # vertical dim lines  (args: fig, x_pos, y_start, y_end, label)
+    vert_line_annotation(fig, flange_length * 0.1, sy * 0, sy * -total_height, "total height", show_dim=show_dim_values)
+    vert_line_annotation(fig, -flange_length * 1.075, sy * 0, sy * -flange_height, "t", show_dim=show_dim_values)
+    # horz dim lines  (args: fig, y_pos, x_start, x_end, label)
+    horz_line_annotation(fig, sy * -total_height * 1.2, -flange_length, 0, "flange length", show_dim=show_dim_values)
+    horz_line_annotation(fig, sy * flange_height / 2.5, -flange_length, -b_star, "a", show_dim=show_dim_values)
+    horz_line_annotation(fig, sy * flange_height / 2.5, -b_star, 0, "b*", show_dim=show_dim_values)
+    horz_line_annotation(fig, sy * flange_height / 6, -wall_thk / 2 - b, -wall_thk / 2, "b", show_dim=show_dim_values)
+    horz_line_annotation(fig, sy * -total_height * 1.1, 0, -wall_thk, "wall thk", show_dim=show_dim_values)
+    horz_line_annotation(fig, sy * -flange_height * 1.2, -b_star - hole_diameter / 2, -b_star + hole_diameter / 2, "hole ⌀", show_dim=show_dim_values)
+
+    if add_bolt_tensioner_dims:
+        horz_line_annotation(fig, sy * -total_height, -wall_thk / 2 - b, -wall_thk, "le min", linecolor="grey", show_dim=show_dim_values)
+
+    # y-axis range flips with the mirror (kept ascending)
+    if mirror_about_x_axis:
+        y_range = [-flange_height * 0.6, total_height * 1.3]
+    else:
+        y_range = [-total_height * 1.3, flange_height * 0.6]
+
+    # fig size / extent and layout
+    fig.update_layout(
+        title=f'L-flange diagram {n_bolts} x {bolt_size} bolts',
+        width=800,
+        height=800,
+        xaxis=dict(range=[-flange_length * 1.2, flange_length * 0.2], scaleanchor='y', title='X (mm)'),
+        yaxis=dict(range=y_range, title='Y (mm)'),
+        showlegend=False)
+
+    return pio.to_json(fig)
+
+
 
 
 if __name__ == "__main__":

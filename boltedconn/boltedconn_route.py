@@ -1,13 +1,10 @@
-import copy
-import math
 import numpy as np
-from flask import Flask, render_template, flash, jsonify, request, session
-
+from flask import Flask, render_template, jsonify, request
 from boltedconn.boltdata import BoltLibrary
 # local
 from boltedconn.boltuls import bolt_connection_uls_strength_check, flange_searching_geometry
 from boltedconn.plotterflange import l_flange_plotter
-from boltedconn.plotterutils import bolted_connection_utils_plot, bolt_util_plotter_process
+from boltedconn.plotterutils import bolt_util_plotter_process
 
 app = Flask(__name__)
 
@@ -22,10 +19,8 @@ def boltedconn_route():
 
         # print("****************")
         # print(data)
-
         bolt_sizes = list(BoltLibrary._bolts.keys())
         bolt_sizes.sort(key=lambda x: int(x[1:]))  # removes 'M' prefix
-        # print(bolt_sizes)
         # ================= DESIGN / ASSESS MODE =================
         bolt_assess = data["bolt_assess"]
 
@@ -54,10 +49,12 @@ def boltedconn_route():
         # ================= OPTIMISATION INPUTS =================
         opt_bolt_size = data.get("opt_bolt_size")  # used in design mode
         bolt_target_util = float(data.get("bolt_target_util", 0.95))
-        maintain_a_b_ratio_1_25 = bool(data.get("maintain_a_b_ratio_1_25", False))
+        maintain_a_b_ratio_1_25 = data.get("maintain_a_b_ratio_1_25", False)
         # plot options
         x_axis_vary = data.get("x_axis_vary_bolt")
-        add_bolt_tensioner_dims = bool(data.get("add_bolt_tensioner_dims", False))
+        show_dim_values = data.get("show_dim_values", True)
+        mirror_about_x_axis = data.get("mirror_about_x_axis", False)
+        add_bolt_tensioner_dims = data.get("add_bolt_tensioner_dims", True)
 
         if bolt_assess == "assess":
             # do the assessment
@@ -66,7 +63,7 @@ def boltedconn_route():
                                                             flange_height, flange_length, bolt_size, n_bolts, b_star)
 
             # get a visual plotly outline plot of the flange
-            flange_plot_json = l_flange_plotter(flange_obj, add_bolt_tensioner_dims)
+            flange_plot_json = l_flange_plotter(flange_obj, show_dim_values, mirror_about_x_axis, add_bolt_tensioner_dims)
 
             if not flange_obj.valid_geom or not flange_obj.Fu_convergence:
                 bolt_util_plot_json = None
@@ -136,16 +133,23 @@ def boltedconn_route():
         # Provide default values to render form
         default_data = {
             "mp_outer_diameter": 7500.,
-            "mp_wall_thk": 100.,
-            "flange_height": 200.,
-            "flange_length": 400.,
-            "n_bolts": 130,
-            "b_star": 210.,
-            "ULS_axial_force": 17.305e6,  # N above the flange
-            "ULS_bending_moment": 557e9,  # Nmm
+            "mp_wall_thk": 85.,
+            "flange_height": 180.,
+            "flange_length": 380.,
+            "n_bolts": 160,
+            "b_star": 173.,
+            "ULS_axial_force": 14.70e6,  # N above the flange
+            "ULS_bending_moment": 511e9,  # Nmm
             "bolt_target_util": 0.95,
-            "maintain_a_b_ratio_1_25": True,
-            "bolt_size": "M90"
+            "maintain_a_b_ratio_1_25": False,
+            "bolt_size": "M72",
+
+
+            # ---- checkbox defaults ----
+            "show_dim_values":         True,
+            "mirror_about_x_axis": False,
+            "add_bolt_tensioner_dims": True,
+
         }
 
         return render_template("boltedconn.html", bolt_sizes=bolt_sizes, **default_data)

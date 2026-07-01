@@ -105,7 +105,6 @@
                     </select>
                 </div>
 
-
                 <div class="bolt-form-row">
                     <label for="tower_steel_grade">Monopile steel grade</label>
                     <select id="tower_steel_grade" name="tower_steel_grade">
@@ -135,7 +134,8 @@
                 </div>
             </div>
 
-<!--            plot options-->
+            <!--            plot options-->
+            <!-- plot options -->
             <div class="bolt-geometry-section l-flange-section">
                 <h4 class="bolt-section-title">Plot options</h4>
 
@@ -144,22 +144,33 @@
                     <select id="x_axis_vary_bolt" name="x_axis_vary_bolt">
                         <option value="flange_height" {% if x_axis_vary_bolt == "flange_height" %}selected{% endif %}>flange_height (t)</option>
                         <option value="flange_length" {% if x_axis_vary_bolt == "flange_length" %}selected{% endif %}>flange_length</option>
-                        <option value="n_bolts" {% if x_axis_vary_bolt == "n_bolts" %}selected{% endif %}>n_bolts</option>
+                        <option value="n_bolts"       {% if x_axis_vary_bolt == "n_bolts"       %}selected{% endif %}>n_bolts</option>
                     </select>
                 </div>
 
                 <div class="bolt-form-row">
-                    <label for="add_bolt_tensioner_dims">
-                        Show bolt tensioner dims
-                    </label>
+                    <label for="show_dim_values">Show dimension values</label>
+                    <input type="checkbox"
+                           id="show_dim_values"
+                           name="show_dim_values"
+                           {% if show_dim_values %}checked{% endif %}>
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="mirror_about_x_axis">Mirror about X-axis</label>
+                    <input type="checkbox"
+                           id="mirror_about_x_axis"
+                           name="mirror_about_x_axis"
+                           {% if mirror_about_x_axis %}checked{% endif %}>
+                </div>
+
+                <div class="bolt-form-row">
+                    <label for="add_bolt_tensioner_dims">Show bolt tensioner dims</label>
                     <input type="checkbox"
                            id="add_bolt_tensioner_dims"
                            name="add_bolt_tensioner_dims"
                            {% if add_bolt_tensioner_dims %}checked{% endif %}>
                 </div>
-
-
-
             </div>
 
             <div class="bolt-geometry-section" id="bolt-optimisation-section">
@@ -286,8 +297,11 @@ document.addEventListener("DOMContentLoaded", function() {
     function getFormValues() {
         const data = {};
         new FormData(form).forEach((value, key) => { data[key] = value; });
-        data["maintain_a_b_ratio_1_25"] =
-            document.getElementById("maintain_a_b_ratio_1_25").checked;
+        // overwrite every checkbox with its real .checked boolean
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            data[cb.name] = cb.checked;
+        });
+
         return data;
     }
 
@@ -315,6 +329,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <div style="font-weight:bold; margin-bottom:10px;">
                         ...Pls hold...running flange geometry design optimisation...
                     </div>
+                </div>
             `;
         }
 
