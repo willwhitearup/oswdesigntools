@@ -74,12 +74,10 @@
                 <div class="bolt-form-row">
                     <label for="n_bolts">No. of bolts</label>
                     <input type="number" step="any" id="n_bolts" name="n_bolts" value="">
-<!--                    value="{{ n_bolts }}">-->
                 </div>
                 <div class="bolt-form-row">
                     <label for="b_star">b*</label>
                     <input type="number" step="any" id="b_star" name="b_star" value="">
-<!--                           value="{{ b_star }}">-->
                 </div>
             </div>
 
@@ -134,7 +132,6 @@
                 </div>
             </div>
 
-            <!--            plot options-->
             <!-- plot options -->
             <div class="bolt-geometry-section l-flange-section">
                 <h4 class="bolt-section-title">Plot options</h4>
@@ -149,7 +146,7 @@
                 </div>
 
                 <div class="bolt-form-row">
-                    <label for="show_dim_values">Show dimension values</label>
+                    <label for="show_dim_values">Show dims</label>
                     <input type="checkbox"
                            id="show_dim_values"
                            name="show_dim_values"
@@ -157,7 +154,7 @@
                 </div>
 
                 <div class="bolt-form-row">
-                    <label for="mirror_about_x_axis">Mirror about X-axis</label>
+                    <label for="mirror_about_x_axis">Mirror</label>
                     <input type="checkbox"
                            id="mirror_about_x_axis"
                            name="mirror_about_x_axis"
@@ -165,7 +162,7 @@
                 </div>
 
                 <div class="bolt-form-row">
-                    <label for="add_bolt_tensioner_dims">Show bolt tensioner dims</label>
+                    <label for="add_bolt_tensioner_dims">Bolt tensioner</label>
                     <input type="checkbox"
                            id="add_bolt_tensioner_dims"
                            name="add_bolt_tensioner_dims"
@@ -242,7 +239,7 @@
 </div>
 
 <!--JS code !!!!!!!!!!!!!!!-->
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
@@ -266,25 +263,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
     let submittedValues = {};
 
-    // ===============================
-    // Toggle Assess / Design Sections
-    // ===============================
     function toggleSections() {
         const mode = modeSelect.value;
         if (mode === "assess") {
-            // lFlangeSection.style.display = "block";
             lFlangeSections.forEach(section => section.style.display = "block");
             optimisationSection.style.display = "none";
             flangePlotDiv.style.display = "block";
             utilContainer.style.display = "block";
-            resContainer.style.display = "flex";  // Show results container
+            resContainer.style.display = "flex";
+            optContainer.style.display = "none";
         } else {
-            // lFlangeSection.style.display = "none";
             lFlangeSections.forEach(section => section.style.display = "none");
             optimisationSection.style.display = "block";
             flangePlotDiv.style.display = "none";
             utilContainer.style.display = "none";
-            resContainer.style.display = "none";  // Hide results container in design mode
+            resContainer.style.display = "none";
         }
     }
 
@@ -416,9 +409,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 utilContainer.style.display = "none";
 
                 if (flangePlotDiv.data) Plotly.purge(flangePlotDiv);
-                if (utilPlotDiv.data) Plotly.purge(utilPlotDiv);
+                if (utilPlotDiv.data)   Plotly.purge(utilPlotDiv);
 
-                resBox.innerHTML = "";
+                resBox.innerHTML  = "";
                 geomBox.innerHTML = "";
 
                 const rows = result.df_optimal_res;
@@ -427,8 +420,9 @@ document.addEventListener("DOMContentLoaded", function() {
                     const columns = Object.keys(rows[0]);
                     let tableHTML = `<table><thead><tr>`;
                     columns.forEach(col => tableHTML += `<th>${col}</th>`);
-                    tableHTML += `</tr></thead><tbody>`;
-                    rows.forEach(row => {
+                    tableHTML += `<th>Assess/Plot</th></tr></thead><tbody>`;   // extra header
+
+                    rows.forEach((row, idx) => {
                         tableHTML += `<tr>`;
                         columns.forEach(col => {
                             let value = row[col];
@@ -436,12 +430,18 @@ document.addEventListener("DOMContentLoaded", function() {
                                 value = Number.isInteger(value) ? value : value.toFixed(3);
                             tableHTML += `<td>${value}</td>`;
                         });
+                        // extra cell with the button; data-row-idx lets us look up the row on click
+                        tableHTML += `<td><button type="button" class="plot-geom-btn" data-row-idx="${idx}">Assess</button></td>`;
                         tableHTML += `</tr>`;
                     });
                     tableHTML += `</tbody></table>`;
 
                     optTableDiv.innerHTML = tableHTML;
                     optContainer.style.display = "block";
+
+                    // hand the rows to the click handler (stashed on the container)
+                    optTableDiv._rows = rows;
+
                 } else {
                     optTableDiv.innerHTML =
                         "<div style='padding:10px; color:#ff0000; font-weight:bold;'>NO RESULTS!</div>";
@@ -459,6 +459,32 @@ document.addEventListener("DOMContentLoaded", function() {
         submitForm();
     });
 
+
+    // ===============================
+    // "Assess" button in opt table
+    // (populates form inputs from row, then submits as assess)
+    // ===============================
+    optTableDiv.addEventListener("click", (e) => {
+        const btn = e.target.closest(".plot-geom-btn");
+        if (!btn) return;
+
+        const row = (optTableDiv._rows || [])[+btn.dataset.rowIdx];
+        if (!row) return;
+
+        // For every row key, if there's a form input with the same id, set its value.
+        // No hard-coded field map to maintain.
+        Object.entries(row).forEach(([key, val]) => {
+            const el = form.elements[key];
+            if (el && val !== null && val !== "") el.value = val;
+        });
+
+        // Flip to assess mode and submit — same path as clicking Submit.
+        modeSelect.value = "assess";
+        modeSelect.dispatchEvent(new Event("change"));
+        submitForm();
+    });
+
+    submittedValues = getFormValues();
     submitForm();
 });
 </script>

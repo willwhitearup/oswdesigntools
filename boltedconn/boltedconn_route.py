@@ -73,8 +73,6 @@ def boltedconn_route():
                                                                 ULS_bending_moment, ULS_axial_force, bolt_size, b_star, mp_outer_diameter, mp_wall_thk,
                                                                 flange_obj.n_bolts_max, flange_obj.flange_height, flange_obj.flange_length, flange_obj.n_bolts)
 
-            # todo debug code to remove plot temporarily!!!!!!!!!!!
-            # bolt_util_plot_json=None
             # convert inf to a 0 for JS rendering
             if np.isinf(flange_obj.util) or np.isnan(flange_obj.util) or flange_obj.util is None:
                 flange_obj.util = 0.
