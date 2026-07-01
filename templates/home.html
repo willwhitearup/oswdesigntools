@@ -222,6 +222,34 @@
     text-decoration: none;
   }
 
+/* CAD models row - centred, step-box style */
+  .cad-models-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 200px;           /* match button width */
+    margin: 20px 0 0 100px; /* same left shift as .flow-steps */
+  }
+
+  .cad-models-row a {
+    background: #007BFF;
+    color: white;
+    padding: 12px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    min-width: 200px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
+    user-select: none;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .cad-models-row a:hover {
+    background: #0056b3;
+    text-decoration: underline;
+  }
+
 </style>
 
 <div class="flowchart" aria-label="Main flowchart container">
@@ -279,6 +307,12 @@
     <a href="/gc">Grouted connection
       <div class="joint-desc">GC design to DNV-ST-0126</div>
     </a>
+  </div>
+
+
+  <!-- CAD models -->
+  <div class="cad-models-row" aria-label="CAD model buttons">
+    <a href="/cad_tp">Transition Piece CAD models</a>
   </div>
 
 </div>
