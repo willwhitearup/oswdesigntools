@@ -1,8 +1,4 @@
 import os
-
-
-
-
 from flask import Flask, render_template, session
 from jktdesign.architect import jacket_architect
 from jktdesign.jktsections import jacket_sections, jacket_sections_plot
@@ -14,9 +10,7 @@ from tubularjointscfs.routes_tyjoint import ty_joint_route
 from tubularjointscfs.routes_ktjoint import kt_joint_route
 from tubularjointscfs.jointdetailing_route import joint_detailing
 from gcdesign.gc_route import gc_route
-
 from boltedconn.boltedconn_route import boltedconn_route
-
 from kitesurf.kitesurf_route import kitesurf_route
 from conescfs.cone_route import cone_route
 from rrfs.rrfs_route import rrfs_route
@@ -53,8 +47,8 @@ app.add_url_rule('/kitesurf', 'kitesurf_route', kitesurf_route, methods=['GET', 
 # onshape CAD viewing
 
 from onshape.onshape_route import onshape_route, onshape_model_glb
-app.add_url_rule('/cad_tp_type1',           'onshape',           onshape_route,      methods=['GET'])
-app.add_url_rule('/cad_tp_type1/model.glb', 'onshape_model_glb', onshape_model_glb,  methods=['GET'])
+app.add_url_rule('/cad_tp',           'onshape',           onshape_route,      methods=['GET'])
+app.add_url_rule('/cad_tp/model.glb', 'onshape_model_glb', onshape_model_glb,  methods=['GET'])
 
 
 if __name__ == '__main__':

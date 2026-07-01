@@ -4,173 +4,338 @@
 
 {% include "onshape/onshape_styles.html" %}
 
-<!-- ===== Info banner ===== -->
 <div class="onshape-info-banner">
     <span class="onshape-info-icon">ⓘ</span>
     <span class="onshape-info-text">
-        TP Type 1 preview shown. Default values only shown - contact the developer for custom geometry.
+        The parameters below illustrate the range of geometry modifications available. Contact the developer for bespoke CAD generation.
     </span>
 </div>
 
-<!-- ===== Main layout: inputs left, viewer right ===== -->
 <div class="onshape-container">
 
-    <!-- LEFT: input panel -->
+    <!-- LEFT PANEL -->
     <div class="onshape-form-container">
-        <form id="onshape-form" class="onshape-input-form" onsubmit="return false;">
 
-            <div class="architect-form-group">
-                <label for="leg_offset">Leg offset (mm)</label>
-                <input type="text"
-                       id="leg_offset"
-                       name="leg_offset"
-                       value="{{ defaults.leg_offset }}">
-                <input type="range"
-                       id="leg_offset_slider"
-                       min="{{ limits.leg_offset.min }}"
-                       max="{{ limits.leg_offset.max }}"
-                       step="{{ limits.leg_offset.step }}"
-                       value="{{ defaults.leg_offset }}">
+        <form id="onshape-form"
+              class="onshape-input-form"
+              onsubmit="return false;">
+
+            <!-- Geometry Dropdown -->
+            <div class="onshape-form-group">
+                <label for="cad_type">Geometry</label>
+
+                <select id="cad_type" name="cad_type">
+                    {% for key, model in models.items() %}
+                    <option value="{{ key }}"
+                            {% if key == default_model %}selected{% endif %}>
+                        {{ model.name }}
+                    </option>
+                    {% endfor %}
+                </select>
             </div>
 
-            <div class="architect-form-group">
-                <label for="strut_angle">Strut angle (&deg;)</label>
+            <!-- Leg Offset -->
+            <div class="onshape-form-group">
+                <label for="leg_offset">Leg offset (mm)</label>
+
                 <input type="text"
-                       id="strut_angle"
-                       name="strut_angle"
-                       value="{{ defaults.strut_angle }}">
+                       id="leg_offset"
+                       value="11000">
+
                 <input type="range"
-                       id="strut_angle_slider"
-                       min="{{ limits.strut_angle.min }}"
-                       max="{{ limits.strut_angle.max }}"
-                       step="{{ limits.strut_angle.step }}"
-                       value="{{ defaults.strut_angle }}">
+                       id="leg_offset_slider"
+                       min="2000"
+                       max="25000"
+                       step="100"
+                       value="11000">
+            </div>
+
+            <!-- Tower Diameter -->
+            <div class="onshape-form-group">
+                <label for="tower_diameter">Tower diameter (mm)</label>
+
+                <input type="text"
+                       id="tower_diameter"
+                       value="7000">
+
+                <input type="range"
+                       id="tower_diameter_slider"
+                       min="3000"
+                       max="12000"
+                       step="100"
+                       value="7000">
+            </div>
+
+            <!-- Leg Diameter -->
+            <div class="onshape-form-group">
+                <label for="leg_diameter">Leg diameter (mm)</label>
+
+                <input type="text"
+                       id="leg_diameter"
+                       value="1800">
+
+                <input type="range"
+                       id="leg_diameter_slider"
+                       min="500"
+                       max="6000"
+                       step="100"
+                       value="1800">
+            </div>
+
+            <!-- Leg Batter -->
+            <div class="onshape-form-group">
+                <label for="leg_batter_angle">Leg batter angle (°)</label>
+
+                <input type="text"
+                       id="leg_batter_angle"
+                       value="5">
+
+                <input type="range"
+                       id="leg_batter_angle_slider"
+                       min="0"
+                       max="20"
+                       step="0.5"
+                       value="5">
             </div>
 
             <button type="button"
                     id="edit-in-onshape-btn"
-                    style="margin-top:14px; width:100%; padding:12px 18px;
-                           background:#0a84ff; color:#fff; border:0; border-radius:6px;
-                           font-weight:600; cursor:pointer; font-size:15px;">
-                🔍 Configure in Onshape &rarr;
+                    class="onshape-open-btn">
+                🔍 Configure in Onshape →
             </button>
+
         </form>
+
     </div>
 
-    <!-- RIGHT: default preview -->
+    <!-- RIGHT PANEL -->
     <div class="onshape-viewer-wrapper">
-        <model-viewer id="onshape-viewer"
-                      src="{{ url_for('onshape_model_glb') }}"
-                      alt="Onshape part preview"
-                      camera-controls
-                      auto-rotate
-                      shadow-intensity="1"
-                      exposure="1"
-                      style="width:100%; height:75vh; background:#1a1a1a; border-radius:8px;">
+
+        <model-viewer
+            id="onshape-viewer"
+            src="{{ url_for('onshape_model_glb') }}?model={{ default_model }}"
+            alt="Onshape preview"
+            camera-controls
+            auto-rotate
+            shadow-intensity="1"
+            exposure="1"
+            style="
+                width:100%;
+                height:75vh;
+                background:#1a1a1a;
+                border-radius:8px;
+            ">
         </model-viewer>
+
     </div>
 
 </div>
 
-<!-- ===== Info modal (click backdrop or Esc to close) ===== -->
-<div id="onshape-modal" class="onshape-modal" role="dialog" aria-hidden="true" aria-labelledby="onshape-modal-title">
+<!-- Modal -->
+<div id="onshape-modal"
+     class="onshape-modal"
+     role="dialog"
+     aria-hidden="true">
+
     <div class="onshape-modal-backdrop"></div>
+
     <div class="onshape-modal-card">
-        <h3 id="onshape-modal-title" style="margin:0 0 12px; font-size:18px;">
-            Info &mdash; Onshape login required to edit
+
+        <h3 style="margin:0 0 12px;">
+            Info — Onshape login required
         </h3>
 
-        <p style="margin:0 0 12px; line-height:1.5; font-size:14px;">
-            !Your slider values will not be sent to Onshape - this is for visual purposes only!
+        <p style="margin:0; line-height:1.5;">
+            The parameters shown on this page are illustrative only and do not directly modify the preview geometry.
+            They demonstrate the types of dimensions that can be customised in a bespoke design.
         </p>
 
     </div>
+
 </div>
 
-<!-- ===== model-viewer web component loader ===== -->
 <script type="module"
         src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
 </script>
 
-<!-- ===== Page logic ===== -->
 <script>
 (function () {
 
-    // ---------- Config ----------
-    const DOC_ID = "{{ doc_id }}";
-    const WID    = "{{ wid }}";
-    const EID    = "{{ eid }}";
+    //------------------------------------------------------------------
+    // Python -> JS
+    //------------------------------------------------------------------
 
-    // Set to true if you'd rather Onshape open as a small floating window.
-    const USE_POPUP_WINDOW = false;
+    const MODELS = {{ models | tojson | safe }};
 
-    const TAB_NAME       = "onshape-cad-viewer";
-    const POPUP_FEATURES = "noopener,width=1000,height=750,left=200,top=80";
+    //------------------------------------------------------------------
+    // DOM
+    //------------------------------------------------------------------
 
-    // ---------- DOM refs ----------
-    const btn           = document.getElementById('edit-in-onshape-btn');
-    const modal         = document.getElementById('onshape-modal');
-    const modalBackdrop = modal.querySelector('.onshape-modal-backdrop');
+    const viewer        = document.getElementById("onshape-viewer");
+    const selector      = document.getElementById("cad_type");
+    const button        = document.getElementById("edit-in-onshape-btn");
 
-    // ---------- Text <-> slider mirroring ----------
+    const modal         = document.getElementById("onshape-modal");
+    const backdrop      = modal.querySelector(".onshape-modal-backdrop");
+
+    //------------------------------------------------------------------
+    // Sync text inputs and sliders
+    //------------------------------------------------------------------
+
     function syncTextAndSlider(el) {
-        if (el.type === 'range') {
-            const text = document.getElementById(el.id.replace('_slider', ''));
-            if (text) text.value = el.value;
+
+        if (el.type === "range") {
+
+            const text =
+                document.getElementById(
+                    el.id.replace("_slider", "")
+                );
+
+            if (text) {
+                text.value = el.value;
+            }
+
         } else {
-            const slider = document.getElementById(el.id + '_slider');
-            if (slider) slider.value = el.value;
+
+            const slider =
+                document.getElementById(
+                    el.id + "_slider"
+                );
+
+            if (slider) {
+                slider.value = el.value;
+            }
         }
     }
 
-    document.querySelectorAll('.onshape-input-form input').forEach(function (input) {
-        input.addEventListener('input', function () { syncTextAndSlider(this); });
-    });
+    document
+        .querySelectorAll(".onshape-input-form input")
+        .forEach(function (input) {
 
-    // ---------- Build the Onshape configurator URL ----------
-    function buildOnshapeUrl() {
-        const leg = document.getElementById('leg_offset').value;
-        const ang = document.getElementById('strut_angle').value;
-        const cfg = `leg_offset=${leg}*millimeter;strut_angle=${ang}*degree`;
+            input.addEventListener(
+                "input",
+                function () {
+                    syncTextAndSlider(this);
+                }
+            );
 
-        return `https://cad.onshape.com/documents/${DOC_ID}/w/${WID}/e/${EID}`
-             + `?configuration=${encodeURIComponent(cfg)}`;
+        });
+
+    //------------------------------------------------------------------
+    // Update GLB Preview
+    //------------------------------------------------------------------
+
+    function updateViewer() {
+
+        const modelName =
+            selector.value;
+
+        viewer.src =
+            "/cad_tp/model.glb"
+            + "?model="
+            + modelName
+            + "&t="
+            + Date.now();
     }
 
-    // ---------- Modal show/hide ----------
+    selector.addEventListener(
+        "change",
+        updateViewer
+    );
+
+    //------------------------------------------------------------------
+    // Build Onshape URL
+    //------------------------------------------------------------------
+
+    function buildOnshapeUrl() {
+
+        const modelName =
+            selector.value;
+
+        const model =
+            MODELS[modelName];
+
+        return (
+            "https://cad.onshape.com/documents/"
+            + model.did
+            + "/w/"
+            + model.wid
+            + "/e/"
+            + model.eid
+        );
+    }
+
+    //------------------------------------------------------------------
+    // Modal
+    //------------------------------------------------------------------
+
     function openModal() {
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
+
+        modal.classList.add("is-open");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "false"
+        );
     }
 
     function closeModal() {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-        btn.focus();
+
+        modal.classList.remove("is-open");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        button.focus();
     }
 
-    // ---------- Open the Onshape tab ----------
-    function openOnshape() {
-        const url      = buildOnshapeUrl();
-        const features = USE_POPUP_WINDOW ? POPUP_FEATURES : "noopener";
-        window.open(url, TAB_NAME, features);
-        window.focus();
-    }
+    //------------------------------------------------------------------
+    // Open Onshape
+    //------------------------------------------------------------------
 
-    // ---------- Wiring ----------
-    btn.addEventListener('click', function () {
-        // Open Onshape in the named tab/window, and also show the info modal.
-        openOnshape();
-        openModal();
-    });
+    button.addEventListener(
+        "click",
+        function () {
 
-    modalBackdrop.addEventListener('click', closeModal);
+            window.open(
+                buildOnshapeUrl(),
+                "onshape-cad-viewer",
+                "noopener"
+            );
 
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
-            closeModal();
+            openModal();
         }
-    });
+    );
+
+    //------------------------------------------------------------------
+    // Close Modal
+    //------------------------------------------------------------------
+
+    backdrop.addEventListener(
+        "click",
+        closeModal
+    );
+
+    document.addEventListener(
+        "keydown",
+        function (e) {
+
+            if (
+                e.key === "Escape"
+                && modal.classList.contains("is-open")
+            ) {
+                closeModal();
+            }
+        }
+    );
+
+    //------------------------------------------------------------------
+    // Initial load
+    //------------------------------------------------------------------
+
+    updateViewer();
 
 })();
 </script>
